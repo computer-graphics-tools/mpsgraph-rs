@@ -50,6 +50,13 @@ impl MPSGraph {
         }
     }
     
+    /// Creates a placeholder tensor in the graph using shape dimensions
+    /// This is a convenience method that converts shape dimensions to an MPSShape
+    pub fn placeholder_with_shape(&self, shape_dims: &[usize], data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
+        let shape = MPSShape::from_slice(shape_dims);
+        self.placeholder(&shape, data_type, name)
+    }
+    
     /// Creates a placeholder tensor in the graph
     pub fn placeholder(&self, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
         unsafe {
@@ -69,8 +76,8 @@ impl MPSGraph {
         }
     }
     
-    /// Creates a constant tensor with scalar value
-    pub fn constant_scalar(&self, value: f32, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
+    /// Creates a constant tensor with scalar value, specifying shape explicitly
+    pub fn constant_scalar_with_shape(&self, value: f32, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
                 Some(s) => NSString::from_str(s).0,
@@ -90,6 +97,38 @@ impl MPSGraph {
     }
     
     /// Creates a constant tensor with data from a slice
+    /// Creates a tensor filled with zeros that has the same shape as the input tensor
+    pub fn zeros_like(&self, tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
+        unsafe {
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).0,
+                None => std::ptr::null_mut(),
+            };
+            
+            let result: *mut Object = msg_send![self.0, 
+                zerosLikeTensor:tensor.0
+                name:name_obj
+            ];
+            
+            let result: *mut Object = msg_send![result, retain];
+            MPSGraphTensor(result)
+        }
+    }
+    
+    /// Creates a scalar constant tensor with the given value
+    pub fn constant_scalar_value<T: Copy>(&self, value: T, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
+        // Create a slice with a single value
+        let data = [value];
+        let shape = MPSShape::scalar();
+        self.constant_from_bytes(&data, &shape, data_type, name)
+    }
+    
+    /// Legacy method for backward compatibility
+    pub fn constant_scalar(&self, value: f32, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
+        self.constant_scalar_with_shape(value, shape, data_type, name)
+    }
+    
+    /// Creates a constant tensor from raw bytes
     pub fn constant_from_bytes<T: Copy>(&self, 
                                 data: &[T], 
                                 shape: &MPSShape, 
@@ -168,7 +207,7 @@ impl MPSGraph {
     }
     
     /// Runs the graph with the given feeds and returns the targets
-    pub fn run(&self,
+    pub fn run_legacy(&self,
            feeds: HashMap<&MPSGraphTensor, MPSGraphTensorData>,
            targets: &[&MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
         unsafe {
@@ -254,6 +293,98 @@ impl MPSGraph {
                 feeds:feed_dict.0
                 targetTensors:targets_array.0
                 targetOperations:std::ptr::null_mut::<Object>()
+            ];
+            
+            // Parse the results
+            let mut output = HashMap::new();
+            
+            // Get enumerator for the dictionary
+            let enumerator: *mut Object = msg_send![results, keyEnumerator];
+            
+            while {
+                let key: *mut Object = msg_send![enumerator, nextObject];
+                !key.is_null()
+            } {
+                let key: *mut Object = msg_send![enumerator, currentObject];
+                let value: *mut Object = msg_send![results, objectForKey:key];
+                
+                // Retain objects to manage their memory
+                let _: () = msg_send![key, retain];
+                let _: () = msg_send![value, retain];
+                
+                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
+            }
+            
+            // Release temporary objects
+            let _: () = msg_send![results, release];
+            
+            output
+        }
+    }
+    
+    /// Execute the graph and return results
+    pub fn run_graph(
+        &self,
+        targets: &[MPSGraphTensor],
+        device: &crate::device::MPSGraphDevice,
+        options: Option<MPSGraphOptions>
+    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        // Empty feeds
+        let feeds = HashMap::new();
+        self.run_with_feeds(&feeds, targets, device, options)
+    }
+    
+    /// Legacy run method for backward compatibility with tests
+    pub fn run(
+        &self,
+        feeds: HashMap<&MPSGraphTensor, MPSGraphTensorData>,
+        targets: &[&MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        self.run_legacy(feeds, targets)
+    }
+    
+    /// Execute the graph with feeds and return results
+    pub fn run_with_feeds(
+        &self,
+        feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+        targets: &[MPSGraphTensor],
+        device: &crate::device::MPSGraphDevice,
+        options: Option<MPSGraphOptions>
+    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get Metal device
+            let metal_device_ptr: *mut Object = msg_send![device.0, mtlDevice];
+            // Convert from Object to MTLDevice
+            let mtl_device_ptr = metal_device_ptr as *mut std::ffi::c_void as *mut metal::MTLDevice;
+            let metal_device = metal::Device::from_ptr(mtl_device_ptr);
+            
+            // Create command queue
+            let command_queue = metal_device.new_command_queue();
+            
+            // Create feed dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = NSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut Object> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = NSArray::from_objects(&targets_raw);
+            
+            // Run the graph
+            let results: *mut Object = msg_send![self.0,
+                runWithMTLCommandQueue:command_queue.as_ptr()
+                feeds:feed_dict.0
+                targetTensors:targets_array.0
+                targetOperations:std::ptr::null_mut::<Object>()
+                options:options.unwrap_or(MPSGraphOptions::Default) as u64
             ];
             
             // Parse the results
@@ -501,6 +632,43 @@ impl MPSGraph {
             
             let tensor: *mut Object = msg_send![self.0, 
                 reciprocalSquareRootWithTensor:x.0
+                name:name_obj
+            ];
+            
+            let tensor: *mut Object = msg_send![tensor, retain];
+            MPSGraphTensor(tensor)
+        }
+    }
+    
+    /// Creates a square operation (x^2)
+    pub fn square(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
+        unsafe {
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).0,
+                None => std::ptr::null_mut(),
+            };
+            
+            let tensor: *mut Object = msg_send![self.0, 
+                squareWithTensor:x.0
+                name:name_obj
+            ];
+            
+            let tensor: *mut Object = msg_send![tensor, retain];
+            MPSGraphTensor(tensor)
+        }
+    }
+    
+    /// Creates a type cast operation to convert tensor to another data type
+    pub fn cast(&self, x: &MPSGraphTensor, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
+        unsafe {
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).0,
+                None => std::ptr::null_mut(),
+            };
+            
+            let tensor: *mut Object = msg_send![self.0, 
+                castTensor:x.0
+                toType:data_type as u64
                 name:name_obj
             ];
             

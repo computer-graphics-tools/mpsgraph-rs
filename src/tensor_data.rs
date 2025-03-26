@@ -10,6 +10,13 @@ use crate::core::MPSShape;
 pub struct MPSGraphTensorData(pub(crate) *mut Object);
 
 impl MPSGraphTensorData {
+    /// Creates a new MPSGraphTensorData from a slice of data and a shape dimensions
+    /// This is a convenience method that converts shape dimensions to an MPSShape
+    pub fn new<T: Copy>(data: &[T], shape_dims: &[usize], data_type: MPSDataType) -> Self {
+        let shape = MPSShape::from_slice(shape_dims);
+        Self::from_bytes(data, &shape, data_type)
+    }
+    
     /// Creates a new MPSGraphTensorData from a slice of data and a shape
     pub fn from_bytes<T: Copy>(data: &[T], shape: &MPSShape, data_type: MPSDataType) -> Self {
         unsafe {

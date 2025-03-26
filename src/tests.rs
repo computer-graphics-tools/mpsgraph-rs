@@ -14,7 +14,7 @@ fn is_dry_run() -> bool {
 }
 
 // Helper function to decide if we should skip a test
-fn should_skip_test(test_name: &str) -> bool {
+pub fn should_skip_test(test_name: &str) -> bool {
     if is_dry_run() {
         println!("Dry run mode: Skipping {}", test_name);
         return true;

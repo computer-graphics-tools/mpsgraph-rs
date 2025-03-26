@@ -289,6 +289,24 @@ impl NSArray {
         }
     }
     
+    pub fn from_slice<T>(objects: &[T]) -> Self
+    where 
+        T: AsRef<crate::tensor::MPSGraphTensor>
+    {
+        // This is safe because we're only accessing the 0 field which is a raw pointer
+        // and we're not dereferencing it, just passing it to from_objects
+        let raw_objects: Vec<*mut Object> = objects
+            .iter()
+            .map(|obj| {
+                let tensor = obj.as_ref();
+                let ptr = tensor.0;
+                ptr
+            })
+            .collect();
+        
+        Self::from_objects(&raw_objects)
+    }
+    
     #[allow(dead_code)]
     pub fn count(&self) -> usize {
         unsafe {

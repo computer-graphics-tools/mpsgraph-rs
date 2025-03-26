@@ -6,8 +6,14 @@ use std::fmt;
 pub struct MPSGraphDevice(pub(crate) *mut Object);
 
 impl MPSGraphDevice {
+    /// Creates a new MPSGraphDevice using the system default Metal device
+    pub fn new() -> Self {
+        let device = metal::Device::system_default().expect("No Metal device found");
+        Self::with_device(&device)
+    }
+    
     /// Creates a new MPSGraphDevice from a Metal device
-    pub fn new(device: &DeviceRef) -> Self {
+    pub fn with_device(device: &DeviceRef) -> Self {
         unsafe {
             let cls = objc::runtime::Class::get("MPSGraphDevice").unwrap();
             let metal_device = device as *const _;

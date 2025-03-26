@@ -1,6 +1,7 @@
 use objc::runtime::Object;
 use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::convert::AsRef;
 use crate::core::MPSDataType;
 use crate::core::MPSShape;
 use crate::operation::MPSGraphOperation;
@@ -112,5 +113,11 @@ impl fmt::Debug for MPSGraphTensor {
             .field("data_type", &self.data_type())
             .field("dimensions", &self.dimensions())
             .finish()
+    }
+}
+
+impl AsRef<MPSGraphTensor> for MPSGraphTensor {
+    fn as_ref(&self) -> &MPSGraphTensor {
+        self
     }
 }
