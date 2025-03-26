@@ -35,21 +35,30 @@ impl MPSGraphTensorData {
             
             let device = device_option.unwrap();
             
-            // Create a Metal buffer with our data
-            let buffer = device.new_buffer_with_data(
-                data.as_ptr() as *const _,
-                (data_size) as u64,
-                metal::MTLResourceOptions::StorageModeShared
-            );
+            // Create NSData with our data
+            let ns_data_cls = objc::runtime::Class::get("NSData").unwrap();
+            let ns_data: *mut Object = msg_send![ns_data_cls, alloc];
+            let ns_data: *mut Object = msg_send![ns_data, 
+                initWithBytes:data.as_ptr() as *const _
+                length:data_size
+            ];
             
-            // Create the MPSGraphTensorData with the Metal buffer
+            // Create MPSGraphDevice from MTLDevice
+            let mps_device_cls = objc::runtime::Class::get("MPSGraphDevice").unwrap();
+            let mps_device: *mut Object = msg_send![mps_device_cls, deviceWithMTLDevice:device.as_ptr()];
+            
+            // Create the MPSGraphTensorData with NSData
             let cls = objc::runtime::Class::get("MPSGraphTensorData").unwrap();
             let obj: *mut Object = msg_send![cls, alloc];
             let obj: *mut Object = msg_send![obj, 
-                initWithBuffer:buffer.as_ptr()
+                initWithDevice:mps_device
+                data:ns_data
                 shape:shape.0
                 dataType:data_type as u64
             ];
+            
+            // Release temporary objects
+            let _: () = msg_send![ns_data, release];
             
             MPSGraphTensorData(obj)
         }
@@ -62,7 +71,7 @@ impl MPSGraphTensorData {
             
             let obj: *mut Object = msg_send![cls, alloc];
             let obj: *mut Object = msg_send![obj, 
-                initWithBuffer:buffer.as_ptr()
+                initWithMTLBuffer:buffer.as_ptr()
                 shape:shape.0
                 dataType:data_type as u64
             ];
