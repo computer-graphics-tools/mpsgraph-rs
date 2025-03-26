@@ -19,6 +19,14 @@ pub mod matrix_ops;
 pub mod convolution_ops;
 pub mod normalization_ops;
 pub mod pooling_ops;
+pub mod gradient_ops;
+pub mod random_ops;
+pub mod loss_ops;
+pub mod optimizer_ops;
+pub mod rnn_ops;
+// Temporarily disable control_flow_ops due to Block_copy issues
+// pub mod control_flow_ops;
+pub mod linear_algebra_ops;
 
 // Re-export most commonly used types
 pub use core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile};
@@ -28,6 +36,9 @@ pub use tensor::MPSGraphTensor;
 pub use tensor_data::MPSGraphTensorData;
 pub use operation::MPSGraphOperation;
 pub use executable::MPSGraphExecutable;
+pub use random_ops::{MPSGraphRandomDistribution, MPSGraphRandomNormalSamplingMethod, MPSGraphRandomOpDescriptor};
+pub use loss_ops::MPSGraphLossReductionType;
+pub use rnn_ops::{MPSGraphRNNActivation, MPSGraphSingleGateRNNDescriptor, MPSGraphLSTMDescriptor, MPSGraphGRUDescriptor};
 
 /// Convenience prelude module with most commonly used items
 pub mod prelude {
@@ -38,6 +49,9 @@ pub mod prelude {
     pub use crate::tensor_data::MPSGraphTensorData;
     pub use crate::operation::MPSGraphOperation;
     pub use crate::executable::MPSGraphExecutable;
+    pub use crate::random_ops::{MPSGraphRandomDistribution, MPSGraphRandomNormalSamplingMethod, MPSGraphRandomOpDescriptor};
+    pub use crate::loss_ops::MPSGraphLossReductionType;
+    pub use crate::rnn_ops::{MPSGraphRNNActivation, MPSGraphSingleGateRNNDescriptor, MPSGraphLSTMDescriptor, MPSGraphGRUDescriptor};
 }
 
 #[cfg(test)]

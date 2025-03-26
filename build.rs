@@ -4,4 +4,7 @@ fn main() {
     println!("cargo:rustc-link-lib=framework=MetalPerformanceShaders");
     println!("cargo:rustc-link-lib=framework=Metal");
     println!("cargo:rustc-link-lib=framework=Foundation");
+    
+    // Link with system library for Block_copy support
+    println!("cargo:rustc-link-lib=System");
 } 
