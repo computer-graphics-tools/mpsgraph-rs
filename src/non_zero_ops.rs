@@ -1,0 +1,43 @@
+use objc::runtime::Object;
+use crate::graph::MPSGraph;
+use crate::tensor::MPSGraphTensor;
+use crate::core::NSString;
+
+/// NonZero operations for MPSGraph
+impl MPSGraph {
+    /// Computes the indices of the non-zero elements of the input tensor.
+    /// 
+    /// The indices are returned as a two-dimensional tensor of size `[number_of_nonzeros, input_rank]`.
+    /// Each row in the result contains indices of a nonzero elements in input.
+    /// For example:
+    /// ```
+    /// tensor = [[ 1,  0, 3],
+    ///           [ 0, 10, 0]]
+    /// indices = [[ 0, 0],
+    ///            [ 0, 2],
+    ///            [ 1, 1]]
+    /// ```
+    /// 
+    /// - Parameters:
+    ///   - tensor: An MPSGraphTensor of which to compute the non-zero indices.
+    ///   - name: The name for the operation.
+    /// - Returns: A valid MPSGraphTensor containing indices in signed int32 data type.
+    pub fn non_zero_indices(&self, 
+                           tensor: &MPSGraphTensor,
+                           name: Option<&str>) -> MPSGraphTensor {
+        unsafe {
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).0,
+                None => std::ptr::null_mut(),
+            };
+            
+            let result: *mut Object = msg_send![self.0, 
+                nonZeroIndicesOfTensor:tensor.0
+                name:name_obj
+            ];
+            
+            let result: *mut Object = msg_send![result, retain];
+            MPSGraphTensor(result)
+        }
+    }
+}

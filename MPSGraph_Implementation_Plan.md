@@ -42,25 +42,25 @@ This document outlines the current state of the `mpsgraph-rs` Rust bindings for 
 | Loss Ops | ✅ Implemented | `MPSGraphLossOps.h` | High |
 | Optimizer Ops | ✅ Implemented | `MPSGraphOptimizerOps.h` | High |
 | RNN Ops | ✅ Implemented | `MPSGraphRNNOps.h` | Medium |
-| Gather Ops | ❌ Missing | `MPSGraphGatherOps.h` | Medium |
+| Gather Ops | ✅ Implemented | `MPSGraphGatherOps.h` | Medium |
 | Transposed Convolution | ✅ Implemented | `MPSGraphConvolutionTransposeOps.h` | Medium |
 | Depthwise Convolution | ✅ Implemented | `MPSGraphDepthwiseConvolutionOps.h` | Medium |
-| Resize Ops | ❌ Missing | `MPSGraphResizeOps.h` | Low |
-| Sort Ops | ❌ Missing | `MPSGraphSortOps.h` | Low |
-| Non-Zero Ops | ❌ Missing | `MPSGraphNonZeroOps.h` | Low |
-| One-Hot Ops | ❌ Missing | `MPSGraphOneHotOps.h` | Low |
-| Top-K Ops | ❌ Missing | `MPSGraphTopKOps.h` | Low |
-| Sample Grid Ops | ❌ Missing | `MPSGraphSampleGridOps.h` | Low |
-| Scatter ND Ops | ❌ Missing | `MPSGraphScatterNDOps.h` | Low |
-| Stencil Ops | ❌ Missing | `MPSGraphStencilOps.h` | Low |
-| Fourier Transform Ops | ❌ Missing | `MPSGraphFourierTransformOps.h` | Low |
-| Non-Maximum Suppression | ❌ Missing | `MPSGraphNonMaximumSuppressionOps.h` | Low |
-| Quantization Ops | ❌ Missing | `MPSGraphQuantizationOps.h` | Medium |
-| Call Ops | ❌ Missing | `MPSGraphCallOps.h` | Low |
-| Cumulative Ops | ❌ Missing | `MPSGraphCumulativeOps.h` | Low |
-| Im2Col Ops | ❌ Missing | `MPSGraphImToColOps.h` | Low |
-| Memory Ops | ❌ Missing | `MPSGraphMemoryOps.h` | Medium |
-| Sparse Ops | ❌ Missing | `MPSGraphSparseOps.h` | Low |
+| Resize Ops | ✅ Implemented | `MPSGraphResizeOps.h` | Low |
+| Sort Ops | ✅ Implemented | `MPSGraphSortOps.h` | Low |
+| Non-Zero Ops | ✅ Implemented | `MPSGraphNonZeroOps.h` | Low |
+| One-Hot Ops | ✅ Implemented | `MPSGraphOneHotOps.h` | Low |
+| Top-K Ops | ✅ Implemented | `MPSGraphTopKOps.h` | Low |
+| Sample Grid Ops | ✅ Implemented | `MPSGraphSampleGridOps.h` | Low |
+| Scatter ND Ops | ✅ Implemented | `MPSGraphScatterNDOps.h` | Low |
+| Stencil Ops | ✅ Implemented | `MPSGraphStencilOps.h` | Low |
+| Fourier Transform Ops | ✅ Implemented | `MPSGraphFourierTransformOps.h` | Low |
+| Non-Maximum Suppression | ✅ Implemented | `MPSGraphNonMaximumSuppressionOps.h` | Low |
+| Quantization Ops | ✅ Implemented | `MPSGraphQuantizationOps.h` | Medium |
+| Call Ops | ✅ Implemented | `MPSGraphCallOps.h` | Low |
+| Cumulative Ops | ✅ Implemented | `MPSGraphCumulativeOps.h` | Low |
+| Im2Col Ops | ✅ Implemented | `MPSGraphImToColOps.h` | Low |
+| Memory Ops | ✅ Implemented | `MPSGraphMemoryOps.h` | Medium |
+| Sparse Ops | ✅ Implemented | `MPSGraphSparseOps.h` | Low |
 
 ## Implementation Priorities
 

@@ -18,6 +18,7 @@
   - Use CamelCase for types and structs
 - **Safety**: Use `unsafe` blocks only when necessary for FFI
 - **Types**: Prefer strong typing with dedicated wrapper types
+- **Descriptors**: Implement as structs
 - **Memory Management**: Ensure proper resource cleanup with Drop implementations
 - **Comments**: Document public APIs with doc comments
 - **Testing**: Write unit tests for all public functionality
