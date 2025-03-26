@@ -17,6 +17,8 @@ pub mod reduction_ops;
 pub mod tensor_shape_ops;
 pub mod matrix_ops;
 pub mod convolution_ops;
+pub mod convolution_transpose_ops;
+pub mod depthwise_convolution_ops;
 pub mod normalization_ops;
 pub mod pooling_ops;
 pub mod gradient_ops;
@@ -39,6 +41,8 @@ pub use executable::MPSGraphExecutable;
 pub use random_ops::{MPSGraphRandomDistribution, MPSGraphRandomNormalSamplingMethod, MPSGraphRandomOpDescriptor};
 pub use loss_ops::MPSGraphLossReductionType;
 pub use rnn_ops::{MPSGraphRNNActivation, MPSGraphSingleGateRNNDescriptor, MPSGraphLSTMDescriptor, MPSGraphGRUDescriptor};
+pub use convolution_transpose_ops::{MPSGraphConvolution2DOpDescriptor, TensorNamedDataLayout, PaddingStyle};
+pub use depthwise_convolution_ops::{MPSGraphDepthwiseConvolution2DOpDescriptor, MPSGraphDepthwiseConvolution3DOpDescriptor};
 
 /// Convenience prelude module with most commonly used items
 pub mod prelude {
@@ -52,6 +56,8 @@ pub mod prelude {
     pub use crate::random_ops::{MPSGraphRandomDistribution, MPSGraphRandomNormalSamplingMethod, MPSGraphRandomOpDescriptor};
     pub use crate::loss_ops::MPSGraphLossReductionType;
     pub use crate::rnn_ops::{MPSGraphRNNActivation, MPSGraphSingleGateRNNDescriptor, MPSGraphLSTMDescriptor, MPSGraphGRUDescriptor};
+    pub use crate::convolution_transpose_ops::{MPSGraphConvolution2DOpDescriptor, TensorNamedDataLayout, PaddingStyle};
+    pub use crate::depthwise_convolution_ops::{MPSGraphDepthwiseConvolution2DOpDescriptor, MPSGraphDepthwiseConvolution3DOpDescriptor};
 }
 
 #[cfg(test)]

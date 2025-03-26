@@ -43,8 +43,8 @@ This document outlines the current state of the `mpsgraph-rs` Rust bindings for 
 | Optimizer Ops | ✅ Implemented | `MPSGraphOptimizerOps.h` | High |
 | RNN Ops | ✅ Implemented | `MPSGraphRNNOps.h` | Medium |
 | Gather Ops | ❌ Missing | `MPSGraphGatherOps.h` | Medium |
-| Transposed Convolution | ❌ Missing | `MPSGraphConvolutionTransposeOps.h` | Medium |
-| Depthwise Convolution | ❌ Missing | `MPSGraphDepthwiseConvolutionOps.h` | Medium |
+| Transposed Convolution | ✅ Implemented | `MPSGraphConvolutionTransposeOps.h` | Medium |
+| Depthwise Convolution | ✅ Implemented | `MPSGraphDepthwiseConvolutionOps.h` | Medium |
 | Resize Ops | ❌ Missing | `MPSGraphResizeOps.h` | Low |
 | Sort Ops | ❌ Missing | `MPSGraphSortOps.h` | Low |
 | Non-Zero Ops | ❌ Missing | `MPSGraphNonZeroOps.h` | Low |
@@ -103,8 +103,9 @@ These operations add specialized functionality that may be useful for specific a
 2. ✅ RNN Operations (`rnn_ops.rs`)
 3. ✅ Control Flow Operations (`control_flow_ops.rs`)
 4. ✅ Linear Algebra Operations (`linear_algebra_ops.rs`)
-5. ❌ Advanced Convolution Operations
-   - Extend `convolution_ops.rs` or create specialized modules
+5. ✅ Advanced Convolution Operations
+   - ✅ Transposed Convolution (`convolution_transpose_ops.rs`) 
+   - ✅ Depthwise Convolution (`depthwise_convolution_ops.rs`)
 
 ### Phase 3: Low Priority Components
 1. Image and Signal Processing (`resize_ops.rs`, `fourier_ops.rs`)
