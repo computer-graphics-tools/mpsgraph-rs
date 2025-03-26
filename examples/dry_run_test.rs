@@ -11,7 +11,7 @@ use mpsgraph::sample_grid_ops::MPSGraphPaddingMode;
 use mpsgraph::convolution_transpose_ops::PaddingStyle;
 
 fn main() {
-    println!("Testing all operations in dry-run mode");
+    println!("Testing all operations API functionality");
     
     // Test representative operations from each category
     test_arithmetic_ops();

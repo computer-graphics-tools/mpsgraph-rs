@@ -6,7 +6,7 @@ use mpsgraph::graph::MPSGraph;
 use mpsgraph::tensor_data::MPSGraphTensorData;
 
 fn main() {
-    println!("Testing basic operations in dry-run mode");
+    println!("Testing basic operations");
     
     let graph = MPSGraph::new();
     

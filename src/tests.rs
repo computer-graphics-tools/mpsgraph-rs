@@ -5,21 +5,8 @@ use crate::core::{MPSDataType, MPSShape};
 use crate::graph::MPSGraph;
 use crate::tensor_data::MPSGraphTensorData;
 
-// Global flag for test mode - set to dry run by default to prevent actual Metal execution
-static TEST_MODE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
-
-// Helper function to check if we're in dry run mode
-fn is_dry_run() -> bool {
-    TEST_MODE.load(std::sync::atomic::Ordering::Relaxed)
-}
-
-// Helper function to decide if we should skip a test
+// Helper function to decide if we should skip a test based on Metal device availability
 pub fn should_skip_test(test_name: &str) -> bool {
-    if is_dry_run() {
-        println!("Dry run mode: Skipping {}", test_name);
-        return true;
-    }
-    
     if Device::system_default().is_none() {
         println!("Skipping {} - No Metal device found", test_name);
         return true;

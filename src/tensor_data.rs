@@ -20,14 +20,33 @@ impl MPSGraphTensorData {
     /// Creates a new MPSGraphTensorData from a slice of data and a shape
     pub fn from_bytes<T: Copy>(data: &[T], shape: &MPSShape, data_type: MPSDataType) -> Self {
         unsafe {
+            // Calculate the total data size
+            let data_size = std::mem::size_of::<T>() * data.len();
+            
+            // Get the default Metal device
+            let device_option = metal::Device::system_default();
+            if device_option.is_none() {
+                // If no device available, create an empty tensor data
+                let cls = objc::runtime::Class::get("NSObject").unwrap();
+                let obj: *mut Object = msg_send![cls, alloc];
+                let obj: *mut Object = msg_send![obj, init];
+                return MPSGraphTensorData(obj);
+            }
+            
+            let device = device_option.unwrap();
+            
+            // Create a Metal buffer with our data
+            let buffer = device.new_buffer_with_data(
+                data.as_ptr() as *const _,
+                (data_size) as u64,
+                metal::MTLResourceOptions::StorageModeShared
+            );
+            
+            // Create the MPSGraphTensorData with the Metal buffer
             let cls = objc::runtime::Class::get("MPSGraphTensorData").unwrap();
-            
-            let data_ptr = data.as_ptr() as *const c_void;
-            let _data_len = (data.len() * std::mem::size_of::<T>()) as usize; // Used for debugging
-            
             let obj: *mut Object = msg_send![cls, alloc];
             let obj: *mut Object = msg_send![obj, 
-                initWithData:data_ptr
+                initWithBuffer:buffer.as_ptr()
                 shape:shape.0
                 dataType:data_type as u64
             ];

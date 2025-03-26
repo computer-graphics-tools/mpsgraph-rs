@@ -7,21 +7,19 @@ use mpsgraph::tensor_data::MPSGraphTensorData;
 use mpsgraph::stencil_ops::{MPSGraphStencilOpDescriptor, MPSGraphReductionMode};
 use mpsgraph::sample_grid_ops::MPSGraphPaddingMode;
 use mpsgraph::convolution_transpose_ops::PaddingStyle;
+use metal::Device;
 
-// Define our own dry run mode flag for testing
-static DRY_RUN_MODE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
-
-// Helper function to check if we're in dry run mode
+// Helper function to check if Metal device is available
 fn should_skip_test(test_name: &str) -> bool {
-    if DRY_RUN_MODE.load(std::sync::atomic::Ordering::Relaxed) {
-        println!("Dry run mode: Skipping {}", test_name);
+    if Device::system_default().is_none() {
+        println!("No Metal device found: Skipping {}", test_name);
         return true;
     }
     false
 }
 
 fn main() {
-    println!("Testing operations in test mode (which uses dry run by default)");
+    println!("Testing operations with Metal device check");
     
     test_basic_operations();
     test_stencil_operations();
@@ -33,7 +31,7 @@ fn main() {
 fn test_basic_operations() {
     println!("\nTesting basic operations...");
     
-    // Skip this test if we're in dry run mode
+    // Skip this test if no Metal device is found
     if should_skip_test("test_basic_operations") {
         println!("...but continuing with API validation");
     }
@@ -63,7 +61,7 @@ fn test_basic_operations() {
     // Run the graph
     let results = graph.run(feeds, &[&add]);
     
-    // If we're in dry run mode, we won't get actual results, but we've validated the API
+    // If no Metal device is available, we won't get actual results, but we've validated the API
     if !should_skip_test("check_results") {
         let add_data = results[&add].to_vec::<f32>();
         println!("Addition result: {:?}", add_data);
@@ -136,7 +134,7 @@ fn test_stencil_operations() {
     
     let results = graph.run(feeds, &[&result]);
     
-    // If we're in dry run mode, we won't get actual results, but we've validated the API
+    // If no Metal device is available, we won't get actual results, but we've validated the API
     if !should_skip_test("check_results") {
         let result_data = results[&result].to_vec::<f32>();
         println!("Stencil operation result: {:?}", result_data);
@@ -180,7 +178,7 @@ fn test_linear_algebra_operations() {
     
     let results = graph.run(feeds, &[&matmul]);
     
-    // If we're in dry run mode, we won't get actual results, but we've validated the API
+    // If no Metal device is available, we won't get actual results, but we've validated the API
     if !should_skip_test("check_results") {
         let matmul_data = results[&matmul].to_vec::<f32>();
         println!("Matrix multiplication result: {:?}", matmul_data);
