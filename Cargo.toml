@@ -31,10 +31,6 @@ name = "matmul"
 path = "examples/matmul.rs"
 
 [[example]]
-name = "neural_network"
-path = "examples/neural_network.rs"
-
-[[example]]
 name = "mock_matmul"
 path = "examples/mock_matmul.rs"
 
