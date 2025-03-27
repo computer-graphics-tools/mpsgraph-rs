@@ -19,8 +19,8 @@ impl MPSGraph {
             
             let shape_array = create_ns_array_from_i64_slice(shape);
             
-            let tensor: *mut AnyObject = msg_send![self.0, reshapeTensor: x.0
-                withShape: shape_array
+            let tensor: *mut AnyObject = msg_send![self.0, reshapeTensor: x.0, 
+                withShape: shape_array, 
                 name: name_obj
             ];
             
@@ -39,8 +39,8 @@ impl MPSGraph {
                 None => ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, flatten2DTensor: x.0
-                axis: axis
+            let tensor: *mut AnyObject = msg_send![self.0, flatten2DTensor: x.0, 
+                axis: axis, 
                 name: name_obj
             ];
             
@@ -59,8 +59,8 @@ impl MPSGraph {
             
             let shape_array = create_ns_array_from_i64_slice(shape);
             
-            let tensor: *mut AnyObject = msg_send![self.0, broadcastTensor: x.0
-                toShape: shape_array
+            let tensor: *mut AnyObject = msg_send![self.0, broadcastTensor: x.0, 
+                toShape: shape_array, 
                 name: name_obj
             ];
             
