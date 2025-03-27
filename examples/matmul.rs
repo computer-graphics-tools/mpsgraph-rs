@@ -110,7 +110,7 @@ fn main() {
     
     // Execute graph with our inputs and output buffers
     // Create execution descriptor that waits until completed
-    let mut execution_descriptor = MPSGraphExecutionDescriptor::new();
+    let execution_descriptor = MPSGraphExecutionDescriptor::new();
     execution_descriptor.set_wait_until_completed(true);
     
     graph.run_with_command_queue_feeds_outputs(

@@ -47,9 +47,9 @@ pub enum MPSGraphPaddingStyle {
     /// Explicit padding with specified values
     Explicit = 0,
     /// Same padding (input and output have same dimensions)
-    TF_SAME = 1,
+    TfSame = 1,
     /// Valid padding (no padding)
-    TF_VALID = 2,
+    TfValid = 2,
 }
 
 /// The descriptor for 2D pooling operations

@@ -2,7 +2,7 @@ use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use std::fmt;
 use metal::Buffer;
-use metal::foreign_types::{ForeignType, ForeignTypeRef};
+use metal::foreign_types::ForeignType;
 use objc2_foundation::NSData;
 use crate::core::MPSDataType;
 use crate::shape::MPSShape;

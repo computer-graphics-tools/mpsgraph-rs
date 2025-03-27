@@ -5,7 +5,6 @@ use objc2::rc::Retained;
 // Import Foundation types for NSArray and NSNumber
 pub use objc2_foundation::{NSArray, NSNumber};
 
-use std::ffi::c_void;
 use std::fmt;
 use std::ptr;
 

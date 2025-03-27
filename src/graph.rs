@@ -492,7 +492,7 @@ impl MPSGraph {
                                 execution_descriptor:  Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
         unsafe {
             // Get the device pointer
-            let device_obj = device.0;
+            let _device_obj = device.0; // Keep reference for safety
             
             // Get the queue pointer
             let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
