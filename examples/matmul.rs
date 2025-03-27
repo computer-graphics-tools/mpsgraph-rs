@@ -99,14 +99,13 @@ fn main() {
     
     // Prepare feeds and targets
     let mut feeds = HashMap::new();
-    feeds.insert(&a, a_tensor.tensor_data.clone());
-    feeds.insert(&b, b_tensor.tensor_data.clone());
+    feeds.insert(&a, &a_tensor.tensor_data);
+    feeds.insert(&b, &b_tensor.tensor_data);
     
     println!("Executing matrix multiplication...");
     
-    // Map our outputs - clone the tensor_data to avoid ownership issues
     let mut output_map = HashMap::new();
-    output_map.insert(&result, result_tensor.tensor_data.clone());
+    output_map.insert(&result, &result_tensor.tensor_data);
     
     // Execute graph with our inputs and output buffers
     graph.run_with_command_queue_feeds_outputs(

@@ -655,10 +655,12 @@ impl MPSGraph {
     }
     
     /// Runs the graph with a command queue, feeds and outputs specified
-    pub fn run_with_command_queue_feeds_outputs(&self,
-                                              command_queue: &CommandQueue,
-                                              feeds: HashMap<&MPSGraphTensor, MPSGraphTensorData>,
-                                              results_dict: HashMap<&MPSGraphTensor, MPSGraphTensorData>) {
+    pub fn run_with_command_queue_feeds_outputs(
+        &self,
+        command_queue: &CommandQueue,
+        feeds: HashMap<&MPSGraphTensor, &MPSGraphTensorData>,
+        results_dict: HashMap<&MPSGraphTensor, &MPSGraphTensorData>
+    ) {
         unsafe {
             // Get the queue pointer
             let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
@@ -821,6 +823,7 @@ impl fmt::Debug for MPSGraph {
 }
 
 // Helper function to create NSArray from dimensions
+#[allow(dead_code)]
 fn create_dimensions(dimensions: &[usize]) -> *mut AnyObject {
     let shape = MPSShape::from_slice(dimensions);
     shape.0
