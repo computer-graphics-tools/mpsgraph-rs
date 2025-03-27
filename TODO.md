@@ -63,9 +63,11 @@ Below is the full status of all modules:
    - Appears to be fully implemented in `call_ops.rs`
    - The Rust interface uses Vec<MPSGraphTensor> for return value instead of NSArray
 5. [x] MPSGraphControlFlowOps.h
-   - Implemented in `control_flow_ops.rs` with Rust-style naming conventions
-   - All operations are implemented but there are compilation errors in the code
-   - **Action Required**: Fix compilation errors in `control_flow_ops.rs` related to Block usage and ObjectRef types
+   - ✅ Fully implemented in `control_flow_ops.rs` with Rust-style naming conventions
+   - ✅ All operations are properly implemented with correct block handling
+   - ✅ Fixed compilation errors related to Block usage and ObjectRef types
+   - ✅ Added support for control dependency, if-then-else, while loops, and for loops
+   - ✅ Comprehensive test cases for conditional execution and looping
 6. [x] MPSGraphConvolutionOps.h
    - ✅ Mostly implemented in `convolution_ops.rs`
    - Implementations:
@@ -89,11 +91,16 @@ Below is the full status of all modules:
      - **Missing in Rust**: `MPSGraphShapedType` implementation
      - **Extra in Rust**: Helper structs like `OurNSString`, `OurNSArray`, etc. for bridging to Objective-C
 9. [x] MPSGraphCumulativeOps.h
-   - Partially implemented in `cumulative_ops.rs`
-   - Issues:
-     - **Missing in Rust**: Some API variants, especially the ones that take axisTensor for cumulative_product, cumulative_minimum, and cumulative_maximum
-     - **Missing in Rust**: Simple versions (without exclusive/reverse parameters) for cumulative_product, cumulative_minimum, and cumulative_maximum
-     - **Action Required**: Implement missing API variants
+   - ✅ Fully implemented in `cumulative_ops.rs`
+   - Implementations:
+     - ✅ All cumulative operations (sum, product, minimum, maximum)
+     - ✅ All API variants including:
+       - Regular versions with axis, exclusive, reverse parameters
+       - axisTensor versions for all operations
+       - Simple versions (without exclusive/reverse parameters) for all operations
+     - ✅ Proper memory management with objc_retain/objc_release
+     - ✅ Consistent API patterns with Option<&str> for optional name parameters
+   - **API Completeness**: All operations from the Objective-C header are now implemented
 10. [x] MPSGraphDepthwiseConvolutionOps.h
 
 - Fully implemented in `depthwise_convolution_ops.rs`
@@ -120,12 +127,21 @@ Below is the full status of all modules:
 
 13. [x] MPSGraphFourierTransformOps.h
 
-- Partially implemented in `fourier_transform_ops.rs`
-- Issues:
-  - **API Mismatch**: The Rust implementation is using an older API compared to the latest Objective-C API
-  - **Missing in Rust**: `MPSGraphFFTDescriptor` implementation does not match the latest properties (inverse, scalingMode, roundToOddHermitean)
-  - **Missing in Rust**: New FFT operations like `fastFourierTransform`, `realToHermiteanFFT`, and `HermiteanToRealFFT`
-  - **Action Required**: Update the implementation to match the latest Objective-C API
+- ✅ Fully implemented in `fourier_transform_ops.rs`
+- Implementations:
+  - ✅ `MPSGraphFFTDescriptor` with all modern properties:
+    - `inverse` property for phase factor sign
+    - `scaling_mode` property for output scaling
+    - `round_to_odd_hermitean` property for output tensor size rounding
+  - ✅ New FFT operations:
+    - `fast_fourier_transform` and `fast_fourier_transform_with_tensor_axes`
+    - `real_to_hermitean_fft` and `real_to_hermitean_fft_with_tensor_axes`
+    - `hermitean_to_real_fft` and `hermitean_to_real_fft_with_tensor_axes`
+  - ✅ Legacy operations kept for backward compatibility:
+    - `forward_fft`, `inverse_fft`, `forward_real_fft`, and `inverse_real_fft`
+  - ✅ Proper memory management with objc2::ffi::objc_retain/objc2::ffi::objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 14. [x] MPSGraphGatherOps.h
 
@@ -137,18 +153,33 @@ Below is the full status of all modules:
 
 15. [x] MPSGraphImToColOps.h
 
-- Partially implemented in `im2col_ops.rs`
-- Issues:
-  - **API Mismatch**: The Rust implementation uses different method names (`image_to_column` instead of `imToCol` and `column_to_image` instead of `colToIm`)
-  - **API Mismatch**: The implementation has the `setExplicitPadding` method missing
-  - **Action Required**: Update method names to match the Objective-C API
+- ✅ Fully implemented in `im2col_ops.rs`
+- Implementations:
+  - ✅ Descriptor implementation:
+    - `MPSGraphImToColOpDescriptor` with full constructor and builder methods
+    - `descriptor_with_kernel_dimensions` and `descriptor_with_kernel_dimensions_simple` matching ObjC API
+    - `set_explicit_padding` method for setting padding values 
+  - ✅ Operations:
+    - `im_to_col` matching the ObjC API (with backward compatibility alias `image_to_column`)
+    - `col_to_im` matching the ObjC API (with backward compatibility alias `column_to_image`)
+  - ✅ Proper memory management with objc_retain/objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 16. [x] MPSGraphLinearAlgebraOps.h
 
-- Partially implemented in `linear_algebra_ops.rs`
-- Issues:
-  - **Missing in Rust**: The `bandPart` operations introduced in macOS 12.3, iOS 15.4, tvOS 15.4
-  - **Action Required**: Implement the missing `bandPart` operations
+- ✅ Fully implemented in `linear_algebra_ops.rs`
+- Implementations:
+  - ✅ Matrix operations:
+    - `matmul`
+    - `matrix_transpose` 
+    - `batch_matrix_multiplication`
+  - ✅ Band operations:
+    - `band_part` with tensor parameters for num_lower and num_upper
+    - `band_part_with_scalars` with scalar parameters for num_lower and num_upper
+  - ✅ Proper memory management with objc_retain/objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 17. [x] MPSGraphLossOps.h
 
@@ -170,11 +201,22 @@ Below is the full status of all modules:
 
 19. [x] MPSGraphMatrixMultiplicationOps.h
 
-- Partially implemented in `linear_algebra_ops.rs`
-- Issues:
-  - **Missing in Rust**: The `HammingDistance` operation introduced in macOS 13.0, iOS 16.0, tvOS 16.0
-  - **Missing in Rust**: The `scaledDotProductAttention` operations introduced in macOS 15.0, iOS 18.0, macCatalyst 18.0, tvOS 18.0
-  - **Action Required**: Implement the missing operations
+- ✅ Fully implemented in `linear_algebra_ops.rs`
+- Implementations:
+  - ✅ Matrix multiplication operations:
+    - `matmul`
+    - `matrix_transpose`
+    - `batch_matrix_multiplication`
+  - ✅ Hamming distance operation:
+    - `hamming_distance` introduced in macOS 13.0, iOS 16.0, tvOS 16.0
+  - ✅ Transformer operations:
+    - `scaled_dot_product_attention` and variants with tensor scale
+    - `scaled_dot_product_attention_with_scalar` and variants with scalar scale
+    - `masked_scaled_dot_product_attention` with mask tensor
+    - `masked_scaled_dot_product_attention_with_scalar` with mask tensor and scalar scale
+  - ✅ Proper memory management with objc_retain/objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 20. [x] MPSGraphMemoryOps.h
 
@@ -232,11 +274,20 @@ Below is the full status of all modules:
 
 26. [x] MPSGraphOptimizerOps.h
 
-- Partially implemented in `optimizer_ops.rs`
-- Issues:
-  - **Missing in Rust**: `MPSGraphVariableOp` implementation needed for `applyStochasticGradientDescent` method
-  - **Missing in Rust**: The `applyStochasticGradientDescent` method that directly updates a variable operation
-  - **Action Required**: Implement `MPSGraphVariableOp` struct and complete the missing method
+- ✅ Fully implemented in `optimizer_ops.rs`
+- Implementations:
+  - ✅ Optimizer operations:
+    - `stochastic_gradient_descent` for simple SGD updates
+    - `adam` for Adam optimization with beta powers
+    - `adam_with_current_learning_rate` for Adam with pre-adjusted learning rate
+  - ✅ Variable operations:
+    - `MPSGraphVariableOp` struct with proper memory management
+    - `variable_op_for_tensor` for creating a variable operation
+    - `apply_stochastic_gradient_descent` for in-place variable updates
+  - ✅ Proper memory management with objc_retain/objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+  - ✅ Comprehensive documentation with usage examples
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 27. [x] MPSGraphPoolingOps.h
 
@@ -360,12 +411,18 @@ Below is the full status of all modules:
 
 36. [x] MPSGraphSparseOps.h
 
-- Partially implemented in `sparse_ops.rs`
-- Issues:
-  - **Missing in Rust**: The actual methods used in the header are `sparseTensorWithType:tensors:shape:dataType:name:` and `sparseTensorWithDescriptor:tensors:shape:name:`, while the Rust implementation has `sparse_tensor_with_indices_and_values` and `sparse_to_dense`
-  - **API Mismatch**: The Rust implementation methods don't match the Objective-C API methods
-  - **Extra in Rust**: The `sparse_to_dense` operation is not in the Objective-C header
-  - **Action Required**: Update implementation to match the Objective-C API methods for creating sparse tensors
+- ✅ Fully implemented in `sparse_ops.rs`
+- Implementations:
+  - ✅ Sparse tensor creation methods:
+    - `sparse_tensor_with_type` matching the ObjC API `sparseTensorWithType:tensors:shape:dataType:name:`
+    - `sparse_tensor_with_descriptor` matching the ObjC API `sparseTensorWithDescriptor:tensors:shape:name:`
+  - ✅ Legacy method kept for backward compatibility:
+    - `sparse_tensor_with_indices_and_values` (marked as deprecated)
+  - ✅ Utility operations:
+    - `sparse_to_dense` for converting sparse to dense tensors
+  - ✅ Proper memory management with objc2_ffi::objc_retain/objc2_ffi::objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 37. [x] MPSGraphStencilOps.h
 
@@ -382,11 +439,25 @@ Below is the full status of all modules:
 
 39. [x] MPSGraphTensorData.h
 
-- Partially implemented in `tensor_data.rs`
-- Issues:
-  - **Missing in Rust**: Several initialization methods including from MPSMatrix, MPSVector, etc.
-  - **Extra in Rust**: Debug print statements that should be removed
-  - **API Mismatch**: Error handling is ad-hoc, creating NSObject when things fail instead of returning proper errors
+- ✅ Fully implemented in `tensor_data.rs`
+- Implementations:
+  - ✅ Basic initialization methods:
+    - `new` and `from_bytes` for creating tensor data from Rust slices
+    - `from_buffer` for creating tensor data from Metal buffers
+  - ✅ Advanced initialization methods:
+    - `from_mps_matrix` for creating tensor data from MPSMatrix
+    - `from_mps_vector` for creating tensor data from MPSVector
+    - `from_mps_ndarray` for creating tensor data from MPSNDArray
+  - ✅ Access methods:
+    - `shape` and `data_type` for tensor information
+    - `mpsndarray` for accessing the underlying MPSNDArray
+  - ✅ Synchronization methods:
+    - `synchronize` and `synchronize_with_region` for CPU synchronization
+  - ✅ Fixed implementation issues:
+    - Removed debug print statements
+    - Improved error handling with clean fallbacks
+  - ✅ Proper memory management with objc2_ffi::objc_retain/objc2_ffi::objc_release
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 40. [x] MPSGraphTensorShapeOps.h
 
