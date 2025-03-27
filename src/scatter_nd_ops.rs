@@ -1,7 +1,8 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, MPSShape};
+use crate::core::{NSString, MPSShape, AsRawObject};
 
 /// Scatter operation mode
 #[repr(i64)]
@@ -38,28 +39,27 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter_nd(&self,
-                     updates_tensor: &MPSGraphTensor,
-                     indices_tensor: &MPSGraphTensor,
-                     shape: &MPSShape,
-                     batch_dimensions: usize,
-                     mode: MPSGraphScatterMode,
-                     name: Option<&str>) -> MPSGraphTensor {
+                     updates_tensor:  &MPSGraphTensor,
+                     indices_tensor:  &MPSGraphTensor,
+                     shape:  &MPSShape,
+                     batch_dimensions:  usize,
+                     mode:  MPSGraphScatterMode,
+                     name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterNDWithUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                shape:shape.0
-                batchDimensions:batch_dimensions
-                mode:mode as i64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterNDWithUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                shape: shape.0
+                batchDimensions: batch_dimensions
+                mode: mode as i64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -74,26 +74,25 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter_nd_add(&self,
-                         updates_tensor: &MPSGraphTensor,
-                         indices_tensor: &MPSGraphTensor,
-                         shape: &MPSShape,
-                         batch_dimensions: usize,
-                         name: Option<&str>) -> MPSGraphTensor {
+                         updates_tensor:  &MPSGraphTensor,
+                         indices_tensor:  &MPSGraphTensor,
+                         shape:  &MPSShape,
+                         batch_dimensions:  usize,
+                         name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterNDWithUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                shape:shape.0
-                batchDimensions:batch_dimensions
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterNDWithUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                shape: shape.0
+                batchDimensions: batch_dimensions
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -111,28 +110,27 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter_nd_with_data(&self,
-                               data_tensor: &MPSGraphTensor,
-                               updates_tensor: &MPSGraphTensor,
-                               indices_tensor: &MPSGraphTensor,
-                               batch_dimensions: usize,
-                               mode: MPSGraphScatterMode,
-                               name: Option<&str>) -> MPSGraphTensor {
+                               data_tensor:  &MPSGraphTensor,
+                               updates_tensor:  &MPSGraphTensor,
+                               indices_tensor:  &MPSGraphTensor,
+                               batch_dimensions:  usize,
+                               mode:  MPSGraphScatterMode,
+                               name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterNDWithDataTensor:data_tensor.0
-                updatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                batchDimensions:batch_dimensions
-                mode:mode as i64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterNDWithDataTensor: data_tensor.0
+                updatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                batchDimensions: batch_dimensions
+                mode: mode as i64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -150,28 +148,27 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter(&self,
-                  updates_tensor: &MPSGraphTensor,
-                  indices_tensor: &MPSGraphTensor,
-                  shape: &MPSShape,
-                  axis: isize,
-                  mode: MPSGraphScatterMode,
-                  name: Option<&str>) -> MPSGraphTensor {
+                  updates_tensor:  &MPSGraphTensor,
+                  indices_tensor:  &MPSGraphTensor,
+                  shape:  &MPSShape,
+                  axis:  isize,
+                  mode:  MPSGraphScatterMode,
+                  name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterWithUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                shape:shape.0
-                axis:axis
-                mode:mode as i64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterWithUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                shape: shape.0
+                axis: axis
+                mode: mode as i64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -189,28 +186,27 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter_with_data(&self,
-                            data_tensor: &MPSGraphTensor,
-                            updates_tensor: &MPSGraphTensor,
-                            indices_tensor: &MPSGraphTensor,
-                            axis: isize,
-                            mode: MPSGraphScatterMode,
-                            name: Option<&str>) -> MPSGraphTensor {
+                            data_tensor:  &MPSGraphTensor,
+                            updates_tensor:  &MPSGraphTensor,
+                            indices_tensor:  &MPSGraphTensor,
+                            axis:  isize,
+                            mode:  MPSGraphScatterMode,
+                            name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterWithDataTensor:data_tensor.0
-                updatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                axis:axis
-                mode:mode as i64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterWithDataTensor: data_tensor.0
+                updatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                axis: axis
+                mode: mode as i64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -228,28 +224,27 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter_along_axis(&self,
-                             axis: isize,
-                             updates_tensor: &MPSGraphTensor,
-                             indices_tensor: &MPSGraphTensor,
-                             shape: &MPSShape,
-                             mode: MPSGraphScatterMode,
-                             name: Option<&str>) -> MPSGraphTensor {
+                             axis:  isize,
+                             updates_tensor:  &MPSGraphTensor,
+                             indices_tensor:  &MPSGraphTensor,
+                             shape:  &MPSShape,
+                             mode:  MPSGraphScatterMode,
+                             name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterAlongAxis:axis
-                withUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                shape:shape.0
-                mode:mode as i64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterAlongAxis: axis
+                withUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                shape: shape.0
+                mode: mode as i64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -267,28 +262,27 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn scatter_along_axis_with_data(&self,
-                                       axis: isize,
-                                       data_tensor: &MPSGraphTensor,
-                                       updates_tensor: &MPSGraphTensor,
-                                       indices_tensor: &MPSGraphTensor,
-                                       mode: MPSGraphScatterMode,
-                                       name: Option<&str>) -> MPSGraphTensor {
+                                       axis:  isize,
+                                       data_tensor:  &MPSGraphTensor,
+                                       updates_tensor:  &MPSGraphTensor,
+                                       indices_tensor:  &MPSGraphTensor,
+                                       mode:  MPSGraphScatterMode,
+                                       name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                scatterAlongAxis:axis
-                withDataTensor:data_tensor.0
-                updatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                mode:mode as i64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterAlongAxis: axis
+                withDataTensor: data_tensor.0
+                updatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                mode: mode as i64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }

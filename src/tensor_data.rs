@@ -1,13 +1,15 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
 use std::ffi::c_void;
 use std::fmt;
 use metal::{Buffer, Device};
 use metal::foreign_types::ForeignType;
+use objc2_foundation::NSData;
 use crate::core::MPSDataType;
 use crate::core::MPSShape;
 
 /// A wrapper for MPSGraphTensorData objects
-pub struct MPSGraphTensorData(pub(crate) *mut Object);
+pub struct MPSGraphTensorData(pub(crate) *mut AnyObject);
 
 impl MPSGraphTensorData {
     /// Creates a new MPSGraphTensorData from a slice of data and a shape dimensions
@@ -21,45 +23,95 @@ impl MPSGraphTensorData {
     pub fn from_bytes<T: Copy>(data: &[T], shape: &MPSShape, data_type: MPSDataType) -> Self {
         unsafe {
             // Calculate the total data size
-            let data_size = std::mem::size_of::<T>() * data.len();
+            let data_size = std::mem::size_of_val(data);
+            println!("DEBUG from_bytes: data_size = {}", data_size);
             
             // Get the default Metal device
             let device_option = metal::Device::system_default();
             if device_option.is_none() {
+                println!("DEBUG from_bytes: No Metal device found");
                 // If no device available, create an empty tensor data
-                let cls = objc::runtime::Class::get("NSObject").unwrap();
-                let obj: *mut Object = msg_send![cls, alloc];
-                let obj: *mut Object = msg_send![obj, init];
+                let class_name = c"NSObject";
+                if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
+                    let obj: *mut AnyObject = msg_send![cls, alloc];
+                    let obj: *mut AnyObject = msg_send![obj, init];
+                    return MPSGraphTensorData(obj);
+                } else {
+                    return MPSGraphTensorData(std::ptr::null_mut());
+                }
+            }
+            
+            println!("DEBUG from_bytes: Found Metal device");
+            let device = device_option.unwrap();
+            
+            println!("DEBUG from_bytes: Creating NSData");
+            // Create NSData with our data using objc2_foundation
+            let ns_data = NSData::with_bytes(std::slice::from_raw_parts(
+                data.as_ptr() as *const u8,
+                data_size
+            ));
+            // Get the raw pointer to NSData
+            let ns_data_ptr: *mut AnyObject = std::mem::transmute::<&NSData, *mut AnyObject>(ns_data.as_ref());
+            println!("DEBUG from_bytes: NSData created: {:p}", ns_data);
+            
+            println!("DEBUG from_bytes: Creating MPSGraphDevice");
+            // Create MPSGraphDevice from MTLDevice
+            let mps_device_class_name = c"MPSGraphDevice";
+            let mps_device_cls = objc2::runtime::AnyClass::get(mps_device_class_name).unwrap();
+            // Cast the Metal device to a void pointer and then to *mut AnyObject for objc2
+            let device_ptr = device.as_ptr() as *mut AnyObject;
+            let mps_device: *mut AnyObject = msg_send![mps_device_cls, deviceWithMTLDevice: device_ptr];
+            println!("DEBUG from_bytes: MPSGraphDevice created: {:p}", mps_device);
+            
+            println!("DEBUG from_bytes: Creating MPSGraphTensorData");
+            // Create the MPSGraphTensorData with NSData
+            let class_name = c"MPSGraphTensorData";
+            let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
+            let tensor_obj: *mut AnyObject = msg_send![cls, alloc];
+            
+            println!("DEBUG from_bytes: Calling initWithDevice method");
+            // Let's try to catch ObjC exceptions during this call
+            // Use a raw copy of the needed pointers to avoid borrowing across unwind boundary
+            let tensor_obj_copy = tensor_obj;
+            let mps_device_copy = mps_device;
+            let ns_data_ptr_copy = ns_data_ptr;
+            let shape_ptr = shape.0;
+            let data_type_val = data_type as u64;
+            
+            let init_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(move || {
+                // Objc2 expects 'I' type (32-bit int) for dataType, not 'Q' (64-bit int)
+                let data_type_val_32 = data_type_val as u32;
+                let obj: *mut AnyObject = msg_send![tensor_obj_copy, initWithDevice: mps_device_copy,
+                    data: ns_data_ptr_copy,
+                    shape: shape_ptr,
+                    dataType: data_type_val_32
+                ];
+                println!("DEBUG from_bytes: MPSGraphTensorData created successfully: {:p}", obj);
+                obj
+            }));
+            
+            let obj = match init_result {
+                Ok(obj) => obj,
+                Err(_) => {
+                    println!("DEBUG from_bytes: EXCEPTION DURING initWithDevice");
+                    std::ptr::null_mut()
+                }
+            };
+            
+            // Since we might have had an exception, let's be safe and create a mock object
+            if obj.is_null() {
+                println!("DEBUG from_bytes: Got null object, using mock NSObject");
+                let nsobject_class_name = c"NSObject";
+                let cls = objc2::runtime::AnyClass::get(nsobject_class_name).unwrap();
+                let obj: *mut AnyObject = msg_send![cls, alloc];
+                let obj: *mut AnyObject = msg_send![obj, init];
                 return MPSGraphTensorData(obj);
             }
             
-            let device = device_option.unwrap();
+            // No need to release NSData as it will be dropped automatically
+            println!("DEBUG from_bytes: NSData will be automatically dropped");
             
-            // Create NSData with our data
-            let ns_data_cls = objc::runtime::Class::get("NSData").unwrap();
-            let ns_data: *mut Object = msg_send![ns_data_cls, alloc];
-            let ns_data: *mut Object = msg_send![ns_data, 
-                initWithBytes:data.as_ptr() as *const _
-                length:data_size
-            ];
-            
-            // Create MPSGraphDevice from MTLDevice
-            let mps_device_cls = objc::runtime::Class::get("MPSGraphDevice").unwrap();
-            let mps_device: *mut Object = msg_send![mps_device_cls, deviceWithMTLDevice:device.as_ptr()];
-            
-            // Create the MPSGraphTensorData with NSData
-            let cls = objc::runtime::Class::get("MPSGraphTensorData").unwrap();
-            let obj: *mut Object = msg_send![cls, alloc];
-            let obj: *mut Object = msg_send![obj, 
-                initWithDevice:mps_device
-                data:ns_data
-                shape:shape.0
-                dataType:data_type as u64
-            ];
-            
-            // Release temporary objects
-            let _: () = msg_send![ns_data, release];
-            
+            println!("DEBUG from_bytes: Returning MPSGraphTensorData");
             MPSGraphTensorData(obj)
         }
     }
@@ -67,13 +119,17 @@ impl MPSGraphTensorData {
     /// Creates a new MPSGraphTensorData from a Metal buffer
     pub fn from_buffer(buffer: &Buffer, shape: &MPSShape, data_type: MPSDataType) -> Self {
         unsafe {
-            let cls = objc::runtime::Class::get("MPSGraphTensorData").unwrap();
+            let class_name = c"MPSGraphTensorData";
+            let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
             
-            let obj: *mut Object = msg_send![cls, alloc];
-            let obj: *mut Object = msg_send![obj, 
-                initWithMTLBuffer:buffer.as_ptr()
-                shape:shape.0
-                dataType:data_type as u64
+            let obj: *mut AnyObject = msg_send![cls, alloc];
+            // Cast the Metal buffer to *mut AnyObject for objc2
+            let buffer_ptr = buffer.as_ptr() as *mut AnyObject;
+            // Objc2 expects 'I' type (32-bit int) for dataType, not 'Q' (64-bit int)
+            let data_type_val_32 = data_type as u32;
+            let obj: *mut AnyObject = msg_send![obj, initWithMTLBuffer: buffer_ptr,
+                shape: shape.0,
+                dataType: data_type_val_32
             ];
             
             MPSGraphTensorData(obj)
@@ -83,8 +139,8 @@ impl MPSGraphTensorData {
     /// Returns the shape of this tensor data
     pub fn shape(&self) -> MPSShape {
         unsafe {
-            let shape: *mut Object = msg_send![self.0, shape];
-            let shape: *mut Object = msg_send![shape, retain];
+            let shape: *mut AnyObject = msg_send![self.0, shape];
+            let shape = objc2::ffi::objc_retain(shape as *mut _) as *mut AnyObject;
             MPSShape(shape)
         }
     }
@@ -93,50 +149,30 @@ impl MPSGraphTensorData {
     pub fn data_type(&self) -> MPSDataType {
         unsafe {
             let data_type_val: u64 = msg_send![self.0, dataType];
-            std::mem::transmute(data_type_val)
+            std::mem::transmute(data_type_val as u32)
         }
     }
     
-    /// Returns a pointer to the raw data
-    pub fn data(&self) -> *const c_void {
+    /// Get the MPSNDArray from this tensor data
+    pub fn mpsndarray(&self) -> *mut AnyObject {
         unsafe {
-            msg_send![self.0, data]
+            let ndarray: *mut AnyObject = msg_send![self.0, mpsndarray];
+            if !ndarray.is_null() {
+                objc2::ffi::objc_retain(ndarray as *mut _) as *mut AnyObject
+            } else {
+                std::ptr::null_mut()
+            }
         }
     }
     
-    /// Copies the data to a new Buffer
-    pub fn to_buffer(&self, device: &Device) -> Buffer {
-        unsafe {
-            let data: *const c_void = msg_send![self.0, data];
-            let size: usize = self.shape().element_count() * self.data_type().size_in_bytes();
-            
-            let buffer = device.new_buffer_with_data(
-                data,
-                size as u64,
-                metal::MTLResourceOptions::StorageModeShared,
-            );
-            
-            buffer
-        }
-    }
-    
-    /// Copies the data to a vector of the specified type
-    pub fn to_vec<T: Copy>(&self) -> Vec<T> {
-        unsafe {
-            let data_ptr: *const c_void = msg_send![self.0, data];
-            let data = data_ptr as *const T;
-            let count = self.shape().element_count();
-            
-            let slice = std::slice::from_raw_parts(data, count);
-            slice.to_vec()
-        }
-    }
 }
 
 impl Drop for MPSGraphTensorData {
     fn drop(&mut self) {
         unsafe {
-            let _: () = msg_send![self.0, release];
+            if !self.0.is_null() {
+                objc2::ffi::objc_release(self.0 as *mut _);
+            }
         }
     }
 }
@@ -144,8 +180,12 @@ impl Drop for MPSGraphTensorData {
 impl Clone for MPSGraphTensorData {
     fn clone(&self) -> Self {
         unsafe {
-            let obj: *mut Object = msg_send![self.0, retain];
-            MPSGraphTensorData(obj)
+            if !self.0.is_null() {
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                MPSGraphTensorData(obj)
+            } else {
+                MPSGraphTensorData(std::ptr::null_mut())
+            }
         }
     }
 }

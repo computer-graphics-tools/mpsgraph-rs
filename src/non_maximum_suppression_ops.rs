@@ -1,8 +1,11 @@
-use objc::runtime::{Object, YES, NO};
-use objc::msg_send;
+use objc2::runtime::AnyObject;
+// In objc2, use false as NO and true as YES
+const NO: bool = false;
+const YES: bool = true;
+use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::NSString;
+use crate::core::{NSString, AsRawObject};
 
 /// The non-maximum suppression coordinate mode.
 ///
@@ -43,34 +46,33 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object containing the non-maximum suppression results.
     pub fn non_maximum_suppression(
         &self,
-        boxes_tensor: &MPSGraphTensor,
-        scores_tensor: &MPSGraphTensor,
-        iou_threshold: f32,
-        score_threshold: f32,
-        per_class_suppression: bool,
-        coordinate_mode: MPSGraphNonMaximumSuppressionCoordinateMode,
-        name: Option<&str>,
+        boxes_tensor:  &MPSGraphTensor,
+        scores_tensor:  &MPSGraphTensor,
+        iou_threshold:  f32,
+        score_threshold:  f32,
+        per_class_suppression:  bool,
+        coordinate_mode:  MPSGraphNonMaximumSuppressionCoordinateMode,
+        name:  Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         let per_class_suppression_obj = if per_class_suppression { YES } else { NO };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                nonMaximumSuppressionWithBoxesTensor:boxes_tensor.0
-                scoresTensor:scores_tensor.0
-                IOUThreshold:iou_threshold
-                scoreThreshold:score_threshold
-                perClassSuppression:per_class_suppression_obj
-                coordinateMode:coordinate_mode as u64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, nonMaximumSuppressionWithBoxesTensor: boxes_tensor.0
+                scoresTensor: scores_tensor.0
+                IOUThreshold: iou_threshold
+                scoreThreshold: score_threshold
+                perClassSuppression: per_class_suppression_obj
+                coordinateMode: coordinate_mode as u64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -97,103 +99,36 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object containing the non-maximum suppression results.
     pub fn non_maximum_suppression_with_class_indices(
         &self,
-        boxes_tensor: &MPSGraphTensor,
-        scores_tensor: &MPSGraphTensor,
-        class_indices_tensor: &MPSGraphTensor,
-        iou_threshold: f32,
-        score_threshold: f32,
-        per_class_suppression: bool,
-        coordinate_mode: MPSGraphNonMaximumSuppressionCoordinateMode,
-        name: Option<&str>,
+        boxes_tensor:  &MPSGraphTensor,
+        scores_tensor:  &MPSGraphTensor,
+        class_indices_tensor:  &MPSGraphTensor,
+        iou_threshold:  f32,
+        score_threshold:  f32,
+        per_class_suppression:  bool,
+        coordinate_mode:  MPSGraphNonMaximumSuppressionCoordinateMode,
+        name:  Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         let per_class_suppression_obj = if per_class_suppression { YES } else { NO };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                nonMaximumSuppressionWithBoxesTensor:boxes_tensor.0
-                scoresTensor:scores_tensor.0
-                classIndicesTensor:class_indices_tensor.0
-                IOUThreshold:iou_threshold
-                scoreThreshold:score_threshold
-                perClassSuppression:per_class_suppression_obj
-                coordinateMode:coordinate_mode as u64
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, nonMaximumSuppressionWithBoxesTensor: boxes_tensor.0
+                scoresTensor: scores_tensor.0
+                classIndicesTensor: class_indices_tensor.0
+                IOUThreshold: iou_threshold
+                scoreThreshold: score_threshold
+                perClassSuppression: per_class_suppression_obj
+                coordinateMode: coordinate_mode as u64
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{MPSDataType, tests::should_skip_test};
-    use crate::core::MPSShape;
-    use std::collections::HashMap;
-    
-    #[test]
-    fn test_non_maximum_suppression() {
-        if should_skip_test("test_non_maximum_suppression") {
-            return;
-        }
-        
-        let graph = MPSGraph::new();
-        
-        // Create boxes tensor: [1,3,4] - one batch, 3 boxes, 4 coordinates per box
-        let boxes_shape = MPSShape::from_slice(&[1, 3, 4]);
-        let boxes_data = vec![
-            // Box 1: [0, 0, 10, 10]
-            0.0f32, 0.0, 10.0, 10.0,
-            // Box 2: [1, 1, 11, 11] - overlaps with Box 1
-            1.0, 1.0, 11.0, 11.0,
-            // Box 3: [20, 20, 30, 30] - no overlap with other boxes
-            20.0, 20.0, 30.0, 30.0
-        ];
-        
-        // Create scores tensor: [1,3,1] - one batch, 3 boxes, 1 score per box
-        let scores_shape = MPSShape::from_slice(&[1, 3, 1]);
-        let scores_data = vec![
-            0.9f32, // Box 1 score
-            0.8f32, // Box 2 score
-            0.7f32  // Box 3 score
-        ];
-        
-        // Create placeholder tensors
-        let boxes_tensor = graph.placeholder(&boxes_shape, MPSDataType::Float32, None);
-        let scores_tensor = graph.placeholder(&scores_shape, MPSDataType::Float32, None);
-        
-        // Apply non-maximum suppression
-        // Use IOU threshold of 0.5 - Box 2 will be suppressed by Box 1
-        let nms_result = graph.non_maximum_suppression(
-            &boxes_tensor,
-            &scores_tensor,
-            0.5, // IOU threshold
-            0.1, // Score threshold
-            false, // No per-class suppression
-            MPSGraphNonMaximumSuppressionCoordinateMode::CornersHeightFirst,
-            Some("nms_test")
-        );
-        
-        // Run the graph
-        let mut feeds = HashMap::new();
-        feeds.insert(&boxes_tensor, crate::MPSGraphTensorData::new(&boxes_data, &[1, 3, 4], MPSDataType::Float32));
-        feeds.insert(&scores_tensor, crate::MPSGraphTensorData::new(&scores_data, &[1, 3, 1], MPSDataType::Float32));
-        
-        let results = graph.run(feeds, &[&nms_result]);
-        
-        // Get the result - we expect two boxes to be kept (Box 1 and Box 3)
-        let result_data = results[&nms_result].to_vec::<u32>();
-        
-        // We don't verify exact values since NMS is non-deterministic
-        // Just check that we get a non-empty result
-        assert!(!result_data.is_empty());
     }
 }

@@ -1,7 +1,10 @@
-use objc::runtime::{Object, YES, NO};
+use objc2::runtime::AnyObject;
+// In objc2, use false as NO and true as YES
+const NO: bool = false;
+const YES: bool = true;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, MPSShape};
+use crate::core::{NSString, MPSShape, AsRawObject};
 use crate::convolution_transpose_ops::TensorNamedDataLayout;
 
 /// The resize mode to use for resizing.
@@ -48,33 +51,32 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object
     pub fn resize(&self,
-                  images_tensor: &MPSGraphTensor,
-                  size: &MPSShape,
-                  mode: MPSGraphResizeMode,
-                  center_result: bool,
-                  align_corners: bool,
-                  layout: TensorNamedDataLayout,
-                  name: Option<&str>) -> MPSGraphTensor {
+                  images_tensor:  &MPSGraphTensor,
+                  size:  &MPSShape,
+                  mode:  MPSGraphResizeMode,
+                  center_result:  bool,
+                  align_corners:  bool,
+                  layout:  TensorNamedDataLayout,
+                  name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                resizeTensor:images_tensor.0
-                size:size.0
-                mode:mode as u64
-                centerResult:center_result_val
-                alignCorners:align_corners_val
-                layout:layout as u64
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0
+                size: size.0
+                mode: mode as u64
+                centerResult: center_result_val
+                alignCorners: align_corners_val
+                layout: layout as u64
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -91,33 +93,32 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object
     pub fn resize_with_size_tensor(&self,
-                                  images_tensor: &MPSGraphTensor,
-                                  size_tensor: &MPSGraphTensor,
-                                  mode: MPSGraphResizeMode,
-                                  center_result: bool,
-                                  align_corners: bool,
-                                  layout: TensorNamedDataLayout,
-                                  name: Option<&str>) -> MPSGraphTensor {
+                                  images_tensor:  &MPSGraphTensor,
+                                  size_tensor:  &MPSGraphTensor,
+                                  mode:  MPSGraphResizeMode,
+                                  center_result:  bool,
+                                  align_corners:  bool,
+                                  layout:  TensorNamedDataLayout,
+                                  name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                resizeTensor:images_tensor.0
-                sizeTensor:size_tensor.0
-                mode:mode as u64
-                centerResult:center_result_val
-                alignCorners:align_corners_val
-                layout:layout as u64
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0
+                sizeTensor: size_tensor.0
+                mode: mode as u64
+                centerResult: center_result_val
+                alignCorners: align_corners_val
+                layout: layout as u64
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -134,33 +135,32 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object
     pub fn resize_nearest(&self,
-                         images_tensor: &MPSGraphTensor,
-                         size_tensor: &MPSGraphTensor,
-                         nearest_rounding_mode: MPSGraphResizeNearestRoundingMode,
-                         center_result: bool,
-                         align_corners: bool,
-                         layout: TensorNamedDataLayout,
-                         name: Option<&str>) -> MPSGraphTensor {
+                         images_tensor:  &MPSGraphTensor,
+                         size_tensor:  &MPSGraphTensor,
+                         nearest_rounding_mode:  MPSGraphResizeNearestRoundingMode,
+                         center_result:  bool,
+                         align_corners:  bool,
+                         layout:  TensorNamedDataLayout,
+                         name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                resizeNearestWithTensor:images_tensor.0
-                sizeTensor:size_tensor.0
-                nearestRoundingMode:nearest_rounding_mode as u64
-                centerResult:center_result_val
-                alignCorners:align_corners_val
-                layout:layout as u64
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, resizeNearestWithTensor: images_tensor.0
+                sizeTensor: size_tensor.0
+                nearestRoundingMode: nearest_rounding_mode as u64
+                centerResult: center_result_val
+                alignCorners: align_corners_val
+                layout: layout as u64
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -176,31 +176,30 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object
     pub fn resize_bilinear(&self,
-                          images_tensor: &MPSGraphTensor,
-                          size_tensor: &MPSGraphTensor,
-                          center_result: bool,
-                          align_corners: bool,
-                          layout: TensorNamedDataLayout,
-                          name: Option<&str>) -> MPSGraphTensor {
+                          images_tensor:  &MPSGraphTensor,
+                          size_tensor:  &MPSGraphTensor,
+                          center_result:  bool,
+                          align_corners:  bool,
+                          layout:  TensorNamedDataLayout,
+                          name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                resizeBilinearWithTensor:images_tensor.0
-                sizeTensor:size_tensor.0
-                centerResult:center_result_val
-                alignCorners:align_corners_val
-                layout:layout as u64
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, resizeBilinearWithTensor: images_tensor.0
+                sizeTensor: size_tensor.0
+                centerResult: center_result_val
+                alignCorners: align_corners_val
+                layout: layout as u64
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -216,28 +215,27 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object
     pub fn resize_with_scale_offset(&self,
-                                   images_tensor: &MPSGraphTensor,
-                                   size_tensor: &MPSGraphTensor,
-                                   scale_offset_tensor: &MPSGraphTensor,
-                                   mode: MPSGraphResizeMode,
-                                   layout: TensorNamedDataLayout,
-                                   name: Option<&str>) -> MPSGraphTensor {
+                                   images_tensor:  &MPSGraphTensor,
+                                   size_tensor:  &MPSGraphTensor,
+                                   scale_offset_tensor:  &MPSGraphTensor,
+                                   mode:  MPSGraphResizeMode,
+                                   layout:  TensorNamedDataLayout,
+                                   name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                resizeTensor:images_tensor.0
-                sizeTensor:size_tensor.0
-                scaleOffsetTensor:scale_offset_tensor.0
-                mode:mode as u64
-                layout:layout as u64
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0
+                sizeTensor: size_tensor.0
+                scaleOffsetTensor: scale_offset_tensor.0
+                mode: mode as u64
+                layout: layout as u64
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -254,33 +252,32 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn resize_gradient(&self,
-                         gradient: &MPSGraphTensor,
-                         input: &MPSGraphTensor,
-                         mode: MPSGraphResizeMode,
-                         center_result: bool,
-                         align_corners: bool,
-                         layout: TensorNamedDataLayout,
-                         name: Option<&str>) -> MPSGraphTensor {
+                         gradient:  &MPSGraphTensor,
+                         input:  &MPSGraphTensor,
+                         mode:  MPSGraphResizeMode,
+                         center_result:  bool,
+                         align_corners:  bool,
+                         layout:  TensorNamedDataLayout,
+                         name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                resizeWithGradientTensor:gradient.0
-                input:input.0
-                mode:mode as u64
-                centerResult:center_result_val
-                alignCorners:align_corners_val
-                layout:layout as u64
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, resizeWithGradientTensor: gradient.0
+                input: input.0
+                mode: mode as u64
+                centerResult: center_result_val
+                alignCorners: align_corners_val
+                layout: layout as u64
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }

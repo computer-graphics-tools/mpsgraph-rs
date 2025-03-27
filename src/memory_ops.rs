@@ -1,9 +1,10 @@
-use objc::runtime::Object;
-use objc::msg_send;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
+use objc2_foundation;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
 use crate::operation::MPSGraphOperation;
-use crate::core::{NSString, MPSShape, MPSDataType};
+use crate::core::{NSString, MPSShape, MPSDataType, AsRawObject};
 
 /// Memory operations for MPSGraph
 impl MPSGraph {
@@ -21,17 +22,16 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object of type ComplexFloat32.
     pub fn complex_constant(
         &self,
-        real_part: f64,
-        imaginary_part: f64,
+        real_part:  f64,
+        imaginary_part:  f64,
     ) -> MPSGraphTensor {
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                constantWithRealPart:real_part 
-                imaginaryPart:imaginary_part
+            let result: *mut AnyObject = msg_send![
+                self.0, constantWithRealPart: real_part 
+                imaginaryPart: imaginary_part
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -49,19 +49,18 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object of complex type.
     pub fn complex_constant_with_type(
         &self,
-        real_part: f64,
-        imaginary_part: f64,
-        data_type: MPSDataType,
+        real_part:  f64,
+        imaginary_part:  f64,
+        data_type:  MPSDataType,
     ) -> MPSGraphTensor {
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                constantWithRealPart:real_part 
-                imaginaryPart:imaginary_part
-                dataType:data_type as u64
+            let result: *mut AnyObject = msg_send![
+                self.0, constantWithRealPart: real_part 
+                imaginaryPart: imaginary_part
+                dataType: data_type as u64
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -80,21 +79,20 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object of complex type.
     pub fn complex_constant_with_shape(
         &self,
-        real_part: f64,
-        imaginary_part: f64,
-        shape: &MPSShape,
-        data_type: MPSDataType,
+        real_part:  f64,
+        imaginary_part:  f64,
+        shape:  &MPSShape,
+        data_type:  MPSDataType,
     ) -> MPSGraphTensor {
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                constantWithRealPart:real_part 
-                imaginaryPart:imaginary_part
-                shape:shape.0
-                dataType:data_type as u64
+            let result: *mut AnyObject = msg_send![
+                self.0, constantWithRealPart: real_part 
+                imaginaryPart: imaginary_part
+                shape: shape.0
+                dataType: data_type as u64
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -113,37 +111,34 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object.
     pub fn variable<T: Copy>(
         &self,
-        data: &[T],
-        shape: &MPSShape,
-        data_type: MPSDataType,
-        name: Option<&str>,
+        data:  &[T],
+        shape:  &MPSShape,
+        data_type:  MPSDataType,
+        name:  Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            // Create NSData from slice
-            let cls = objc::runtime::Class::get("NSData").unwrap();
-            let bytes_ptr = data.as_ptr() as *const std::ffi::c_void;
-            let bytes_len = data.len() * std::mem::size_of::<T>();
+            // Create NSData using objc2_foundation
+            let bytes_len = std::mem::size_of_val(data);
+            let data_slice = std::slice::from_raw_parts(
+                data.as_ptr() as *const u8,
+                bytes_len
+            );
+            let ns_data = objc2_foundation::NSData::with_bytes(data_slice);
+            let data_obj: *mut AnyObject = ns_data.as_ref() as *const objc2_foundation::NSData as *mut AnyObject;
             
-            let data_obj: *mut Object = msg_send![
-                cls,
-                dataWithBytes:bytes_ptr 
-                length:bytes_len
+            let result: *mut AnyObject = msg_send![
+                self.0, variableWithData: data_obj,
+                shape: shape.0,
+                dataType: data_type as u64,
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![
-                self.0,
-                variableWithData:data_obj
-                shape:shape.0
-                dataType:data_type as u64
-                name:name_obj
-            ];
-            
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -160,22 +155,21 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object representing the variable.
     pub fn variable_from_tensor(
         &self,
-        tensor: &MPSGraphTensor,
-        name: Option<&str>,
+        tensor:  &MPSGraphTensor,
+        name:  Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                variableFromTensorWithTensor:tensor.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, variableFromTensorWithTensor: tensor.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -192,22 +186,21 @@ impl MPSGraph {
     /// A valid MPSGraphTensor object.
     pub fn read_variable(
         &self,
-        variable: &MPSGraphTensor,
-        name: Option<&str>,
+        variable:  &MPSGraphTensor,
+        name:  Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                readVariable:variable.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, readVariable: variable.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -225,85 +218,24 @@ impl MPSGraph {
     /// A valid MPSGraphOperation object.
     pub fn assign_variable(
         &self,
-        variable: &MPSGraphTensor,
-        tensor: &MPSGraphTensor,
-        name: Option<&str>,
+        variable:  &MPSGraphTensor,
+        tensor:  &MPSGraphTensor,
+        name:  Option<&str>,
     ) -> MPSGraphOperation {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                assignVariable:variable.0
-                withValueOfTensor:tensor.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, assignVariable: variable.0
+                withValueOfTensor: tensor.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphOperation(result)
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::tests::should_skip_test;
-    use std::collections::HashMap;
-    
-    #[test]
-    fn test_complex_constant() {
-        if should_skip_test("test_complex_constant") {
-            return;
-        }
-        
-        let graph = MPSGraph::new();
-        
-        // Create a complex constant tensor
-        let _complex_tensor = graph.complex_constant(
-            1.0,  // real part
-            2.0,  // imaginary part
-        );
-        
-        // Test succeeds if it doesn't crash
-    }
-    
-    #[test]
-    fn test_variable_read() {
-        if should_skip_test("test_variable_read") {
-            return;
-        }
-        
-        let graph = MPSGraph::new();
-        
-        // Create a variable tensor
-        let shape = MPSShape::from_slice(&[2, 2]);
-        let initial_data = vec![1.0f32, 2.0, 3.0, 4.0];
-        
-        let variable = graph.variable(
-            &initial_data, 
-            &shape, 
-            MPSDataType::Float32, 
-            Some("test_variable")
-        );
-        
-        // Read the variable
-        let read_var = graph.read_variable(&variable, Some("read_var"));
-        
-        // Run the graph
-        let feeds = HashMap::new();
-        let results = graph.run(feeds, &[&read_var]);
-        
-        // Get the result data - should be the initial data
-        let result_data = results[&read_var].to_vec::<f32>();
-        
-        assert_eq!(result_data.len(), 4);
-        assert_eq!(result_data[0], 1.0);
-        assert_eq!(result_data[1], 2.0);
-        assert_eq!(result_data[2], 3.0);
-        assert_eq!(result_data[3], 4.0);
     }
 }

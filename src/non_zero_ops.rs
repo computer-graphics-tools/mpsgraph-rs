@@ -1,7 +1,8 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::NSString;
+use crate::core::{NSString, AsRawObject};
 
 /// NonZero operations for MPSGraph
 impl MPSGraph {
@@ -23,20 +24,19 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor containing indices in signed int32 data type.
     pub fn non_zero_indices(&self, 
-                           tensor: &MPSGraphTensor,
-                           name: Option<&str>) -> MPSGraphTensor {
+                           tensor:  &MPSGraphTensor,
+                           name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut Object = msg_send![self.0, 
-                nonZeroIndicesOfTensor:tensor.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, nonZeroIndicesOfTensor: tensor.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }

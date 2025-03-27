@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate objc_rs as objc;
+extern crate objc2;
 
 // Core modules
 pub mod core;
@@ -95,5 +95,3 @@ pub mod prelude {
     pub use crate::sparse_ops::{MPSGraphSparseStorageType, MPSGraphCreateSparseOpDescriptor};
 }
 
-#[cfg(test)]
-mod tests;

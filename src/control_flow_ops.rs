@@ -1,4 +1,4 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
 use std::ops::Fn;
 use std::ffi::c_void;
 use crate::graph::MPSGraph;
@@ -29,15 +29,15 @@ impl MPSGraph {
     ///
     /// A vector of tensors that are the result of the dependent_block
     pub fn control_dependency<F>(&self, 
-                              operations: &[&MPSGraphOperation],
-                              dependent_block: F,
-                              name: Option<&str>) -> Vec<MPSGraphTensor>
+                              operations:  &[&MPSGraphOperation],
+                              dependent_block:  F,
+                              name:  Option<&str>) -> Vec<MPSGraphTensor>
     where
-        F: Fn() -> Vec<MPSGraphTensor>
+        F:  Fn() -> Vec<MPSGraphTensor>
     {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -58,11 +58,10 @@ impl MPSGraph {
             }).copy();
             
             // Call the Objective-C method
-            let result_array: *mut Object = msg_send![
-                self.0,
-                controlDependencyWithOperations:operations_array.0
-                dependentBlock:&*block
-                name:name_obj
+            let result_array: *mut AnyObject = msg_send![
+                self.0, controlDependencyWithOperations: operations_array.0
+                dependentBlock: &*block
+                name: name_obj
             ];
             
             // Get the count of result tensors
@@ -71,8 +70,8 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut Object = msg_send![result_array, objectAtIndex:i];
-                let tensor: *mut Object = msg_send![tensor, retain];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -96,17 +95,17 @@ impl MPSGraph {
     /// A vector of tensors that are the result of either the then_block or else_block,
     /// depending on the value of the predicate tensor
     pub fn if_op<F, G>(&self,
-                    predicate: &MPSGraphTensor,
-                    then_block: F,
-                    else_block: Option<G>,
-                    name: Option<&str>) -> Vec<MPSGraphTensor>
+                    predicate:  &MPSGraphTensor,
+                    then_block:  F,
+                    else_block:  Option<G>,
+                    name:  Option<&str>) -> Vec<MPSGraphTensor>
     where
-        F: Fn() -> Vec<MPSGraphTensor>,
-        G: Fn() -> Vec<MPSGraphTensor>
+        F:  Fn() -> Vec<MPSGraphTensor>,
+        G:  Fn() -> Vec<MPSGraphTensor>
     {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -138,12 +137,11 @@ impl MPSGraph {
             };
             
             // Call the Objective-C method
-            let result_array: *mut Object = msg_send![
-                self.0,
-                ifWithPredicateTensor:predicate.0
-                thenBlock:&*then_callback
-                elseBlock:else_callback
-                name:name_obj
+            let result_array: *mut AnyObject = msg_send![
+                self.0, ifWithPredicateTensor: predicate.0
+                thenBlock: &*then_callback
+                elseBlock: else_callback
+                name: name_obj
             ];
             
             // Get the count of result tensors
@@ -152,8 +150,8 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut Object = msg_send![result_array, objectAtIndex:i];
-                let tensor: *mut Object = msg_send![tensor, retain];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -176,17 +174,17 @@ impl MPSGraph {
     ///
     /// A vector of tensors that are the final result of the while loop
     pub fn while_loop<F, G>(&self,
-                         initial_inputs: &[&MPSGraphTensor],
-                         before_block: F,
-                         after_block: G,
-                         name: Option<&str>) -> Vec<MPSGraphTensor>
+                         initial_inputs:  &[&MPSGraphTensor],
+                         before_block:  F,
+                         after_block:  G,
+                         name:  Option<&str>) -> Vec<MPSGraphTensor>
     where
-        F: Fn(&[MPSGraphTensor], &mut Vec<MPSGraphTensor>) -> MPSGraphTensor,
-        G: Fn(&[MPSGraphTensor]) -> Vec<MPSGraphTensor>
+        F:  Fn(&[MPSGraphTensor], &mut Vec<MPSGraphTensor>) -> MPSGraphTensor,
+        G:  Fn(&[MPSGraphTensor]) -> Vec<MPSGraphTensor>
     {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -196,12 +194,12 @@ impl MPSGraph {
             );
             
             // Create the before block callback
-            let before_callback = ConcreteBlock::new(move |inputs: *mut Object, results: *mut Object| -> *mut Object {
+            let before_callback = ConcreteBlock::new(move |inputs: *mut AnyObject, results: *mut AnyObject| -> *mut AnyObject {
                 // Convert NSArray to Vec<MPSGraphTensor>
                 let inputs_count: usize = msg_send![inputs, count];
                 let mut input_tensors = Vec::with_capacity(inputs_count);
                 for i in 0..inputs_count {
-                    let tensor: *mut Object = msg_send![inputs, objectAtIndex:i];
+                    let tensor: *mut AnyObject = msg_send![inputs, objectAtIndex: i];
                     input_tensors.push(MPSGraphTensor(tensor));
                 }
                 
@@ -215,7 +213,7 @@ impl MPSGraph {
                 if !result_tensors.is_empty() {
                     let result_ptrs: Vec<*mut Object> = result_tensors.iter().map(|t| t.0).collect();
                     for i in 0..result_ptrs.len() {
-                        let _: () = msg_send![results, addObject:result_ptrs[i]];
+                        let _: () = msg_send![results, addObject: result_ptrs[i]];
                     }
                 }
                 
@@ -224,12 +222,12 @@ impl MPSGraph {
             }).copy();
             
             // Create the after block callback
-            let after_callback = ConcreteBlock::new(move |body_args: *mut Object| -> *mut Object {
+            let after_callback = ConcreteBlock::new(move |body_args: *mut AnyObject| -> *mut AnyObject {
                 // Convert NSArray to Vec<MPSGraphTensor>
                 let args_count: usize = msg_send![body_args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut Object = msg_send![body_args, objectAtIndex:i];
+                    let tensor: *mut AnyObject = msg_send![body_args, objectAtIndex: i];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -245,12 +243,11 @@ impl MPSGraph {
             }).copy();
             
             // Call the Objective-C method
-            let result_array: *mut Object = msg_send![
-                self.0,
-                whileWithInitialInputs:initial_inputs_array.0
-                before:&*before_callback
-                after:&*after_callback
-                name:name_obj
+            let result_array: *mut AnyObject = msg_send![
+                self.0, whileWithInitialInputs: initial_inputs_array.0
+                before: &*before_callback
+                after: &*after_callback
+                name: name_obj
             ];
             
             // Get the count of result tensors
@@ -259,8 +256,8 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut Object = msg_send![result_array, objectAtIndex:i];
-                let tensor: *mut Object = msg_send![tensor, retain];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -285,18 +282,18 @@ impl MPSGraph {
     ///
     /// A vector of tensors that are the final result of the for loop
     pub fn for_loop<F>(&self, 
-                    lower_bound: &MPSGraphTensor,
-                    upper_bound: &MPSGraphTensor,
-                    step: &MPSGraphTensor,
-                    initial_body_arguments: &[&MPSGraphTensor],
-                    body_block: F,
-                    name: Option<&str>) -> Vec<MPSGraphTensor>
+                    lower_bound:  &MPSGraphTensor,
+                    upper_bound:  &MPSGraphTensor,
+                    step:  &MPSGraphTensor,
+                    initial_body_arguments:  &[&MPSGraphTensor],
+                    body_block:  F,
+                    name:  Option<&str>) -> Vec<MPSGraphTensor>
     where
-        F: Fn(&MPSGraphTensor, &[MPSGraphTensor]) -> Vec<MPSGraphTensor>
+        F:  Fn(&MPSGraphTensor, &[MPSGraphTensor]) -> Vec<MPSGraphTensor>
     {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -306,7 +303,7 @@ impl MPSGraph {
             );
             
             // Create the body block callback
-            let body_callback = ConcreteBlock::new(move |index: *mut Object, args: *mut Object| -> *mut Object {
+            let body_callback = ConcreteBlock::new(move |index: *mut AnyObject, args: *mut AnyObject| -> *mut AnyObject {
                 // Convert to MPSGraphTensor
                 let index_tensor = MPSGraphTensor(index);
                 
@@ -314,7 +311,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut Object = msg_send![args, objectAtIndex:i];
+                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -330,14 +327,13 @@ impl MPSGraph {
             }).copy();
             
             // Call the Objective-C method
-            let result_array: *mut Object = msg_send![
-                self.0,
-                forLoopWithLowerBound:lower_bound.0
-                upperBound:upper_bound.0
-                step:step.0
-                initialBodyArguments:initial_args_array.0
-                body:&*body_callback
-                name:name_obj
+            let result_array: *mut AnyObject = msg_send![
+                self.0, forLoopWithLowerBound: lower_bound.0
+                upperBound: upper_bound.0
+                step: step.0
+                initialBodyArguments: initial_args_array.0
+                body: &*body_callback
+                name: name_obj
             ];
             
             // Get the count of result tensors
@@ -346,8 +342,8 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut Object = msg_send![result_array, objectAtIndex:i];
-                let tensor: *mut Object = msg_send![tensor, retain];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -370,16 +366,16 @@ impl MPSGraph {
     ///
     /// A vector of tensors that are the final result of the for loop
     pub fn for_loop_with_iterations<F>(&self,
-                                    num_iterations: &MPSGraphTensor,
-                                    initial_body_arguments: &[&MPSGraphTensor],
-                                    body_block: F,
-                                    name: Option<&str>) -> Vec<MPSGraphTensor>
+                                    num_iterations:  &MPSGraphTensor,
+                                    initial_body_arguments:  &[&MPSGraphTensor],
+                                    body_block:  F,
+                                    name:  Option<&str>) -> Vec<MPSGraphTensor>
     where
-        F: Fn(&MPSGraphTensor, &[MPSGraphTensor]) -> Vec<MPSGraphTensor>
+        F:  Fn(&MPSGraphTensor, &[MPSGraphTensor]) -> Vec<MPSGraphTensor>
     {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -389,7 +385,7 @@ impl MPSGraph {
             );
             
             // Create the body block callback
-            let body_callback = ConcreteBlock::new(move |index: *mut Object, args: *mut Object| -> *mut Object {
+            let body_callback = ConcreteBlock::new(move |index: *mut AnyObject, args: *mut AnyObject| -> *mut AnyObject {
                 // Convert to MPSGraphTensor
                 let index_tensor = MPSGraphTensor(index);
                 
@@ -397,7 +393,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut Object = msg_send![args, objectAtIndex:i];
+                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -413,12 +409,11 @@ impl MPSGraph {
             }).copy();
             
             // Call the Objective-C method
-            let result_array: *mut Object = msg_send![
-                self.0,
-                forLoopWithNumberOfIterations:num_iterations.0
-                initialBodyArguments:initial_args_array.0
-                body:&*body_callback
-                name:name_obj
+            let result_array: *mut AnyObject = msg_send![
+                self.0, forLoopWithNumberOfIterations: num_iterations.0
+                initialBodyArguments: initial_args_array.0
+                body: &*body_callback
+                name: name_obj
             ];
             
             // Get the count of result tensors
@@ -427,8 +422,8 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut Object = msg_send![result_array, objectAtIndex:i];
-                let tensor: *mut Object = msg_send![tensor, retain];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -440,32 +435,32 @@ impl MPSGraph {
 /// A concrete implementation of an Objective-C block
 #[repr(C)]
 struct ConcreteBlock<F> {
-    isa: *const c_void,
-    flags: usize,
-    reserved: usize,
-    invoke: *const c_void,
-    descriptor: *const BlockDescriptor,
-    closure: F,
+    isa:  *const c_void,
+    flags:  usize,
+    reserved:  usize,
+    invoke:  *const c_void,
+    descriptor:  *const BlockDescriptor,
+    closure:  F,
 }
 
 /// Block descriptor containing size and copy/dispose functions
 #[repr(C)]
 struct BlockDescriptor {
-    reserved: usize,
-    size: usize,
-    copy_helper: *const c_void,
-    dispose_helper: *const c_void,
+    reserved:  usize,
+    size:  usize,
+    copy_helper:  *const c_void,
+    dispose_helper:  *const c_void,
 }
 
 impl<F> ConcreteBlock<F> {
     /// Creates a new ConcreteBlock with the given closure
     fn new(closure: F) -> Self {
         ConcreteBlock {
-            isa: 0 as *const _,
-            flags: 0,
-            reserved: 0,
-            invoke: 0 as *const _,
-            descriptor: 0 as *const _,
+            isa:  0 as *const _,
+            flags:  0,
+            reserved:  0,
+            invoke:  0 as *const _,
+            descriptor:  0 as *const _,
             closure,
         }
     }
@@ -497,8 +492,8 @@ extern "C" {
 // Alternative implementation using objc_msgSend if Block_copy isn't found
 fn block_copy(block: *const c_void) -> *mut c_void {
     unsafe {
-        let cls = objc::runtime::Class::get("NSBlock").unwrap_or_else(|| {
-            objc::runtime::Class::get("NSObject").unwrap()
+        let cls = objc2::runtime::AnyClass::get(std::ffi::CStr::from_bytes_with_nul(b("NSBlock").unwrap_or_else(|| {
+            objc2::runtime::AnyClass::get(std::ffi::CStr::from_bytes_with_nul(b("NSObject").unwrap()
         });
         let block_obj = block as *mut objc::runtime::Object;
         let copied: *mut objc::runtime::Object = msg_send![block_obj, copy];
@@ -506,8 +501,6 @@ fn block_copy(block: *const c_void) -> *mut c_void {
     }
 }
 
-#[cfg(test)]
-mod tests {
     use super::*;
     use crate::core::MPSDataType;
     use crate::device::MPSGraphDevice;

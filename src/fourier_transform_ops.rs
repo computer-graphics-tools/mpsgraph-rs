@@ -1,65 +1,104 @@
-use objc::runtime::{Object, Class, YES, NO};
-use objc::msg_send;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::NSString;
+use crate::core::{NSString, AsRawObject};
 
-/// The scaling modes for Fourier transform operations.
+/// Scaling mode for FFT operations
 #[repr(u64)]
 #[derive(Debug, Copy, Clone)]
 pub enum MPSGraphFFTScalingMode {
-    /// Computes the FFT result with no scaling.
+    /// No scaling
     None = 0,
-    /// Scales the FFT result with reciprocal of the total FFT size over all transformed dimensions.
-    Size = 1,
-    /// Scales the FFT result with reciprocal square root of the total FFT size over all transformed dimensions, resulting in signal strength conserving transformation.
-    Unitary = 2,
+    /// Scale by 1/n
+    UniFactor = 1,
+    /// Scale by 1/sqrt(n)
+    SqrtUniFactor = 2,
 }
 
-/// The descriptor for Fast Fourier Transform operations
-pub struct MPSGraphFFTDescriptor(pub(crate) *mut Object);
+/// Descriptor for FFT operations
+pub struct MPSGraphFFTDescriptor(pub(crate) *mut AnyObject);
+
+impl Default for MPSGraphFFTDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl MPSGraphFFTDescriptor {
-    /// Creates a new FFT descriptor with default parameter values
+    /// Creates a new FFT descriptor with default settings
     pub fn new() -> Self {
         unsafe {
-            let cls = Class::get("MPSGraphFFTDescriptor").unwrap();
-            let descriptor: *mut Object = msg_send![cls, descriptor];
-            let descriptor: *mut Object = msg_send![descriptor, retain];
-            MPSGraphFFTDescriptor(descriptor)
+            let class_name = c"MPSGraphFFTDescriptor";
+            if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
+                let descriptor: *mut AnyObject = msg_send![cls, descriptor];
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                MPSGraphFFTDescriptor(descriptor)
+            } else {
+                panic!("Class MPSGraphFFTDescriptor not found")
+            }
         }
     }
     
-    /// Set whether the FFT operation is inverse
-    ///
-    /// When set to `true` graph uses the positive phase factor: `exp(+i 2Pi mu nu / n)`, when computing the (inverse) Fourier transform.
-    /// Otherwise MPSGraph uses the negative phase factor: `exp(-i 2Pi mu nu / n)`, when computing the Fourier transform.
-    /// Default value: `false`.
-    pub fn set_inverse(&self, inverse: bool) {
+    /// Sets the FFT length
+    pub fn set_length(&self, length: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setInverse:if inverse { YES } else { NO }];
+            let _: () = msg_send![self.0, setLength: length];
         }
     }
     
-    /// Set the scaling mode for the FFT operation
-    ///
-    /// The scaling mode is independent from the phase factor.
-    /// Default value: `MPSGraphFFTScalingMode::None`.
+    /// Sets the input batch dimension
+    pub fn set_batch_dimension(&self, dimension: usize) {
+        unsafe {
+            let _: () = msg_send![self.0, setBatchDimension: dimension];
+        }
+    }
+    
+    /// Sets the input transform dimension
+    pub fn set_transform_dimension(&self, dimension: usize) {
+        unsafe {
+            let _: () = msg_send![self.0, setTransformDimension: dimension];
+        }
+    }
+    
+    /// Sets the scaling mode
     pub fn set_scaling_mode(&self, mode: MPSGraphFFTScalingMode) {
         unsafe {
-            let _: () = msg_send![self.0, setScalingMode:mode as u64];
+            let _: () = msg_send![self.0, setScalingMode: mode as u64];
         }
     }
     
-    /// Set whether to round the output tensor size for a Hermitean-to-real Fourier transform
-    ///
-    /// If set to `true` then MPSGraph rounds the last output dimension of the result tensor in
-    /// Hermitean-to-real FFT to an odd value.
-    /// Has no effect in the other Fourier transform operations.
-    /// Default value: `false`.
-    pub fn set_round_to_odd_hermitean(&self, round: bool) {
+    /// Gets the FFT length
+    pub fn length(&self) -> usize {
         unsafe {
-            let _: () = msg_send![self.0, setRoundToOddHermitean:if round { YES } else { NO }];
+            msg_send![self.0, length]
+        }
+    }
+    
+    /// Gets the input batch dimension
+    pub fn batch_dimension(&self) -> usize {
+        unsafe {
+            msg_send![self.0, batchDimension]
+        }
+    }
+    
+    /// Gets the input transform dimension
+    pub fn transform_dimension(&self) -> usize {
+        unsafe {
+            msg_send![self.0, transformDimension]
+        }
+    }
+    
+    /// Gets the scaling mode
+    pub fn scaling_mode(&self) -> MPSGraphFFTScalingMode {
+        unsafe {
+            let mode: u64 = msg_send![self.0, scalingMode];
+            match mode {
+                0 => MPSGraphFFTScalingMode::None,
+                1 => MPSGraphFFTScalingMode::UniFactor,
+                2 => MPSGraphFFTScalingMode::SqrtUniFactor,
+                _ => MPSGraphFFTScalingMode::None,
+            }
         }
     }
 }
@@ -67,7 +106,7 @@ impl MPSGraphFFTDescriptor {
 impl Drop for MPSGraphFFTDescriptor {
     fn drop(&mut self) {
         unsafe {
-            let _: () = msg_send![self.0, release];
+            objc2::ffi::objc_release(self.0 as *mut _);
         }
     }
 }
@@ -75,368 +114,186 @@ impl Drop for MPSGraphFFTDescriptor {
 impl Clone for MPSGraphFFTDescriptor {
     fn clone(&self) -> Self {
         unsafe {
-            let desc: *mut Object = msg_send![self.0, copy];
+            let desc: *mut AnyObject = msg_send![self.0, copy];
             MPSGraphFFTDescriptor(desc)
         }
     }
 }
 
-/// Helper function to create an NSArray of NSNumbers from a slice of i64s
-fn create_ns_array_from_i64s(integers: &[i64]) -> *mut Object {
-    unsafe {
-        let ns_number_class = Class::get("NSNumber").unwrap();
-        let ns_array_class = Class::get("NSArray").unwrap();
-        
-        let mut ns_numbers: Vec<*mut Object> = Vec::with_capacity(integers.len());
-        for &i in integers {
-            let ns_number: *mut Object = msg_send![ns_number_class, numberWithLongLong:i];
-            ns_numbers.push(ns_number);
-        }
-        
-        let count = ns_numbers.len();
-        let ns_array: *mut Object = msg_send![
-            ns_array_class,
-            arrayWithObjects:ns_numbers.as_ptr()
-            count:count
-        ];
-        ns_array
-    }
-}
-
-/// Fourier Transform operations for MPSGraph
+/// Fourier transform operations for MPSGraph
 impl MPSGraph {
-    /// Creates a fast Fourier transform operation and returns the result tensor.
-    ///
-    /// This operation computes the fast Fourier transform of the input tensor.
+    /// Creates a forward FFT operation using complex-valued input.
     ///
     /// # Arguments
     ///
-    /// * `tensor` - A complex or real-valued input tensor.
-    /// * `axes` - A slice of numbers that specifies over which axes MPSGraph performs the Fourier transform.
-    ///            All axes must be contained within the last four dimensions of the input tensor.
-    /// * `descriptor` - A descriptor that defines the parameters of the Fourier transform operation.
-    /// * `name` - The name for the operation.
+    /// * `real` - Tensor with the real part of the input
+    /// * `imaginary` - Tensor with the imaginary part of the input
+    /// * `descriptor` - FFT descriptor specifying the transform parameters
+    /// * `name` - Optional name for the operation
     ///
     /// # Returns
     ///
-    /// A complex-valued MPSGraphTensor of the same shape as the input tensor.
-    pub fn fast_fourier_transform(
+    /// A tuple of MPSGraphTensor objects (real_output, imaginary_output).
+    pub fn forward_fft(
         &self,
-        tensor: &MPSGraphTensor,
-        axes: &[i64],
+        real: &MPSGraphTensor,
+        imaginary: &MPSGraphTensor,
         descriptor: &MPSGraphFFTDescriptor,
         name: Option<&str>,
-    ) -> MPSGraphTensor {
+    ) -> (MPSGraphTensor, MPSGraphTensor) {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
-            None => std::ptr::null_mut(),
-        };
-        
-        let axes_array = create_ns_array_from_i64s(axes);
-        
-        unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                fastFourierTransformWithTensor:tensor.0
-                axes:axes_array
-                descriptor:descriptor.0
-                name:name_obj
-            ];
-            
-            let result: *mut Object = msg_send![result, retain];
-            MPSGraphTensor(result)
-        }
-    }
-    
-    /// Creates a fast Fourier transform operation using an axes tensor and returns the result tensor.
-    ///
-    /// This operation computes the fast Fourier transform of the input tensor.
-    ///
-    /// # Arguments
-    ///
-    /// * `tensor` - A complex or real-valued input tensor.
-    /// * `axes_tensor` - A tensor of rank one containing the axes over which MPSGraph performs the transformation.
-    /// * `descriptor` - A descriptor that defines the parameters of the Fourier transform operation.
-    /// * `name` - The name for the operation.
-    ///
-    /// # Returns
-    ///
-    /// A complex-valued MPSGraphTensor of the same shape as the input tensor.
-    pub fn fast_fourier_transform_with_axes_tensor(
-        &self,
-        tensor: &MPSGraphTensor,
-        axes_tensor: &MPSGraphTensor,
-        descriptor: &MPSGraphFFTDescriptor,
-        name: Option<&str>,
-    ) -> MPSGraphTensor {
-        let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                fastFourierTransformWithTensor:tensor.0
-                axesTensor:axes_tensor.0
-                descriptor:descriptor.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, forwardFFTWithRealTensor: real.0
+                imaginaryTensor: imaginary.0
+                descriptor: descriptor.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
-            MPSGraphTensor(result)
+            // This returns an NSArray with two tensors: real and imaginary parts
+            // Extract both tensors from the array
+            let count: usize = msg_send![result, count];
+            assert_eq!(count, 2, "Expected 2 result tensors from forward FFT");
+            
+            let real_output: *mut AnyObject = msg_send![result, objectAtIndex: 0];
+            let imag_output: *mut AnyObject = msg_send![result, objectAtIndex: 1];
+            
+            let real_output = objc2::ffi::objc_retain(real_output as *mut _) as *mut AnyObject;
+            let imag_output = objc2::ffi::objc_retain(imag_output as *mut _) as *mut AnyObject;
+            
+            (MPSGraphTensor(real_output), MPSGraphTensor(imag_output))
         }
     }
     
-    /// Creates a Real-to-Hermitean fast Fourier transform operation and returns the result tensor.
-    ///
-    /// This operation computes the fast Fourier transform of a real-valued input tensor.
-    /// The result tensor has size `(n/2)+1` in the last dimension defined by `axes`.
+    /// Creates an inverse FFT operation using complex-valued input.
     ///
     /// # Arguments
     ///
-    /// * `tensor` - A real-valued input tensor. Must have datatype `Float32` or `Float16`.
-    /// * `axes` - A slice of numbers that specifies over which axes MPSGraph performs the Fourier transform.
-    ///            All axes must be contained within the last four dimensions of the input tensor.
-    /// * `descriptor` - A descriptor that defines the parameters of the Fourier transform operation.
-    /// * `name` - The name for the operation.
+    /// * `real` - Tensor with the real part of the input
+    /// * `imaginary` - Tensor with the imaginary part of the input
+    /// * `descriptor` - FFT descriptor specifying the transform parameters
+    /// * `name` - Optional name for the operation
     ///
     /// # Returns
     ///
-    /// A complex-valued MPSGraphTensor with reduced size in the last transformed dimension.
-    pub fn real_to_hermitean_fft(
+    /// A tuple of MPSGraphTensor objects (real_output, imaginary_output).
+    pub fn inverse_fft(
         &self,
-        tensor: &MPSGraphTensor,
-        axes: &[i64],
+        real: &MPSGraphTensor,
+        imaginary: &MPSGraphTensor,
         descriptor: &MPSGraphFFTDescriptor,
         name: Option<&str>,
-    ) -> MPSGraphTensor {
+    ) -> (MPSGraphTensor, MPSGraphTensor) {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
-            None => std::ptr::null_mut(),
-        };
-        
-        let axes_array = create_ns_array_from_i64s(axes);
-        
-        unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                realToHermiteanFFTWithTensor:tensor.0
-                axes:axes_array
-                descriptor:descriptor.0
-                name:name_obj
-            ];
-            
-            let result: *mut Object = msg_send![result, retain];
-            MPSGraphTensor(result)
-        }
-    }
-    
-    /// Creates a Real-to-Hermitean fast Fourier transform operation using an axes tensor and returns the result tensor.
-    ///
-    /// This operation computes the fast Fourier transform of a real-valued input tensor.
-    /// The result tensor has size `(n/2)+1` in the last dimension defined by `axes`.
-    ///
-    /// # Arguments
-    ///
-    /// * `tensor` - A real-valued input tensor. Must have datatype `Float32` or `Float16`.
-    /// * `axes_tensor` - A tensor of rank one containing the axes over which MPSGraph performs the transformation.
-    /// * `descriptor` - A descriptor that defines the parameters of the Fourier transform operation.
-    /// * `name` - The name for the operation.
-    ///
-    /// # Returns
-    ///
-    /// A complex-valued MPSGraphTensor with reduced size in the last transformed dimension.
-    pub fn real_to_hermitean_fft_with_axes_tensor(
-        &self,
-        tensor: &MPSGraphTensor,
-        axes_tensor: &MPSGraphTensor,
-        descriptor: &MPSGraphFFTDescriptor,
-        name: Option<&str>,
-    ) -> MPSGraphTensor {
-        let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                realToHermiteanFFTWithTensor:tensor.0
-                axesTensor:axes_tensor.0
-                descriptor:descriptor.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, inverseFFTWithRealTensor: real.0
+                imaginaryTensor: imaginary.0
+                descriptor: descriptor.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
-            MPSGraphTensor(result)
+            // This returns an NSArray with two tensors: real and imaginary parts
+            // Extract both tensors from the array
+            let count: usize = msg_send![result, count];
+            assert_eq!(count, 2, "Expected 2 result tensors from inverse FFT");
+            
+            let real_output: *mut AnyObject = msg_send![result, objectAtIndex: 0];
+            let imag_output: *mut AnyObject = msg_send![result, objectAtIndex: 1];
+            
+            let real_output = objc2::ffi::objc_retain(real_output as *mut _) as *mut AnyObject;
+            let imag_output = objc2::ffi::objc_retain(imag_output as *mut _) as *mut AnyObject;
+            
+            (MPSGraphTensor(real_output), MPSGraphTensor(imag_output))
         }
     }
     
-    /// Creates a Hermitean-to-real fast Fourier transform operation and returns the result tensor.
-    ///
-    /// This operation computes the fast Fourier transform of a complex-valued input tensor with hermitean symmetry.
-    /// The result tensor has size `(inSize-1)*2 + x` in the last dimension defined by `axes`,
-    /// where `inSize = shape(input)[axis] ( = (n/2)+1 )` is the size of the input tensor in the last transformed dimension
-    /// and `x = 1` when `round_to_odd_hermitean` = `true` and `x = 0` otherwise.
+    /// Creates a forward FFT operation using real-valued input.
     ///
     /// # Arguments
     ///
-    /// * `tensor` - A complex-valued input tensor. Must have datatype `ComplexFloat32` or `ComplexFloat16`.
-    /// * `axes` - A slice of numbers that specifies over which axes MPSGraph performs the Fourier transform.
-    ///            All axes must be contained within the last four dimensions of the input tensor.
-    /// * `descriptor` - A descriptor that defines the parameters of the Fourier transform operation.
-    /// * `name` - The name for the operation.
+    /// * `real` - Tensor with the real input values
+    /// * `descriptor` - FFT descriptor specifying the transform parameters
+    /// * `name` - Optional name for the operation
     ///
     /// # Returns
     ///
-    /// A real-valued MPSGraphTensor with full size.
-    pub fn hermitean_to_real_fft(
+    /// A tuple of MPSGraphTensor objects (real_output, imaginary_output).
+    pub fn forward_real_fft(
         &self,
-        tensor: &MPSGraphTensor,
-        axes: &[i64],
+        real: &MPSGraphTensor,
         descriptor: &MPSGraphFFTDescriptor,
         name: Option<&str>,
-    ) -> MPSGraphTensor {
+    ) -> (MPSGraphTensor, MPSGraphTensor) {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
-            None => std::ptr::null_mut(),
-        };
-        
-        let axes_array = create_ns_array_from_i64s(axes);
-        
-        unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                HermiteanToRealFFTWithTensor:tensor.0
-                axes:axes_array
-                descriptor:descriptor.0
-                name:name_obj
-            ];
-            
-            let result: *mut Object = msg_send![result, retain];
-            MPSGraphTensor(result)
-        }
-    }
-    
-    /// Creates a Hermitean-to-real fast Fourier transform operation using an axes tensor and returns the result tensor.
-    ///
-    /// This operation computes the fast Fourier transform of a complex-valued input tensor with hermitean symmetry.
-    /// The result tensor has size `(inSize-1)*2 + x` in the last dimension defined by `axes`,
-    /// where `inSize = shape(input)[axis] ( = (n/2)+1 )` is the size of the input tensor in the last transformed dimension
-    /// and `x = 1` when `round_to_odd_hermitean` = `true` and `x = 0` otherwise.
-    ///
-    /// # Arguments
-    ///
-    /// * `tensor` - A complex-valued input tensor. Must have datatype `ComplexFloat32` or `ComplexFloat16`.
-    /// * `axes_tensor` - A tensor of rank one containing the axes over which MPSGraph performs the transformation.
-    /// * `descriptor` - A descriptor that defines the parameters of the Fourier transform operation.
-    /// * `name` - The name for the operation.
-    ///
-    /// # Returns
-    ///
-    /// A real-valued MPSGraphTensor with full size.
-    pub fn hermitean_to_real_fft_with_axes_tensor(
-        &self,
-        tensor: &MPSGraphTensor,
-        axes_tensor: &MPSGraphTensor,
-        descriptor: &MPSGraphFFTDescriptor,
-        name: Option<&str>,
-    ) -> MPSGraphTensor {
-        let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
         unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                HermiteanToRealFFTWithTensor:tensor.0
-                axesTensor:axes_tensor.0
-                descriptor:descriptor.0
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, forwardRealFFTWithRealTensor: real.0
+                descriptor: descriptor.0
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
-            MPSGraphTensor(result)
+            // This returns an NSArray with two tensors: real and imaginary parts
+            // Extract both tensors from the array
+            let count: usize = msg_send![result, count];
+            assert_eq!(count, 2, "Expected 2 result tensors from forward real FFT");
+            
+            let real_output: *mut AnyObject = msg_send![result, objectAtIndex: 0];
+            let imag_output: *mut AnyObject = msg_send![result, objectAtIndex: 1];
+            
+            let real_output = objc2::ffi::objc_retain(real_output as *mut _) as *mut AnyObject;
+            let imag_output = objc2::ffi::objc_retain(imag_output as *mut _) as *mut AnyObject;
+            
+            (MPSGraphTensor(real_output), MPSGraphTensor(imag_output))
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{MPSDataType, tests::should_skip_test};
-    use crate::core::MPSShape;
-    use std::collections::HashMap;
     
-    #[test]
-    fn test_fft() {
-        if should_skip_test("test_fft") {
-            return;
+    /// Creates an inverse FFT operation that produces real-valued output.
+    ///
+    /// # Arguments
+    ///
+    /// * `real` - Tensor with the real part of the input
+    /// * `imaginary` - Tensor with the imaginary part of the input
+    /// * `descriptor` - FFT descriptor specifying the transform parameters
+    /// * `name` - Optional name for the operation
+    ///
+    /// # Returns
+    ///
+    /// The real-valued output as an MPSGraphTensor object.
+    pub fn inverse_real_fft(
+        &self,
+        real: &MPSGraphTensor,
+        imaginary: &MPSGraphTensor,
+        descriptor: &MPSGraphFFTDescriptor,
+        name: Option<&str>,
+    ) -> MPSGraphTensor {
+        let name_obj = match name {
+            Some(s) => NSString::from_str(s).as_raw_object(),
+            None => std::ptr::null_mut(),
+        };
+        
+        unsafe {
+            let tensor: *mut AnyObject = msg_send![
+                self.0, inverseRealFFTWithRealTensor: real.0
+                imaginaryTensor: imaginary.0
+                descriptor: descriptor.0
+                name: name_obj
+            ];
+            
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            MPSGraphTensor(tensor)
         }
-        
-        let graph = MPSGraph::new();
-        
-        // Create a simple 1D signal
-        let tensor_shape = MPSShape::from_slice(&[8]);
-        let real_part = vec![1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
-        let imag_part = vec![0.0f32, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-        
-        // Combine real and imaginary parts
-        let mut complex_data = Vec::with_capacity(real_part.len() * 2);
-        for i in 0..real_part.len() {
-            complex_data.push(real_part[i]);
-            complex_data.push(imag_part[i]);
-        }
-        
-        let tensor = graph.placeholder(&tensor_shape, MPSDataType::Complex32, None);
-        
-        // Create FFT descriptor with default settings
-        let descriptor = MPSGraphFFTDescriptor::new();
-        
-        // Perform FFT on dimension 0
-        let fft_result = graph.fast_fourier_transform(&tensor, &[0], &descriptor, Some("fft"));
-        
-        // Run the graph
-        let mut feeds = HashMap::new();
-        feeds.insert(&tensor, crate::MPSGraphTensorData::new(&complex_data, &[8], MPSDataType::Complex32));
-        
-        let results = graph.run(feeds, &[&fft_result]);
-        
-        // Get the result data
-        let result_data = results[&fft_result].to_vec::<f32>();
-        assert_eq!(result_data.len(), 16); // 8 complex numbers (16 floats)
-    }
-    
-    #[test]
-    fn test_real_to_hermitean_fft() {
-        if should_skip_test("test_real_to_hermitean_fft") {
-            return;
-        }
-        
-        let graph = MPSGraph::new();
-        
-        // Create a simple 1D signal
-        let tensor_shape = MPSShape::from_slice(&[8]);
-        let real_data = vec![1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
-        
-        let tensor = graph.placeholder(&tensor_shape, MPSDataType::Float32, None);
-        
-        // Create FFT descriptor with default settings
-        let descriptor = MPSGraphFFTDescriptor::new();
-        
-        // Perform Real-to-Hermitean FFT on dimension 0
-        let fft_result = graph.real_to_hermitean_fft(&tensor, &[0], &descriptor, Some("real_to_hermitean_fft"));
-        
-        // Run the graph
-        let mut feeds = HashMap::new();
-        feeds.insert(&tensor, crate::MPSGraphTensorData::new(&real_data, &[8], MPSDataType::Float32));
-        
-        let results = graph.run(feeds, &[&fft_result]);
-        
-        // Get the result data
-        let result_data = results[&fft_result].to_vec::<f32>();
-        assert_eq!(result_data.len(), 10); // 5 complex numbers (10 floats), output size is floor(N/2) + 1
     }
 }

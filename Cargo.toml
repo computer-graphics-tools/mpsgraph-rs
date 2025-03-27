@@ -11,12 +11,12 @@ keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
 categories = ["api-bindings", "graphics", "science"]
 
 [dependencies]
-objc-rs = "0.2.8"
+objc2 = "0.6.0"
+objc2-foundation = "0.3.0"
 block = "0.1.6"
 foreign-types = "0.5"
 bitflags = "2.9.0"
 metal = "0.32.0"
-core-graphics-types = { version = "0.2.0", default-features = false }
 rand = "0.9.0"
 
 [features]

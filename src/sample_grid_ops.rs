@@ -1,7 +1,11 @@
-use objc::runtime::{Object, YES, NO};
+use objc2::runtime::AnyObject;
+// In objc2, use false as NO and true as YES
+const NO: bool = false;
+const YES: bool = true;
+use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::NSString;
+use crate::core::{NSString, AsRawObject};
 use crate::convolution_transpose_ops::TensorNamedDataLayout;
 use crate::resize_ops::{MPSGraphResizeMode, MPSGraphResizeNearestRoundingMode};
 
@@ -46,19 +50,19 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn sample_grid(&self,
-                      source: &MPSGraphTensor,
-                      coordinates: &MPSGraphTensor,
-                      layout: TensorNamedDataLayout,
-                      normalize_coordinates: bool,
-                      relative_coordinates: bool,
-                      align_corners: bool,
-                      padding_mode: MPSGraphPaddingMode,
-                      sampling_mode: MPSGraphResizeMode,
-                      constant_value: f64,
-                      name: Option<&str>) -> MPSGraphTensor {
+                      source:  &MPSGraphTensor,
+                      coordinates:  &MPSGraphTensor,
+                      layout:  TensorNamedDataLayout,
+                      normalize_coordinates:  bool,
+                      relative_coordinates:  bool,
+                      align_corners:  bool,
+                      padding_mode:  MPSGraphPaddingMode,
+                      sampling_mode:  MPSGraphResizeMode,
+                      constant_value:  f64,
+                      name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -66,20 +70,19 @@ impl MPSGraph {
             let relative_coordinates_val = if relative_coordinates { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let result: *mut Object = msg_send![self.0, 
-                sampleGridWithSourceTensor:source.0
-                coordinateTensor:coordinates.0
-                layout:layout as u64
-                normalizeCoordinates:normalize_coordinates_val
-                relativeCoordinates:relative_coordinates_val
-                alignCorners:align_corners_val
-                paddingMode:padding_mode as i64
-                samplingMode:sampling_mode as u64
-                constantValue:constant_value
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0
+                coordinateTensor: coordinates.0
+                layout: layout as u64
+                normalizeCoordinates: normalize_coordinates_val
+                relativeCoordinates: relative_coordinates_val
+                alignCorners: align_corners_val
+                paddingMode: padding_mode as i64
+                samplingMode: sampling_mode as u64
+                constantValue: constant_value
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
@@ -99,19 +102,19 @@ impl MPSGraph {
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
     pub fn sample_grid_nearest(&self,
-                              source: &MPSGraphTensor,
-                              coordinates: &MPSGraphTensor,
-                              layout: TensorNamedDataLayout,
-                              normalize_coordinates: bool,
-                              relative_coordinates: bool,
-                              align_corners: bool,
-                              padding_mode: MPSGraphPaddingMode,
-                              nearest_rounding_mode: MPSGraphResizeNearestRoundingMode,
-                              constant_value: f64,
-                              name: Option<&str>) -> MPSGraphTensor {
+                              source:  &MPSGraphTensor,
+                              coordinates:  &MPSGraphTensor,
+                              layout:  TensorNamedDataLayout,
+                              normalize_coordinates:  bool,
+                              relative_coordinates:  bool,
+                              align_corners:  bool,
+                              padding_mode:  MPSGraphPaddingMode,
+                              nearest_rounding_mode:  MPSGraphResizeNearestRoundingMode,
+                              constant_value:  f64,
+                              name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -119,20 +122,19 @@ impl MPSGraph {
             let relative_coordinates_val = if relative_coordinates { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let result: *mut Object = msg_send![self.0, 
-                sampleGridWithSourceTensor:source.0
-                coordinateTensor:coordinates.0
-                layout:layout as u64
-                normalizeCoordinates:normalize_coordinates_val
-                relativeCoordinates:relative_coordinates_val
-                alignCorners:align_corners_val
-                paddingMode:padding_mode as i64
-                nearestRoundingMode:nearest_rounding_mode as u64
-                constantValue:constant_value
-                name:name_obj
+            let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0
+                coordinateTensor: coordinates.0
+                layout: layout as u64
+                normalizeCoordinates: normalize_coordinates_val
+                relativeCoordinates: relative_coordinates_val
+                alignCorners: align_corners_val
+                paddingMode: padding_mode as i64
+                nearestRoundingMode: nearest_rounding_mode as u64
+                constantValue: constant_value
+                name: name_obj
             ];
             
-            let result: *mut Object = msg_send![result, retain];
+            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }

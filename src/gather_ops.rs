@@ -1,7 +1,7 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::NSString;
+use crate::core::{NSString, AsRawObject};
 
 /// Gather operations for MPSGraph
 impl MPSGraph {
@@ -16,24 +16,23 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object 
     pub fn gather_nd(&self, 
-                     updates_tensor: &MPSGraphTensor,
-                     indices_tensor: &MPSGraphTensor,
-                     batch_dimensions: usize,
-                     name: Option<&str>) -> MPSGraphTensor {
+                     updates_tensor:  &MPSGraphTensor,
+                     indices_tensor:  &MPSGraphTensor,
+                     batch_dimensions:  usize,
+                     name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                gatherNDWithUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                batchDimensions:batch_dimensions
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherNDWithUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                batchDimensions: batch_dimensions
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -50,26 +49,25 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object 
     pub fn gather(&self, 
-                  updates_tensor: &MPSGraphTensor,
-                  indices_tensor: &MPSGraphTensor,
-                  axis: usize,
-                  batch_dimensions: usize,
-                  name: Option<&str>) -> MPSGraphTensor {
+                  updates_tensor:  &MPSGraphTensor,
+                  indices_tensor:  &MPSGraphTensor,
+                  axis:  usize,
+                  batch_dimensions:  usize,
+                  name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                gatherWithUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                axis:axis
-                batchDimensions:batch_dimensions
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherWithUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                axis: axis
+                batchDimensions: batch_dimensions
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -88,24 +86,23 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object 
     pub fn gather_along_axis(&self,
-                            axis: isize,
-                            updates_tensor: &MPSGraphTensor,
-                            indices_tensor: &MPSGraphTensor,
-                            name: Option<&str>) -> MPSGraphTensor {
+                            axis:  isize,
+                            updates_tensor:  &MPSGraphTensor,
+                            indices_tensor:  &MPSGraphTensor,
+                            name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                gatherAlongAxis:axis
-                withUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherAlongAxis: axis
+                withUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
@@ -124,24 +121,23 @@ impl MPSGraph {
     ///   - name: The name for the operation.
     /// - Returns: A valid MPSGraphTensor object 
     pub fn gather_along_axis_tensor(&self,
-                                  axis_tensor: &MPSGraphTensor,
-                                  updates_tensor: &MPSGraphTensor,
-                                  indices_tensor: &MPSGraphTensor,
-                                  name: Option<&str>) -> MPSGraphTensor {
+                                  axis_tensor:  &MPSGraphTensor,
+                                  updates_tensor:  &MPSGraphTensor,
+                                  indices_tensor:  &MPSGraphTensor,
+                                  name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => NSString::from_str(s).0,
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut Object = msg_send![self.0, 
-                gatherAlongAxisTensor:axis_tensor.0
-                withUpdatesTensor:updates_tensor.0
-                indicesTensor:indices_tensor.0
-                name:name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherAlongAxisTensor: axis_tensor.0
+                withUpdatesTensor: updates_tensor.0
+                indicesTensor: indices_tensor.0
+                name: name_obj
             ];
             
-            let tensor: *mut Object = msg_send![tensor, retain];
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }

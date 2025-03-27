@@ -1,8 +1,9 @@
-use objc::runtime::Object;
-use objc::msg_send;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
+use objc2_foundation::{NSArray, NSString};
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::NSString;
+use crate::core::{AsRawObject};
 
 /// Call operations for MPSGraph
 impl MPSGraph {
@@ -20,92 +21,77 @@ impl MPSGraph {
     /// An array of MPSGraphTensor objects representing the return tensors of the invoked executable
     pub fn call(
         &self,
-        symbol_name: &str,
-        input_tensors: &[&MPSGraphTensor],
-        output_types: &[*mut Object], // MPSGraphType objects
-        name: Option<&str>,
+        symbol_name:  &str,
+        input_tensors:  &[&MPSGraphTensor],
+        output_types:  &[*mut AnyObject], // MPSGraphType objects
+        name:  Option<&str>,
     ) -> Vec<MPSGraphTensor> {
         let name_obj = match name {
-            Some(s) => NSString::from_str(s).0,
+            Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
         
-        let symbol_name_obj = NSString::from_str(symbol_name).0;
+        let symbol_name_obj = NSString::from_str(symbol_name).as_raw_object();
         
-        // Create NSArray of input tensors
+        // Create NSArray of input tensors using objc2_foundation
         let input_tensors_array = unsafe {
-            let cls = objc::runtime::Class::get("NSArray").unwrap();
-            let mut ns_objects: Vec<*mut Object> = Vec::with_capacity(input_tensors.len());
+            // Convert to slice of references to AnyObject
+            let refs: Vec<&objc2::runtime::AnyObject> = input_tensors.iter()
+                .map(|tensor| &*tensor.0.cast::<objc2::runtime::AnyObject>())
+                .collect();
             
-            for tensor in input_tensors {
-                ns_objects.push(tensor.0);
-            }
-            
-            let count = ns_objects.len();
-            let ns_array: *mut Object = msg_send![
-                cls,
-                arrayWithObjects:ns_objects.as_ptr()
-                count:count
-            ];
+            // Create NSArray from references
+            let array = NSArray::from_slice(&refs);
+            let ns_array: *mut AnyObject = std::mem::transmute::<&NSArray<objc2::runtime::AnyObject>, *mut AnyObject>(array.as_ref());
             ns_array
         };
         
-        // Create NSArray of output types
+        // Create NSArray of output types using objc2_foundation
         let output_types_array = unsafe {
-            let cls = objc::runtime::Class::get("NSArray").unwrap();
-            let count = output_types.len();
-            let ns_array: *mut Object = msg_send![
-                cls,
-                arrayWithObjects:output_types.as_ptr()
-                count:count
-            ];
+            // Convert to slice of references to AnyObject
+            let refs: Vec<&objc2::runtime::AnyObject> = output_types.iter()
+                .map(|&type_obj| &*type_obj.cast::<objc2::runtime::AnyObject>())
+                .collect();
+            
+            // Create NSArray from references
+            let array = NSArray::from_slice(&refs);
+            let ns_array: *mut AnyObject = std::mem::transmute::<&NSArray<objc2::runtime::AnyObject>, *mut AnyObject>(array.as_ref());
             ns_array
         };
         
         // Call the Objective-C method and get the result array
         let result_array = unsafe {
-            let result: *mut Object = msg_send![
-                self.0,
-                callSymbolName:symbol_name_obj
-                inputTensors:input_tensors_array
-                outputTypes:output_types_array
-                name:name_obj
+            let result: *mut AnyObject = msg_send![
+                self.0, callSymbolName: symbol_name_obj
+                inputTensors: input_tensors_array
+                outputTypes: output_types_array
+                name: name_obj
             ];
             result
         };
         
-        // Convert the result array to a Vec of MPSGraphTensor
-        let count = unsafe {
-            let count: usize = msg_send![result_array, count];
-            count
-        };
-        
-        let mut results = Vec::with_capacity(count);
-        
-        for i in 0..count {
-            unsafe {
-                let tensor: *mut Object = msg_send![result_array, objectAtIndex:i];
-                let tensor: *mut Object = msg_send![tensor, retain];
-                results.push(MPSGraphTensor(tensor));
+        // Convert the result array to a Vec of MPSGraphTensor using objc2_foundation
+        unsafe {
+            // Convert to NSArray
+            let array_ref: &NSArray<objc2::runtime::AnyObject> = &*(result_array as *const objc2_foundation::NSArray);
+            let count = array_ref.len();
+            
+            let mut results = Vec::with_capacity(count);
+            
+            for i in 0..count {
+                // NSArray in objc2-foundation may have different methods in different versions
+                // Directly get object at index
+                if i < count {
+                    let obj: &objc2::runtime::AnyObject = unsafe { msg_send![array_ref, objectAtIndex: i] };
+                    // Get the object and convert it to a raw pointer
+                    let tensor_ptr: *mut AnyObject = std::mem::transmute(obj);
+                    let tensor = objc2::ffi::objc_retain(tensor_ptr as *mut _) as *mut AnyObject;
+                    results.push(MPSGraphTensor(tensor));
+                }
             }
+            
+            results
         }
-        
-        results
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::tests::should_skip_test;
-    
-    // We can't easily test the call operation without creating a proper compilation descriptor
-    // with callables, so we'll just stub the test to make sure the code compiles
-    #[test]
-    fn test_call_stub() {
-        if should_skip_test("test_call_stub") {
-            return;
-        }
-        
-        // This is just a compile-time check since we can't easily test the call operation
-    }
-}

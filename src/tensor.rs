@@ -1,13 +1,15 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
+use objc2::msg_send;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::convert::AsRef;
+use std::ptr;
 use crate::core::MPSDataType;
 use crate::core::MPSShape;
 use crate::operation::MPSGraphOperation;
 
 /// A wrapper for MPSGraphTensor objects
-pub struct MPSGraphTensor(pub(crate) *mut Object);
+pub struct MPSGraphTensor(pub(crate) *mut AnyObject);
 
 // Implement Send + Sync for the wrapper type
 unsafe impl Send for MPSGraphTensor {}
@@ -18,19 +20,19 @@ impl MPSGraphTensor {
     pub fn data_type(&self) -> MPSDataType {
         unsafe {
             let data_type_val: u64 = msg_send![self.0, dataType];
-            std::mem::transmute(data_type_val)
+            std::mem::transmute(data_type_val as u32)
         }
     }
     
     /// Returns the shape of this tensor
     pub fn shape(&self) -> MPSShape {
         unsafe {
-            let shape: *mut Object = msg_send![self.0, shape];
+            let shape: *mut AnyObject = msg_send![self.0, shape];
             // Check if shape is null (unranked tensor)
             if shape.is_null() {
                 return MPSShape::from_slice(&[]);
             }
-            let shape: *mut Object = msg_send![shape, retain];
+            let shape = objc2::ffi::objc_retain(shape as *mut _) as *mut AnyObject;
             MPSShape(shape)
         }
     }
@@ -38,15 +40,15 @@ impl MPSGraphTensor {
     /// Returns the operation that produced this tensor
     pub fn operation(&self) -> MPSGraphOperation {
         unsafe {
-            let operation: *mut Object = msg_send![self.0, operation];
-            let operation: *mut Object = msg_send![operation, retain];
+            let operation: *mut AnyObject = msg_send![self.0, operation];
+            let operation = objc2::ffi::objc_retain(operation as *mut _) as *mut AnyObject;
             MPSGraphOperation(operation)
         }
     }
     
     /// Returns the dimensions of the tensor
     pub fn dimensions(&self) -> Vec<usize> {
-        self.shape().dimensions()
+        self.shape().dimensions().to_vec()
     }
     
     /// Returns the rank (number of dimensions) of this tensor
@@ -62,7 +64,7 @@ impl MPSGraphTensor {
     /// Returns the name of this tensor
     pub fn name(&self) -> String {
         unsafe {
-            let name: *mut Object = msg_send![self.0, name];
+            let name: *mut AnyObject = msg_send![self.0, name];
             
             // Handle case where name is nil
             if name.is_null() {
@@ -78,7 +80,9 @@ impl MPSGraphTensor {
 impl Drop for MPSGraphTensor {
     fn drop(&mut self) {
         unsafe {
-            let _: () = msg_send![self.0, release];
+            if !self.0.is_null() {
+                objc2::ffi::objc_release(self.0 as *mut _);
+            }
         }
     }
 }
@@ -86,8 +90,12 @@ impl Drop for MPSGraphTensor {
 impl Clone for MPSGraphTensor {
     fn clone(&self) -> Self {
         unsafe {
-            let obj: *mut Object = msg_send![self.0, retain];
-            MPSGraphTensor(obj)
+            if !self.0.is_null() {
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                MPSGraphTensor(obj)
+            } else {
+                MPSGraphTensor(ptr::null_mut())
+            }
         }
     }
 }

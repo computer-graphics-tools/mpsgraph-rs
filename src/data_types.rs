@@ -1,4 +1,4 @@
-use objc::runtime::Object;
+use objc2::runtime::AnyObject;
 
 // MPS Graph execution options
 #[derive(Debug, Clone, Copy)]
@@ -8,10 +8,10 @@ pub enum ExecutionMode {
 }
 
 // Define the base types for MPS Graph objects
-pub struct MPSGraphType(pub(crate) *mut Object);
-pub struct MPSGraphTensorType(pub(crate) *mut Object);
-pub struct MPSGraphOperationType(pub(crate) *mut Object);
-pub struct MPSGraphExecutableType(pub(crate) *mut Object);
+pub struct MPSGraphType(pub(crate) *mut AnyObject);
+pub struct MPSGraphTensorType(pub(crate) *mut AnyObject);
+pub struct MPSGraphOperationType(pub(crate) *mut AnyObject);
+pub struct MPSGraphExecutableType(pub(crate) *mut AnyObject);
 
 // Common data types used in MPS Graph
 #[repr(u64)]
@@ -95,14 +95,14 @@ impl MPSShapeDescriptor {
     pub fn with_dimensions(&self, dimensions: Vec<u64>) -> Self {
         Self {
             dimensions,
-            data_type: self.data_type,
+            data_type:  self.data_type,
         }
     }
     
     /// Create a new shape with different data type but same dimensions
     pub fn with_data_type(&self, data_type: MPSDataType) -> Self {
         Self {
-            dimensions: self.dimensions.clone(),
+            dimensions:  self.dimensions.clone(),
             data_type,
         }
     }
@@ -110,7 +110,7 @@ impl MPSShapeDescriptor {
     /// Create a scalar shape with the given data type
     pub fn scalar(data_type: MPSDataType) -> Self {
         Self {
-            dimensions: vec![1],
+            dimensions:  vec![1],
             data_type,
         }
     }
@@ -118,7 +118,7 @@ impl MPSShapeDescriptor {
     /// Create a vector shape with the given length and data type
     pub fn vector(length: u64, data_type: MPSDataType) -> Self {
         Self {
-            dimensions: vec![length],
+            dimensions:  vec![length],
             data_type,
         }
     }
@@ -126,7 +126,7 @@ impl MPSShapeDescriptor {
     /// Create a matrix shape with the given rows, columns and data type
     pub fn matrix(rows: u64, columns: u64, data_type: MPSDataType) -> Self {
         Self {
-            dimensions: vec![rows, columns],
+            dimensions:  vec![rows, columns],
             data_type,
         }
     }
