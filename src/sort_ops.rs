@@ -30,10 +30,10 @@ impl MPSGraph {
             
             let descending_val = if descending { YES } else { NO };
             
-            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0
-                axis: axis
-                descending: descending_val
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0,
+                axis: axis,
+                descending: descending_val,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -58,9 +58,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0
-                axis: axis
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0,
+                axis: axis,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -89,10 +89,10 @@ impl MPSGraph {
             
             let descending_val = if descending { YES } else { NO };
             
-            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0
-                axisTensor: axis_tensor.0
-                descending: descending_val
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0,
+                axisTensor: axis_tensor.0,
+                descending: descending_val,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -117,9 +117,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0
-                axisTensor: axis_tensor.0
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, sortWithTensor: tensor.0,
+                axisTensor: axis_tensor.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -148,10 +148,10 @@ impl MPSGraph {
             
             let descending_val = if descending { YES } else { NO };
             
-            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0
-                axis: axis
-                descending: descending_val
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0,
+                axis: axis,
+                descending: descending_val,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -176,9 +176,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0
-                axis: axis
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0,
+                axis: axis,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -207,10 +207,10 @@ impl MPSGraph {
             
             let descending_val = if descending { YES } else { NO };
             
-            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0
-                axisTensor: axis_tensor.0
-                descending: descending_val
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0,
+                axisTensor: axis_tensor.0,
+                descending: descending_val,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -235,9 +235,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0
-                axisTensor: axis_tensor.0
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, argSortWithTensor: tensor.0,
+                axisTensor: axis_tensor.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;

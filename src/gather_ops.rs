@@ -26,10 +26,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, gatherNDWithUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                batchDimensions: batch_dimensions
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherNDWithUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                batchDimensions: batch_dimensions,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -60,11 +60,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, gatherWithUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                axis: axis
-                batchDimensions: batch_dimensions
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherWithUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                axis: axis,
+                batchDimensions: batch_dimensions,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -96,10 +96,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, gatherAlongAxis: axis
-                withUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherAlongAxis: axis,
+                withUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -131,10 +131,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, gatherAlongAxisTensor: axis_tensor.0
-                withUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, gatherAlongAxisTensor: axis_tensor.0,
+                withUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

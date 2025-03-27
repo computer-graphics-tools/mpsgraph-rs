@@ -320,6 +320,7 @@ impl OurNSString {
         }
     }
     
+    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         unsafe {
             let ns_string_ref: &NSString = &*(self.0 as *const objc2_foundation::NSString);
@@ -449,9 +450,10 @@ impl OurNSArray {
         }
     }
     
+    #[allow(dead_code)]
     pub fn from_slice<T>(objects: &[T]) -> Self
     where 
-        T: AsRef<crate::tensor::MPSGraphTensor>
+        T: AsRef<crate::tensor::MPSGraphTensor>,
     {
         // This is safe because we're only accessing the 0 field which is a raw pointer
         // and we're not dereferencing it, just passing it to from_objects

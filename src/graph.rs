@@ -76,7 +76,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, placeholderWithShape: shape.0,
                 dataType:  data_type as u32,
-                name:  name_obj
+                name: name_obj,
             ];
             
             // Retain using objc2 functions
@@ -103,7 +103,7 @@ impl MPSGraph {
             };
             
             let result: *mut AnyObject = msg_send![self.0, zerosLikeTensor: tensor.0,
-                name:  name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -136,7 +136,7 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let data_ptr = data.as_ptr() as *const c_void;
+            let _data_ptr = data.as_ptr() as *const c_void;
             let _data_len = std::mem::size_of_val(data); // Used for debugging
             
             // Create NSData for the input data
@@ -151,7 +151,7 @@ impl MPSGraph {
             let tensor: *mut AnyObject = msg_send![self.0, constantWithSharedData: ns_data_ptr,
                 shape:  shape.0,
                 dataType:  data_type as u32,
-                name:  name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -201,7 +201,7 @@ impl MPSGraph {
                 feeds: feed_dict.0, 
                 targetTensors: targets_array.0, 
                 targetOperations: std::ptr::null_mut::<AnyObject>(), 
-                name: name_obj
+                name: name_obj,
             ];
             
             let executable = objc2::ffi::objc_retain(executable as *mut _) as *mut AnyObject;
@@ -235,7 +235,7 @@ impl MPSGraph {
             // Run the graph - fixing the syntax for objc2
             let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict.0, 
                 targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>()
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
             ];
             
             // Parse the results
@@ -306,7 +306,7 @@ impl MPSGraph {
             let results: *mut AnyObject = msg_send![self.0, runWithMTLCommandQueue: cmd_queue_ptr, 
                 feeds: feed_dict.0, 
                 targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>()
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
             ];
             
             // Parse the results
@@ -389,7 +389,7 @@ impl MPSGraph {
             println!("DEBUG run: About to execute graph");
             let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict.0, 
                 targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>()
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
             ];
             println!("DEBUG run: Got results pointer: {:p}", results);
             
@@ -555,7 +555,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, additionWithPrimaryTensor: lhs.0,
                 secondaryTensor: rhs.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -573,7 +573,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, subtractionWithPrimaryTensor: lhs.0, 
                 secondaryTensor: rhs.0, 
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -591,7 +591,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, multiplicationWithPrimaryTensor: lhs.0, 
                 secondaryTensor: rhs.0, 
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -609,7 +609,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, divisionWithPrimaryTensor: lhs.0,
                 secondaryTensor: rhs.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -627,7 +627,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, powerWithPrimaryTensor: lhs.0,
                 secondaryTensor: rhs.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -644,7 +644,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, negativeWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -661,7 +661,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, absoluteWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -681,7 +681,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, exponentWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -698,7 +698,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, logarithmWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -715,7 +715,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, squareRootWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -732,7 +732,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, reciprocalSquareRootWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -749,7 +749,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, squareWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -767,7 +767,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, castTensor: x.0,
                 toType: data_type as u64,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -784,7 +784,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, sineWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -801,7 +801,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, cosineWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -818,7 +818,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, tangentWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -843,7 +843,7 @@ impl MPSGraph {
             // Create the operation
             let tensor: *mut AnyObject = msg_send![self.0, transposeTensor: x.0,
                 dimension: dimensions_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -863,7 +863,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, reLUWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -880,7 +880,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, sigmoidWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -897,7 +897,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, tanhWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -915,7 +915,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, softMaxWithTensor: x.0,
                 axis: axis,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -936,7 +936,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, reshapeTensor: x.0,
                 withShape: new_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -954,7 +954,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, broadcastTensor: x.0,
                 toShape: shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -979,7 +979,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, concatenationWithTensors: tensors_array.0,
                 dimension: dimension,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -1003,7 +1003,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, reductionSumWithTensor: x.0,
                 axes: axes_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -1024,7 +1024,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, reductionMeanWithTensor: x.0,
                 axes: axes_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -1045,7 +1045,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, reductionMaximumWithTensor: x.0,
                 axes: axes_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -1066,7 +1066,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, reductionMinimumWithTensor: x.0,
                 axes: axes_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

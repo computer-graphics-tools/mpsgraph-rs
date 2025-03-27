@@ -62,10 +62,10 @@ impl MPSGraph {
         // Call the Objective-C method and get the result array
         let result_array = unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, callSymbolName: symbol_name_obj
-                inputTensors: input_tensors_array
-                outputTypes: output_types_array
-                name: name_obj
+                self.0, callSymbolName: symbol_name_obj,
+                inputTensors: input_tensors_array,
+                outputTypes: output_types_array,
+                name: name_obj,
             ];
             result
         };
@@ -82,7 +82,7 @@ impl MPSGraph {
                 // NSArray in objc2-foundation may have different methods in different versions
                 // Directly get object at index
                 if i < count {
-                    let obj: &objc2::runtime::AnyObject = unsafe { msg_send![array_ref, objectAtIndex: i] };
+                    let obj: &objc2::runtime::AnyObject = msg_send![array_ref, objectAtIndex: i,];
                     // Get the object and convert it to a raw pointer
                     let tensor_ptr: *mut AnyObject = std::mem::transmute(obj);
                     let tensor = objc2::ffi::objc_retain(tensor_ptr as *mut _) as *mut AnyObject;

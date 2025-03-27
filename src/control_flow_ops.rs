@@ -59,9 +59,9 @@ impl MPSGraph {
             
             // Call the Objective-C method
             let result_array: *mut AnyObject = msg_send![
-                self.0, controlDependencyWithOperations: operations_array.0
-                dependentBlock: &*block
-                name: name_obj
+                self.0, controlDependencyWithOperations: operations_array.0,
+                dependentBlock: &*block,
+                name: name_obj,
             ];
             
             // Get the count of result tensors
@@ -70,7 +70,7 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,,,,,,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
@@ -138,10 +138,10 @@ impl MPSGraph {
             
             // Call the Objective-C method
             let result_array: *mut AnyObject = msg_send![
-                self.0, ifWithPredicateTensor: predicate.0
-                thenBlock: &*then_callback
-                elseBlock: else_callback
-                name: name_obj
+                self.0, ifWithPredicateTensor: predicate.0,
+                thenBlock: &*then_callback,
+                elseBlock: else_callback,
+                name: name_obj,
             ];
             
             // Get the count of result tensors
@@ -150,7 +150,7 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
@@ -199,7 +199,7 @@ impl MPSGraph {
                 let inputs_count: usize = msg_send![inputs, count];
                 let mut input_tensors = Vec::with_capacity(inputs_count);
                 for i in 0..inputs_count {
-                    let tensor: *mut AnyObject = msg_send![inputs, objectAtIndex: i];
+                    let tensor: *mut AnyObject = msg_send![inputs, objectAtIndex: i,];
                     input_tensors.push(MPSGraphTensor(tensor));
                 }
                 
@@ -213,7 +213,7 @@ impl MPSGraph {
                 if !result_tensors.is_empty() {
                     let result_ptrs: Vec<*mut Object> = result_tensors.iter().map(|t| t.0).collect();
                     for i in 0..result_ptrs.len() {
-                        let _: () = msg_send![results, addObject: result_ptrs[i]];
+                        let _: () = msg_send![results, addObject: result_ptrs[i],];
                     }
                 }
                 
@@ -227,7 +227,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![body_args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut AnyObject = msg_send![body_args, objectAtIndex: i];
+                    let tensor: *mut AnyObject = msg_send![body_args, objectAtIndex: i,,];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -244,10 +244,10 @@ impl MPSGraph {
             
             // Call the Objective-C method
             let result_array: *mut AnyObject = msg_send![
-                self.0, whileWithInitialInputs: initial_inputs_array.0
-                before: &*before_callback
-                after: &*after_callback
-                name: name_obj
+                self.0, whileWithInitialInputs: initial_inputs_array.0,
+                before: &*before_callback,
+                after: &*after_callback,
+                name: name_obj,
             ];
             
             // Get the count of result tensors
@@ -256,7 +256,7 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,,,,,,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
@@ -311,7 +311,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i];
+                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i,,,];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -328,12 +328,12 @@ impl MPSGraph {
             
             // Call the Objective-C method
             let result_array: *mut AnyObject = msg_send![
-                self.0, forLoopWithLowerBound: lower_bound.0
-                upperBound: upper_bound.0
-                step: step.0
-                initialBodyArguments: initial_args_array.0
-                body: &*body_callback
-                name: name_obj
+                self.0, forLoopWithLowerBound: lower_bound.0,
+                upperBound: upper_bound.0,
+                step: step.0,
+                initialBodyArguments: initial_args_array.0,
+                body: &*body_callback,
+                name: name_obj,
             ];
             
             // Get the count of result tensors
@@ -342,7 +342,7 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
@@ -393,7 +393,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i];
+                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i,];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -410,10 +410,10 @@ impl MPSGraph {
             
             // Call the Objective-C method
             let result_array: *mut AnyObject = msg_send![
-                self.0, forLoopWithNumberOfIterations: num_iterations.0
-                initialBodyArguments: initial_args_array.0
-                body: &*body_callback
-                name: name_obj
+                self.0, forLoopWithNumberOfIterations: num_iterations.0,
+                initialBodyArguments: initial_args_array.0,
+                body: &*body_callback,
+                name: name_obj,
             ];
             
             // Get the count of result tensors
@@ -422,7 +422,7 @@ impl MPSGraph {
             // Convert NSArray to Vec<MPSGraphTensor>
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,,,,,,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }

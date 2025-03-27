@@ -52,7 +52,7 @@ impl MPSGraph {
             let array = crate::core::OurNSArray::from_objects(&tensor_ptrs);
             
             // Call the Objective-C method
-            let dict: *mut AnyObject = msg_send![self.0, gradientForPrimaryTensor: primary_tensor.0, withTensors: array.0, name: name_obj];
+            let dict: *mut AnyObject = msg_send![self.0, gradientForPrimaryTensor: primary_tensor.0, withTensors: array.0, name: name_obj,];
             
             // We need to manually parse the NSDictionary since we can't directly use the new objc2 version
             // Convert NSDictionary to HashMap manually
@@ -63,11 +63,11 @@ impl MPSGraph {
             let keys_count: usize = msg_send![keys, count];
             
             for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
+                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i,];
                 let key_retained = objc2::ffi::objc_retain(key as *mut _) as *mut AnyObject;
                 let key_tensor = MPSGraphTensor(key_retained);
                 
-                let value: *mut AnyObject = msg_send![dict, objectForKey: key];
+                let value: *mut AnyObject = msg_send![dict, objectForKey: key,];
                 let value_retained = objc2::ffi::objc_retain(value as *mut _) as *mut AnyObject;
                 let value_tensor = MPSGraphTensor(value_retained);
                 

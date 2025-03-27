@@ -43,21 +43,21 @@ impl MPSGraphFFTDescriptor {
     /// Sets the FFT length
     pub fn set_length(&self, length: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setLength: length];
+            let _: () = msg_send![self.0, setLength: length,];
         }
     }
     
     /// Sets the input batch dimension
     pub fn set_batch_dimension(&self, dimension: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setBatchDimension: dimension];
+            let _: () = msg_send![self.0, setBatchDimension: dimension,];
         }
     }
     
     /// Sets the input transform dimension
     pub fn set_transform_dimension(&self, dimension: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setTransformDimension: dimension];
+            let _: () = msg_send![self.0, setTransformDimension: dimension,];
         }
     }
     
@@ -148,10 +148,10 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, forwardFFTWithRealTensor: real.0
-                imaginaryTensor: imaginary.0
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, forwardFFTWithRealTensor: real.0,
+                imaginaryTensor: imaginary.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             // This returns an NSArray with two tensors: real and imaginary parts
@@ -195,10 +195,10 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, inverseFFTWithRealTensor: real.0
-                imaginaryTensor: imaginary.0
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, inverseFFTWithRealTensor: real.0,
+                imaginaryTensor: imaginary.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             // This returns an NSArray with two tensors: real and imaginary parts
@@ -240,9 +240,9 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, forwardRealFFTWithRealTensor: real.0
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, forwardRealFFTWithRealTensor: real.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             // This returns an NSArray with two tensors: real and imaginary parts
@@ -286,10 +286,10 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, inverseRealFFTWithRealTensor: real.0
-                imaginaryTensor: imaginary.0
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, inverseRealFFTWithRealTensor: real.0,
+                imaginaryTensor: imaginary.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

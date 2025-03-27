@@ -72,11 +72,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, softMaxCrossEntropyWithSourceTensor: source_tensor.0
-                labelsTensor: labels_tensor.0
-                axis: axis
-                reductionType: reduction_type as u64
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, softMaxCrossEntropyWithSourceTensor: source_tensor.0,
+                labelsTensor: labels_tensor.0,
+                axis: axis,
+                reductionType: reduction_type as u64,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -136,12 +136,12 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, softMaxCrossEntropyGradientWithIncomingGradientTensor: gradient_tensor.0
-                sourceTensor: source_tensor.0
-                labelsTensor: labels_tensor.0
-                axis: axis
-                reductionType: reduction_type as u64
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, softMaxCrossEntropyGradientWithIncomingGradientTensor: gradient_tensor.0,
+                sourceTensor: source_tensor.0,
+                labelsTensor: labels_tensor.0,
+                axis: axis,
+                reductionType: reduction_type as u64,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

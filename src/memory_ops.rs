@@ -27,8 +27,8 @@ impl MPSGraph {
     ) -> MPSGraphTensor {
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, constantWithRealPart: real_part 
-                imaginaryPart: imaginary_part
+                self.0, constantWithRealPart: real_part,
+                imaginaryPart: imaginary_part,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -55,8 +55,8 @@ impl MPSGraph {
     ) -> MPSGraphTensor {
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, constantWithRealPart: real_part 
-                imaginaryPart: imaginary_part
+                self.0, constantWithRealPart: real_part,
+                imaginaryPart: imaginary_part,
                 dataType: data_type as u64
             ];
             
@@ -86,9 +86,9 @@ impl MPSGraph {
     ) -> MPSGraphTensor {
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, constantWithRealPart: real_part 
-                imaginaryPart: imaginary_part
-                shape: shape.0
+                self.0, constantWithRealPart: real_part,
+                imaginaryPart: imaginary_part,
+                shape: shape.0,
                 dataType: data_type as u64
             ];
             
@@ -135,7 +135,7 @@ impl MPSGraph {
                 self.0, variableWithData: data_obj,
                 shape: shape.0,
                 dataType: data_type as u64,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -165,8 +165,8 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, variableFromTensorWithTensor: tensor.0
-                name: name_obj
+                self.0, variableFromTensorWithTensor: tensor.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -196,8 +196,8 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, readVariable: variable.0
-                name: name_obj
+                self.0, readVariable: variable.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -229,9 +229,9 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, assignVariable: variable.0
-                withValueOfTensor: tensor.0
-                name: name_obj
+                self.0, assignVariable: variable.0,
+                withValueOfTensor: tensor.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;

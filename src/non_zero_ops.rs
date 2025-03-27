@@ -32,8 +32,8 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, nonZeroIndicesOfTensor: tensor.0
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, nonZeroIndicesOfTensor: tensor.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;

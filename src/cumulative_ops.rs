@@ -44,7 +44,7 @@ impl MPSGraph {
                 axis: axis,
                 exclusive: exclusive_obj,
                 reverse: reverse_obj,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -87,7 +87,7 @@ impl MPSGraph {
                 axisTensor: axis_tensor.0,
                 exclusive: exclusive_obj,
                 reverse: reverse_obj,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -121,7 +121,7 @@ impl MPSGraph {
             let result: *mut AnyObject = msg_send![
                 self.0, cumulativeSumWithTensor: tensor.0,
                 axis: axis,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -164,7 +164,7 @@ impl MPSGraph {
                 axis: axis,
                 exclusive: exclusive_obj,
                 reverse: reverse_obj,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -207,7 +207,7 @@ impl MPSGraph {
                 axis: axis,
                 exclusive: exclusive_obj,
                 reverse: reverse_obj,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -250,7 +250,7 @@ impl MPSGraph {
                 axis: axis,
                 exclusive: exclusive_obj,
                 reverse: reverse_obj,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);

@@ -51,10 +51,10 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![
-                self.0, stochasticGradientDescentWithLearningRateTensor: learning_rate.0
-                valuesTensor: values.0
-                gradientTensor: gradient.0
-                name: name_obj
+                self.0, stochasticGradientDescentWithLearningRateTensor: learning_rate.0,
+                valuesTensor: values.0,
+                gradientTensor: gradient.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -160,18 +160,18 @@ impl MPSGraph {
             };
             
             let result_array: *mut AnyObject = msg_send![
-                self.0, adamWithLearningRateTensor: learning_rate.0
-                beta1Tensor: beta1.0
-                beta2Tensor: beta2.0
-                epsilonTensor: epsilon.0
-                beta1PowerTensor: beta1_power.0
-                beta2PowerTensor: beta2_power.0
-                valuesTensor: values.0
-                momentumTensor: momentum.0
-                velocityTensor: velocity.0
-                maximumVelocityTensor: max_velocity_obj
-                gradientTensor: gradient.0
-                name: name_obj
+                self.0, adamWithLearningRateTensor: learning_rate.0,
+                beta1Tensor: beta1.0,
+                beta2Tensor: beta2.0,
+                epsilonTensor: epsilon.0,
+                beta1PowerTensor: beta1_power.0,
+                beta2PowerTensor: beta2_power.0,
+                valuesTensor: values.0,
+                momentumTensor: momentum.0,
+                velocityTensor: velocity.0,
+                maximumVelocityTensor: max_velocity_obj,
+                gradientTensor: gradient.0,
+                name: name_obj,
             ];
             
             // Get the count of result tensors
@@ -246,16 +246,16 @@ impl MPSGraph {
             };
             
             let result_array: *mut AnyObject = msg_send![
-                self.0, adamWithCurrentLearningRateTensor: current_learning_rate.0
-                beta1Tensor: beta1.0
-                beta2Tensor: beta2.0
-                epsilonTensor: epsilon.0
-                valuesTensor: values.0
-                momentumTensor: momentum.0
-                velocityTensor: velocity.0
-                maximumVelocityTensor: max_velocity_obj
-                gradientTensor: gradient.0
-                name: name_obj
+                self.0, adamWithCurrentLearningRateTensor: current_learning_rate.0,
+                beta1Tensor: beta1.0,
+                beta2Tensor: beta2.0,
+                epsilonTensor: epsilon.0,
+                valuesTensor: values.0,
+                momentumTensor: momentum.0,
+                velocityTensor: velocity.0,
+                maximumVelocityTensor: max_velocity_obj,
+                gradientTensor: gradient.0,
+                name: name_obj,
             ];
             
             // Get the count of result tensors

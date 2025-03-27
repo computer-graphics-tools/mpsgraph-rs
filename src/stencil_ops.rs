@@ -1,4 +1,4 @@
-use objc2::runtime::Object;
+use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
@@ -23,7 +23,7 @@ pub enum MPSGraphReductionMode {
 }
 
 /// Descriptor for stencil operations
-pub struct MPSGraphStencilOpDescriptor(pub(crate) *mut Object);
+pub struct MPSGraphStencilOpDescriptor(pub(crate) *mut AnyObject);
 
 impl Default for MPSGraphStencilOpDescriptor {
     fn default() -> Self {
@@ -37,8 +37,8 @@ impl MPSGraphStencilOpDescriptor {
         unsafe {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-                let descriptor: *mut Object = msg_send![cls, descriptor];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut Object;
+                let descriptor: *mut AnyObject = msg_send![cls, descriptor];
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -52,8 +52,8 @@ impl MPSGraphStencilOpDescriptor {
         unsafe {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-                let descriptor: *mut Object = msg_send![cls, descriptorWithPaddingStyle: padding_style as i64];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut Object;
+                let descriptor: *mut AnyObject = msg_send![cls, descriptorWithPaddingStyle: padding_style as i64];
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -67,8 +67,8 @@ impl MPSGraphStencilOpDescriptor {
         unsafe {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-                let descriptor: *mut Object = msg_send![cls, descriptorWithExplicitPadding: explicit_padding.0];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut Object;
+                let descriptor: *mut AnyObject = msg_send![cls, descriptorWithExplicitPadding: explicit_padding.0,];
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -82,8 +82,8 @@ impl MPSGraphStencilOpDescriptor {
         unsafe {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-                let descriptor: *mut Object = msg_send![cls, descriptorWithOffsets: offsets.0 explicitPadding:explicit_padding.0];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut Object;
+                let descriptor: *mut AnyObject = msg_send![cls, descriptorWithOffsets: offsets.0, explicitPadding: explicit_padding.0,];
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -106,16 +106,16 @@ impl MPSGraphStencilOpDescriptor {
         unsafe {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-                let descriptor: *mut Object = msg_send![cls, descriptorWithReductionMode: reduction_mode as u64
-                    offsets: offsets.0
-                    strides: strides.0
-                    dilationRates: dilation_rates.0
-                    explicitPadding: explicit_padding.0
-                    boundaryMode: boundary_mode as i64
-                    paddingStyle: padding_style as u64
-                    paddingConstant: padding_constant
+                let descriptor: *mut AnyObject = msg_send![cls, descriptorWithReductionMode: reduction_mode as u64,
+                    offsets: offsets.0,
+                    strides: strides.0,
+                    dilationRates: dilation_rates.0,
+                    explicitPadding: explicit_padding.0,
+                    boundaryMode: boundary_mode as i64,
+                    paddingStyle: padding_style as u64,
+                    paddingConstant: padding_constant,
                 ];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut Object;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -134,28 +134,28 @@ impl MPSGraphStencilOpDescriptor {
     /// Sets the offsets
     pub fn set_offsets(&self, offsets: &MPSShape) {
         unsafe {
-            let _: () = msg_send![self.0, setOffsets: offsets.0];
+            let _: () = msg_send![self.0, setOffsets: offsets.0,];
         }
     }
     
     /// Sets the strides
     pub fn set_strides(&self, strides: &MPSShape) {
         unsafe {
-            let _: () = msg_send![self.0, setStrides: strides.0];
+            let _: () = msg_send![self.0, setStrides: strides.0,];
         }
     }
     
     /// Sets the dilation rates
     pub fn set_dilation_rates(&self, dilation_rates: &MPSShape) {
         unsafe {
-            let _: () = msg_send![self.0, setDilationRates: dilation_rates.0];
+            let _: () = msg_send![self.0, setDilationRates: dilation_rates.0,];
         }
     }
     
     /// Sets the explicit padding
     pub fn set_explicit_padding(&self, explicit_padding: &MPSShape) {
         unsafe {
-            let _: () = msg_send![self.0, setExplicitPadding: explicit_padding.0];
+            let _: () = msg_send![self.0, setExplicitPadding: explicit_padding.0,];
         }
     }
     
@@ -176,7 +176,7 @@ impl MPSGraphStencilOpDescriptor {
     /// Sets the padding constant
     pub fn set_padding_constant(&self, value: f32) {
         unsafe {
-            let _: () = msg_send![self.0, setPaddingConstant: value];
+            let _: () = msg_send![self.0, setPaddingConstant: value,];
         }
     }
 }
@@ -192,7 +192,7 @@ impl Drop for MPSGraphStencilOpDescriptor {
 impl Clone for MPSGraphStencilOpDescriptor {
     fn clone(&self) -> Self {
         unsafe {
-            let desc: *mut Object = msg_send![self.0, copy];
+            let desc: *mut AnyObject = msg_send![self.0, copy];
             MPSGraphStencilOpDescriptor(desc)
         }
     }
@@ -231,14 +231,14 @@ impl MPSGraph {
         };
         
         unsafe {
-            let tensor: *mut Object = msg_send![
-                self.0, stencilWithSourceTensor: source.0
-                weightsTensor: weights.0
-                descriptor: descriptor.0
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![
+                self.0, stencilWithSourceTensor: source.0,
+                weightsTensor: weights.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut Object;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }

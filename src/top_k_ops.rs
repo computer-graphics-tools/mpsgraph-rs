@@ -28,9 +28,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0
-                k: k
-                name: name_obj
+            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0,
+                k: k,
+                name: name_obj,
             ];
             
             // Get the two tensors from the NSArray
@@ -66,10 +66,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0
-                axis: axis
-                k: k
-                name: name_obj
+            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0,
+                axis: axis,
+                k: k,
+                name: name_obj,
             ];
             
             // Get the two tensors from the NSArray
@@ -105,10 +105,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result_array: *mut AnyObject = msg_send![self.0, bottomKWithSourceTensor: source.0
-                axis: axis
-                k: k
-                name: name_obj
+            let result_array: *mut AnyObject = msg_send![self.0, bottomKWithSourceTensor: source.0,
+                axis: axis,
+                k: k,
+                name: name_obj,
             ];
             
             // Get the two tensors from the NSArray
@@ -140,9 +140,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0
-                kTensor: k_tensor.0
-                name: name_obj
+            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0,
+                kTensor: k_tensor.0,
+                name: name_obj,
             ];
             
             // Get the two tensors from the NSArray
@@ -176,10 +176,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0
-                axisTensor: axis_tensor.0
-                kTensor: k_tensor.0
-                name: name_obj
+            let result_array: *mut AnyObject = msg_send![self.0, topKWithSourceTensor: source.0,
+                axisTensor: axis_tensor.0,
+                kTensor: k_tensor.0,
+                name: name_obj,
             ];
             
             // Get the two tensors from the NSArray
@@ -213,10 +213,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result_array: *mut AnyObject = msg_send![self.0, bottomKWithSourceTensor: source.0
-                axisTensor: axis_tensor.0
-                kTensor: k_tensor.0
-                name: name_obj
+            let result_array: *mut AnyObject = msg_send![self.0, bottomKWithSourceTensor: source.0,
+                axisTensor: axis_tensor.0,
+                kTensor: k_tensor.0,
+                name: name_obj,
             ];
             
             // Get the two tensors from the NSArray
@@ -250,10 +250,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, topKWithGradientTensor: gradient.0
-                source: source.0
-                k: k
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, topKWithGradientTensor: gradient.0,
+                source: source.0,
+                k: k,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -282,11 +282,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, topKWithGradientTensor: gradient.0
-                source: source.0
-                axis: axis
-                k: k
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, topKWithGradientTensor: gradient.0,
+                source: source.0,
+                axis: axis,
+                k: k,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -315,11 +315,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, bottomKWithGradientTensor: gradient.0
-                source: source.0
-                axis: axis
-                k: k
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, bottomKWithGradientTensor: gradient.0,
+                source: source.0,
+                axis: axis,
+                k: k,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;

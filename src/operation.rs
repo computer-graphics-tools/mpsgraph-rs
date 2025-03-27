@@ -17,7 +17,7 @@ impl MPSGraphOperation {
             let mut result = Vec::with_capacity(count);
             
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![input_tensors, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![input_tensors, objectAtIndex: i,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
@@ -34,7 +34,7 @@ impl MPSGraphOperation {
             let mut result = Vec::with_capacity(count);
             
             for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![output_tensors, objectAtIndex: i];
+                let tensor: *mut AnyObject = msg_send![output_tensors, objectAtIndex: i,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
@@ -69,7 +69,7 @@ impl MPSGraphOperation {
             let mut result = Vec::with_capacity(count);
             
             for i in 0..count {
-                let op: *mut AnyObject = msg_send![dependencies, objectAtIndex: i];
+                let op: *mut AnyObject = msg_send![dependencies, objectAtIndex: i,];
                 let op = objc2::ffi::objc_retain(op as *mut _) as *mut AnyObject;
                 result.push(MPSGraphOperation(op));
             }

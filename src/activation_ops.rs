@@ -16,7 +16,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, leakyReLUWithTensor: x.0,
                 alpha: alpha as f64,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -34,7 +34,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, PReLUWithTensor: x.0,
                 alpha: alpha.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -51,7 +51,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, gELUWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -68,7 +68,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, hardSigmoidWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -85,7 +85,7 @@ impl MPSGraph {
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, softPlusWithTensor: x.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -103,7 +103,7 @@ impl MPSGraph {
             
             let tensor: *mut AnyObject = msg_send![self.0, logSoftMaxWithTensor: x.0,
                 axis: axis,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

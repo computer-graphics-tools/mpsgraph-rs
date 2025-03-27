@@ -132,7 +132,7 @@ impl MPSGraph {
                 valuesTensor: values.0,
                 denseShape: dense_shape.0,
                 descriptor: descriptor.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);
@@ -181,7 +181,7 @@ impl MPSGraph {
                 self.0, sparseToDenseWithIndicesTensors: input_tensors_array,
                 valuesTensor: values.0,
                 denseShapeTensor: dense_shape.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _);

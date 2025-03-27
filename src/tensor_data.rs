@@ -1,8 +1,7 @@
 use objc2::runtime::AnyObject;
 use objc2::msg_send;
-use std::ffi::c_void;
 use std::fmt;
-use metal::{Buffer, Device};
+use metal::Buffer;
 use metal::foreign_types::ForeignType;
 use objc2_foundation::NSData;
 use crate::core::MPSDataType;
@@ -60,7 +59,7 @@ impl MPSGraphTensorData {
             let mps_device_cls = objc2::runtime::AnyClass::get(mps_device_class_name).unwrap();
             // Cast the Metal device to a void pointer and then to *mut AnyObject for objc2
             let device_ptr = device.as_ptr() as *mut AnyObject;
-            let mps_device: *mut AnyObject = msg_send![mps_device_cls, deviceWithMTLDevice: device_ptr];
+            let mps_device: *mut AnyObject = msg_send![mps_device_cls, deviceWithMTLDevice: device_ptr,];
             println!("DEBUG from_bytes: MPSGraphDevice created: {:p}", mps_device);
             
             println!("DEBUG from_bytes: Creating MPSGraphTensorData");
@@ -84,7 +83,7 @@ impl MPSGraphTensorData {
                 let obj: *mut AnyObject = msg_send![tensor_obj_copy, initWithDevice: mps_device_copy,
                     data: ns_data_ptr_copy,
                     shape: shape_ptr,
-                    dataType: data_type_val_32
+                    dataType: data_type_val_32,
                 ];
                 println!("DEBUG from_bytes: MPSGraphTensorData created successfully: {:p}", obj);
                 obj
@@ -129,7 +128,7 @@ impl MPSGraphTensorData {
             let data_type_val_32 = data_type as u32;
             let obj: *mut AnyObject = msg_send![obj, initWithMTLBuffer: buffer_ptr,
                 shape: shape.0,
-                dataType: data_type_val_32
+                dataType: data_type_val_32,
             ];
             
             MPSGraphTensorData(obj)

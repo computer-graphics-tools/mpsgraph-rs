@@ -311,13 +311,13 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, singleGateRNNWithSourceTensor: input.0
-                recurrentSourceTensor: initial_state.0
-                weightsTensor: weights.0
-                recurrentWeightsTensor: recurrent_weights.0
-                biasesTensor: biases_obj
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, singleGateRNNWithSourceTensor: input.0,
+                recurrentSourceTensor: initial_state.0,
+                weightsTensor: weights.0,
+                recurrentWeightsTensor: recurrent_weights.0,
+                biasesTensor: biases_obj,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             // This returns an NSArray with two tensors: output and output_state
@@ -374,14 +374,14 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, LSTMWithSourceTensor: input.0
-                recurrentSourceTensor: initial_hidden_state.0
-                cellSourceTensor: initial_cell_state.0
-                weightsTensor: weights.0
-                recurrentWeightsTensor: recurrent_weights.0
-                biasesTensor: biases_obj
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, LSTMWithSourceTensor: input.0,
+                recurrentSourceTensor: initial_hidden_state.0,
+                cellSourceTensor: initial_cell_state.0,
+                weightsTensor: weights.0,
+                recurrentWeightsTensor: recurrent_weights.0,
+                biasesTensor: biases_obj,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             // This returns an NSArray with three tensors: output, output_hidden_state, and output_cell_state
@@ -442,13 +442,13 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, GRUWithSourceTensor: input.0
-                recurrentSourceTensor: initial_state.0
-                weightsTensor: weights.0
-                recurrentWeightsTensor: recurrent_weights.0
-                biasesTensor: biases_obj
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, GRUWithSourceTensor: input.0,
+                recurrentSourceTensor: initial_state.0,
+                weightsTensor: weights.0,
+                recurrentWeightsTensor: recurrent_weights.0,
+                biasesTensor: biases_obj,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             // This returns an NSArray with two tensors: output and output_state

@@ -156,7 +156,7 @@ impl MPSGraph {
             let tensor: *mut AnyObject = msg_send![
                 self.0, imageToColumnWithSourceTensor: source.0,
                 descriptor: descriptor.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _);
@@ -193,7 +193,7 @@ impl MPSGraph {
                 self.0, columnToImageWithSourceTensor: source.0,
                 outputShape: output_shape.0,
                 descriptor: descriptor.0,
-                name: name_obj
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _);

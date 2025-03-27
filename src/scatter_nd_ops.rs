@@ -51,11 +51,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterNDWithUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                shape: shape.0
-                batchDimensions: batch_dimensions
-                mode: mode as i64
+            let result: *mut AnyObject = msg_send![self.0, scatterNDWithUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                shape: shape.0,
+                batchDimensions: batch_dimensions,
+                mode: mode as i64,
                 name: name_obj
             ];
             
@@ -85,11 +85,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterNDWithUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                shape: shape.0
-                batchDimensions: batch_dimensions
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, scatterNDWithUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                shape: shape.0,
+                batchDimensions: batch_dimensions,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -122,11 +122,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterNDWithDataTensor: data_tensor.0
-                updatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                batchDimensions: batch_dimensions
-                mode: mode as i64
+            let result: *mut AnyObject = msg_send![self.0, scatterNDWithDataTensor: data_tensor.0,
+                updatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                batchDimensions: batch_dimensions,
+                mode: mode as i64,
                 name: name_obj
             ];
             
@@ -160,11 +160,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterWithUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                shape: shape.0
-                axis: axis
-                mode: mode as i64
+            let result: *mut AnyObject = msg_send![self.0, scatterWithUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                shape: shape.0,
+                axis: axis,
+                mode: mode as i64,
                 name: name_obj
             ];
             
@@ -198,11 +198,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterWithDataTensor: data_tensor.0
-                updatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                axis: axis
-                mode: mode as i64
+            let result: *mut AnyObject = msg_send![self.0, scatterWithDataTensor: data_tensor.0,
+                updatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                axis: axis,
+                mode: mode as i64,
                 name: name_obj
             ];
             
@@ -236,11 +236,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterAlongAxis: axis
-                withUpdatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                shape: shape.0
-                mode: mode as i64
+            let result: *mut AnyObject = msg_send![self.0, scatterAlongAxis: axis,
+                withUpdatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                shape: shape.0,
+                mode: mode as i64,
                 name: name_obj
             ];
             
@@ -274,11 +274,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, scatterAlongAxis: axis
-                withDataTensor: data_tensor.0
-                updatesTensor: updates_tensor.0
-                indicesTensor: indices_tensor.0
-                mode: mode as i64
+            let result: *mut AnyObject = msg_send![self.0, scatterAlongAxis: axis,
+                withDataTensor: data_tensor.0,
+                updatesTensor: updates_tensor.0,
+                indicesTensor: indices_tensor.0,
+                mode: mode as i64,
                 name: name_obj
             ];
             

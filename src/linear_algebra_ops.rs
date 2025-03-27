@@ -32,7 +32,7 @@ impl MPSGraph {
             let tensor: *mut AnyObject = msg_send![
                 self.0, matrixMultiplicationWithPrimaryTensor: primary.0,
                 secondaryTensor: secondary.0,
-                name: name_obj
+                name: name_obj,
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -72,7 +72,7 @@ impl MPSGraph {
                 transposePrimary: primary_transpose,
                 secondaryTensor: secondary.0,
                 transposeSecondary: secondary_transpose,
-                name: name_obj
+                name: name_obj,
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -106,7 +106,7 @@ impl MPSGraph {
             let tensor: *mut AnyObject = msg_send![
                 self.0, innerProductWithPrimaryTensor: primary.0,
                 secondaryTensor: secondary.0,
-                name: name_obj
+                name: name_obj,
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -140,7 +140,7 @@ impl MPSGraph {
             let tensor: *mut AnyObject = msg_send![
                 self.0, outerProductWithPrimaryTensor: primary.0,
                 secondaryTensor: secondary.0,
-                name: name_obj
+                name: name_obj,
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -174,7 +174,7 @@ impl MPSGraph {
             let tensor: *mut AnyObject = msg_send![
                 self.0, batchMatrixMultiplicationWithPrimaryTensor: primary.0,
                 secondaryTensor: secondary.0,
-                name: name_obj
+                name: name_obj,
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -215,7 +215,7 @@ impl MPSGraph {
                 transposePrimary: primary_transpose,
                 secondaryTensor: secondary.0,
                 transposeSecondary: secondary_transpose,
-                name: name_obj
+                name: name_obj,
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

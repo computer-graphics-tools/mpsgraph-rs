@@ -28,7 +28,7 @@ impl MPSGraphDevice {
             let cls = objc2::runtime::AnyClass::get(class_name).unwrap_or_else(|| panic!("MPSGraphDevice class not found"));
             // Convert the Metal device to a void pointer to avoid RefEncode issues
             let metal_device_ptr = device.as_ptr() as *mut std::ffi::c_void;
-            let obj: *mut AnyObject = msg_send![cls, deviceWithMTLDevice: metal_device_ptr];
+            let obj: *mut AnyObject = msg_send![cls, deviceWithMTLDevice: metal_device_ptr,];
             let obj = objc2::ffi::objc_retain(obj as *mut _) as *mut AnyObject;
             MPSGraphDevice(obj)
         }

@@ -36,13 +36,13 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0
-                depth: depth
-                axis: axis
-                dataType: data_type as u64
-                onValue: on_value
-                offValue: off_value
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0,
+                depth: depth,
+                axis: axis,
+                dataType: data_type as u64,
+                onValue: on_value,
+                offValue: off_value,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -73,12 +73,12 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0
-                depth: depth
-                dataType: data_type as u64
-                onValue: on_value
-                offValue: off_value
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0,
+                depth: depth,
+                dataType: data_type as u64,
+                onValue: on_value,
+                offValue: off_value,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -107,11 +107,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0
-                depth: depth
-                axis: axis
-                dataType: data_type as u64
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0,
+                depth: depth,
+                axis: axis,
+                dataType: data_type as u64,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -136,9 +136,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0
-                depth: depth
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0,
+                depth: depth,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -165,10 +165,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0
-                depth: depth
-                dataType: data_type as u64
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0,
+                depth: depth,
+                dataType: data_type as u64,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -195,10 +195,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0
-                depth: depth
-                axis: axis
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, oneHotWithIndicesTensor: indices_tensor.0,
+                depth: depth,
+                axis: axis,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;

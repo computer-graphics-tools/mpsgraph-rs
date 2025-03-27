@@ -32,7 +32,7 @@ impl MPSGraph {
                 strides: strides_array,
                 padding: padding_array,
                 dilationRates: dilations_array,
-                name: name_obj
+                name: name_obj,
             ];
             
             // Release temporary objects
@@ -65,14 +65,14 @@ impl MPSGraph {
             let padding_array = create_dimensions(&[padding.0, padding.1, padding.2, padding.3]);
             let dilations_array = create_dimensions(&[dilations.0, dilations.1]);
             
-            let tensor: *mut AnyObject = msg_send![self.0, convolution2DWithSourceTensor: input.0
-                weightsTensor: weights.0
-                biasTensor: bias.0
-                descriptor: std::ptr::null_mut::<AnyObject>()
-                strides: strides_array
-                padding: padding_array
-                dilationRates: dilations_array
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, convolution2DWithSourceTensor: input.0,
+                weightsTensor: weights.0,
+                biasTensor: bias.0,
+                descriptor: std::ptr::null_mut::<AnyObject>(),
+                strides: strides_array,
+                padding: padding_array,
+                dilationRates: dilations_array,
+                name: name_obj,
             ];
             
             // Release temporary objects
@@ -104,13 +104,13 @@ impl MPSGraph {
             let padding_array = create_dimensions(&[padding.0, padding.1, padding.2, padding.3]);
             let dilations_array = create_dimensions(&[dilations.0, dilations.1]);
             
-            let tensor: *mut AnyObject = msg_send![self.0, depthwiseConvolution2DWithSourceTensor: input.0
-                weightsTensor: weights.0
-                descriptor: std::ptr::null_mut::<AnyObject>()
-                strides: strides_array
-                padding: padding_array
-                dilationRates: dilations_array
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, depthwiseConvolution2DWithSourceTensor: input.0,
+                weightsTensor: weights.0,
+                descriptor: std::ptr::null_mut::<AnyObject>(),
+                strides: strides_array,
+                padding: padding_array,
+                dilationRates: dilations_array,
+                name: name_obj,
             ];
             
             // Release temporary objects
@@ -143,14 +143,14 @@ impl MPSGraph {
             let padding_array = create_dimensions(&[padding.0, padding.1, padding.2, padding.3]);
             let dilations_array = create_dimensions(&[dilations.0, dilations.1]);
             
-            let tensor: *mut AnyObject = msg_send![self.0, transposedConvolution2DWithSourceTensor: input.0
-                weightsTensor: weights.0
-                outputShapeTensor: output_shape.0
-                descriptor: std::ptr::null_mut::<AnyObject>()
-                strides: strides_array
-                padding: padding_array
-                dilationRates: dilations_array
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, transposedConvolution2DWithSourceTensor: input.0,
+                weightsTensor: weights.0,
+                outputShapeTensor: output_shape.0,
+                descriptor: std::ptr::null_mut::<AnyObject>(),
+                strides: strides_array,
+                padding: padding_array,
+                dilationRates: dilations_array,
+                name: name_obj,
             ];
             
             // Release temporary objects
@@ -172,7 +172,7 @@ fn create_dimensions(dimensions: &[usize]) -> *mut AnyObject {
         let dimensions: Vec<*mut AnyObject> = dimensions.iter()
             .map(|&d| {
                 let obj: *mut AnyObject = msg_send![cls, alloc];
-                let obj: *mut AnyObject = msg_send![obj, initWithUnsignedLongLong: d];
+                let obj: *mut AnyObject = msg_send![obj, initWithUnsignedLongLong: d,];
                 obj
             })
             .collect();
@@ -181,7 +181,7 @@ fn create_dimensions(dimensions: &[usize]) -> *mut AnyObject {
         let array_cls = objc2::runtime::AnyClass::get(nsarray_name).unwrap();
         let dims_array: *mut AnyObject = msg_send![array_cls, alloc];
         let dims_array: *mut AnyObject = msg_send![dims_array, initWithObjects: dimensions.as_ptr(),
-            count: dimensions.len()
+            count: dimensions.len(),
         ];
         
         // Release NSNumber objects

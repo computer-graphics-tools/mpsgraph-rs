@@ -46,7 +46,7 @@ impl MPSGraphExecutable {
             // Execute the graph
             let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict.0,
                 targetTensors: output_tensors_array.0,
-                targetOperations: std::ptr::null_mut::<AnyObject>()
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
             ];
             
             // Parse the results
@@ -106,7 +106,7 @@ impl MPSGraphExecutable {
             let results: *mut AnyObject = msg_send![self.0, runWithMTLCommandQueue: command_queue_ptr,
                 feeds: feed_dict.0,
                 targetTensors: output_tensors_array.0,
-                targetOperations: std::ptr::null_mut::<AnyObject>()
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
             ];
             
             // Parse the results
@@ -167,7 +167,7 @@ impl MPSGraphExecutable {
                 feeds: feed_dict.0,
                 targetTensors: output_tensors_array.0,
                 targetOperations: std::ptr::null_mut::<AnyObject>(),
-                executionDescriptor: std::ptr::null_mut::<AnyObject>()
+                executionDescriptor: std::ptr::null_mut::<AnyObject>(),
             ];
             
             // Parse the results

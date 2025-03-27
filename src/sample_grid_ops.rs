@@ -70,15 +70,15 @@ impl MPSGraph {
             let relative_coordinates_val = if relative_coordinates { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0
-                coordinateTensor: coordinates.0
-                layout: layout as u64
-                normalizeCoordinates: normalize_coordinates_val
-                relativeCoordinates: relative_coordinates_val
-                alignCorners: align_corners_val
-                paddingMode: padding_mode as i64
-                samplingMode: sampling_mode as u64
-                constantValue: constant_value
+            let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0,
+                coordinateTensor: coordinates.0,
+                layout: layout as u64,
+                normalizeCoordinates: normalize_coordinates_val,
+                relativeCoordinates: relative_coordinates_val,
+                alignCorners: align_corners_val,
+                paddingMode: padding_mode as i64,
+                samplingMode: sampling_mode as u64,
+                constantValue: constant_value,
                 name: name_obj
             ];
             
@@ -122,15 +122,15 @@ impl MPSGraph {
             let relative_coordinates_val = if relative_coordinates { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0
-                coordinateTensor: coordinates.0
-                layout: layout as u64
-                normalizeCoordinates: normalize_coordinates_val
-                relativeCoordinates: relative_coordinates_val
-                alignCorners: align_corners_val
-                paddingMode: padding_mode as i64
-                nearestRoundingMode: nearest_rounding_mode as u64
-                constantValue: constant_value
+            let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0,
+                coordinateTensor: coordinates.0,
+                layout: layout as u64,
+                normalizeCoordinates: normalize_coordinates_val,
+                relativeCoordinates: relative_coordinates_val,
+                alignCorners: align_corners_val,
+                paddingMode: padding_mode as i64,
+                nearestRoundingMode: nearest_rounding_mode as u64,
+                constantValue: constant_value,
                 name: name_obj
             ];
             

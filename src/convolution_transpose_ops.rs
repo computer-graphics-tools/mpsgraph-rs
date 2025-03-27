@@ -54,56 +54,56 @@ impl MPSGraphConvolution2DOpDescriptor {
     /// Sets the stride in X dimension
     pub fn set_stride_in_x(&self, stride: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setStrideInX: stride];
+            let _: () = msg_send![self.0, setStrideInX: stride,];
         }
     }
     
     /// Sets the stride in Y dimension
     pub fn set_stride_in_y(&self, stride: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setStrideInY: stride];
+            let _: () = msg_send![self.0, setStrideInY: stride,];
         }
     }
     
     /// Sets the dilation rate in X dimension
     pub fn set_dilation_rate_in_x(&self, rate: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setDilationRateInX: rate];
+            let _: () = msg_send![self.0, setDilationRateInX: rate,];
         }
     }
     
     /// Sets the dilation rate in Y dimension
     pub fn set_dilation_rate_in_y(&self, rate: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setDilationRateInY: rate];
+            let _: () = msg_send![self.0, setDilationRateInY: rate,];
         }
     }
     
     /// Sets the padding on the left
     pub fn set_padding_left(&self, padding: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setPaddingLeft: padding];
+            let _: () = msg_send![self.0, setPaddingLeft: padding,];
         }
     }
     
     /// Sets the padding on the right
     pub fn set_padding_right(&self, padding: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setPaddingRight: padding];
+            let _: () = msg_send![self.0, setPaddingRight: padding,];
         }
     }
     
     /// Sets the padding on the top
     pub fn set_padding_top(&self, padding: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setPaddingTop: padding];
+            let _: () = msg_send![self.0, setPaddingTop: padding,];
         }
     }
     
     /// Sets the padding on the bottom
     pub fn set_padding_bottom(&self, padding: usize) {
         unsafe {
-            let _: () = msg_send![self.0, setPaddingBottom: padding];
+            let _: () = msg_send![self.0, setPaddingBottom: padding,];
         }
     }
     
@@ -132,10 +132,10 @@ impl MPSGraphConvolution2DOpDescriptor {
     pub fn set_explicit_padding(&self, left: usize, right: usize, top: usize, bottom: usize) {
         unsafe {
             let _: () = msg_send![
-                self.0, setExplicitPaddingWithPaddingLeft: left
-                paddingRight: right
-                paddingTop: top
-                paddingBottom: bottom
+                self.0, setExplicitPaddingWithPaddingLeft: left,
+                paddingRight: right,
+                paddingTop: top,
+                paddingBottom: bottom,
             ];
         }
     }
@@ -200,11 +200,11 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, convolutionTranspose2DWithSourceTensor: source.0
-                weightsTensor: weights.0
-                outputShape: output_shape.0
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, convolutionTranspose2DWithSourceTensor: source.0,
+                weightsTensor: weights.0,
+                outputShape: output_shape.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -240,11 +240,11 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, convolutionTranspose2DWithSourceTensor: source.0
-                weightsTensor: weights.0
-                outputShapeTensor: output_shape_tensor.0
-                descriptor: descriptor.0
-                name: name_obj
+                self.0, convolutionTranspose2DWithSourceTensor: source.0,
+                weightsTensor: weights.0,
+                outputShapeTensor: output_shape_tensor.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -280,11 +280,11 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, convolutionTranspose2DDataGradientWithIncomingGradientTensor: incoming_gradient.0
-                weightsTensor: weights.0
-                outputShape: output_shape.0
-                forwardConvolutionDescriptor: forward_convolution_descriptor.0
-                name: name_obj
+                self.0, convolutionTranspose2DDataGradientWithIncomingGradientTensor: incoming_gradient.0,
+                weightsTensor: weights.0,
+                outputShape: output_shape.0,
+                forwardConvolutionDescriptor: forward_convolution_descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -320,11 +320,11 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, convolutionTranspose2DDataGradientWithIncomingGradientTensor: incoming_gradient.0
-                weightsTensor: weights.0
-                outputShapeTensor: output_shape_tensor.0
-                forwardConvolutionDescriptor: forward_convolution_descriptor.0
-                name: name_obj
+                self.0, convolutionTranspose2DDataGradientWithIncomingGradientTensor: incoming_gradient.0,
+                weightsTensor: weights.0,
+                outputShapeTensor: output_shape_tensor.0,
+                forwardConvolutionDescriptor: forward_convolution_descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -360,11 +360,11 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, convolutionTranspose2DWeightsGradientWithIncomingGradientTensor: incoming_gradient.0
-                sourceTensor: source.0
-                outputShape: output_shape.0
-                forwardConvolutionDescriptor: forward_convolution_descriptor.0
-                name: name_obj
+                self.0, convolutionTranspose2DWeightsGradientWithIncomingGradientTensor: incoming_gradient.0,
+                sourceTensor: source.0,
+                outputShape: output_shape.0,
+                forwardConvolutionDescriptor: forward_convolution_descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -400,11 +400,11 @@ impl MPSGraph {
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, convolutionTranspose2DWeightsGradientWithIncomingGradientTensor: incoming_gradient.0
-                sourceTensor: source.0
-                outputShapeTensor: output_shape_tensor.0
-                forwardConvolutionDescriptor: forward_convolution_descriptor.0
-                name: name_obj
+                self.0, convolutionTranspose2DWeightsGradientWithIncomingGradientTensor: incoming_gradient.0,
+                sourceTensor: source.0,
+                outputShapeTensor: output_shape_tensor.0,
+                forwardConvolutionDescriptor: forward_convolution_descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

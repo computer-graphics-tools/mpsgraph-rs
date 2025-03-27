@@ -34,7 +34,7 @@ impl MPSGraphRandomOpDescriptor {
     pub fn new(distribution: MPSGraphRandomDistribution, data_type: MPSDataType) -> Self {
         unsafe {
             let descriptor: *mut AnyObject = msg_send![
-                class!(MPSGraphRandomOpDescriptor), descriptorWithDistribution: distribution as u64
+                class!(MPSGraphRandomOpDescriptor), descriptorWithDistribution: distribution as u64,
                 dataType: data_type as u64
             ];
             let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
@@ -45,42 +45,42 @@ impl MPSGraphRandomOpDescriptor {
     /// Sets the minimum value (for float data types)
     pub fn set_min(&self, min: f32) {
         unsafe {
-            let _: () = msg_send![self.0, setMin: min];
+            let _: () = msg_send![self.0, setMin: min,];
         }
     }
     
     /// Sets the maximum value (for float data types)
     pub fn set_max(&self, max: f32) {
         unsafe {
-            let _: () = msg_send![self.0, setMax: max];
+            let _: () = msg_send![self.0, setMax: max,];
         }
     }
     
     /// Sets the minimum integer value (for integer data types)
     pub fn set_min_integer(&self, min: i64) {
         unsafe {
-            let _: () = msg_send![self.0, setMinInteger: min];
+            let _: () = msg_send![self.0, setMinInteger: min,];
         }
     }
     
     /// Sets the maximum integer value (for integer data types)
     pub fn set_max_integer(&self, max: i64) {
         unsafe {
-            let _: () = msg_send![self.0, setMaxInteger: max];
+            let _: () = msg_send![self.0, setMaxInteger: max,];
         }
     }
     
     /// Sets the mean (for normal distributions)
     pub fn set_mean(&self, mean: f32) {
         unsafe {
-            let _: () = msg_send![self.0, setMean: mean];
+            let _: () = msg_send![self.0, setMean: mean,];
         }
     }
     
     /// Sets the standard deviation (for normal distributions)
     pub fn set_standard_deviation(&self, std_dev: f32) {
         unsafe {
-            let _: () = msg_send![self.0, setStandardDeviation: std_dev];
+            let _: () = msg_send![self.0, setStandardDeviation: std_dev,];
         }
     }
     
@@ -123,8 +123,8 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, randomPhiloxStateTensorWithSeed: seed
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, randomPhiloxStateTensorWithSeed: seed,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -146,10 +146,10 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, randomPhiloxStateTensorWithCounterLow: counter_low
-                counterHigh: counter_high
-                key: key
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, randomPhiloxStateTensorWithCounterLow: counter_low,
+                counterHigh: counter_high,
+                key: key,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -172,9 +172,9 @@ impl MPSGraph {
             
             let shape_obj = MPSShape::from_slice(shape);
             
-            let tensor: *mut AnyObject = msg_send![self.0, randomTensorWithShape: shape_obj.0
-                descriptor: descriptor.0
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, randomTensorWithShape: shape_obj.0,
+                descriptor: descriptor.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -198,10 +198,10 @@ impl MPSGraph {
             
             let shape_obj = MPSShape::from_slice(shape);
             
-            let tensor: *mut AnyObject = msg_send![self.0, randomTensorWithShape: shape_obj.0
-                descriptor: descriptor.0
-                seed: seed
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, randomTensorWithShape: shape_obj.0,
+                descriptor: descriptor.0,
+                seed: seed,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -225,10 +225,10 @@ impl MPSGraph {
             
             let shape_obj = MPSShape::from_slice(shape);
             
-            let result: *mut AnyObject = msg_send![self.0, randomTensorWithShape: shape_obj.0
-                descriptor: descriptor.0
-                stateTensor: state.0
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, randomTensorWithShape: shape_obj.0,
+                descriptor: descriptor.0,
+                stateTensor: state.0,
+                name: name_obj,
             ];
             
             // Extract the two tensors from the result array
@@ -256,8 +256,8 @@ impl MPSGraph {
             
             let shape_obj = MPSShape::from_slice(shape);
             
-            let tensor: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape_obj.0
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape_obj.0,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -280,9 +280,9 @@ impl MPSGraph {
             
             let shape_obj = MPSShape::from_slice(shape);
             
-            let tensor: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape_obj.0
-                seed: seed
-                name: name_obj
+            let tensor: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape_obj.0,
+                seed: seed,
+                name: name_obj,
             ];
             
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -305,9 +305,9 @@ impl MPSGraph {
             
             let shape_obj = MPSShape::from_slice(shape);
             
-            let result: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape_obj.0
-                stateTensor: state.0
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape_obj.0,
+                stateTensor: state.0,
+                name: name_obj,
             ];
             
             // Extract the two tensors from the result array
@@ -333,9 +333,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, dropoutTensor: tensor.0
-                rate: rate
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, dropoutTensor: tensor.0,
+                rate: rate,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
@@ -356,9 +356,9 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, dropoutTensor: tensor.0
-                rateTensor: rate_tensor.0
-                name: name_obj
+            let result: *mut AnyObject = msg_send![self.0, dropoutTensor: tensor.0,
+                rateTensor: rate_tensor.0,
+                name: name_obj,
             ];
             
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;

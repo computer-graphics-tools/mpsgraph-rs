@@ -63,12 +63,12 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, nonMaximumSuppressionWithBoxesTensor: boxes_tensor.0
-                scoresTensor: scores_tensor.0
-                IOUThreshold: iou_threshold
-                scoreThreshold: score_threshold
-                perClassSuppression: per_class_suppression_obj
-                coordinateMode: coordinate_mode as u64
+                self.0, nonMaximumSuppressionWithBoxesTensor: boxes_tensor.0,
+                scoresTensor: scores_tensor.0,
+                IOUThreshold: iou_threshold,
+                scoreThreshold: score_threshold,
+                perClassSuppression: per_class_suppression_obj,
+                coordinateMode: coordinate_mode as u64,
                 name: name_obj
             ];
             
@@ -117,13 +117,13 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, nonMaximumSuppressionWithBoxesTensor: boxes_tensor.0
-                scoresTensor: scores_tensor.0
-                classIndicesTensor: class_indices_tensor.0
-                IOUThreshold: iou_threshold
-                scoreThreshold: score_threshold
-                perClassSuppression: per_class_suppression_obj
-                coordinateMode: coordinate_mode as u64
+                self.0, nonMaximumSuppressionWithBoxesTensor: boxes_tensor.0,
+                scoresTensor: scores_tensor.0,
+                classIndicesTensor: class_indices_tensor.0,
+                IOUThreshold: iou_threshold,
+                scoreThreshold: score_threshold,
+                perClassSuppression: per_class_suppression_obj,
+                coordinateMode: coordinate_mode as u64,
                 name: name_obj
             ];
             

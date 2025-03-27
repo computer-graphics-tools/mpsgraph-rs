@@ -67,12 +67,12 @@ impl MPSGraph {
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0
-                size: size.0
-                mode: mode as u64
-                centerResult: center_result_val
-                alignCorners: align_corners_val
-                layout: layout as u64
+            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0,
+                size: size.0,
+                mode: mode as u64,
+                centerResult: center_result_val,
+                alignCorners: align_corners_val,
+                layout: layout as u64,
                 name: name_obj
             ];
             
@@ -109,12 +109,12 @@ impl MPSGraph {
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0
-                sizeTensor: size_tensor.0
-                mode: mode as u64
-                centerResult: center_result_val
-                alignCorners: align_corners_val
-                layout: layout as u64
+            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0,
+                sizeTensor: size_tensor.0,
+                mode: mode as u64,
+                centerResult: center_result_val,
+                alignCorners: align_corners_val,
+                layout: layout as u64,
                 name: name_obj
             ];
             
@@ -151,12 +151,12 @@ impl MPSGraph {
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut AnyObject = msg_send![self.0, resizeNearestWithTensor: images_tensor.0
-                sizeTensor: size_tensor.0
-                nearestRoundingMode: nearest_rounding_mode as u64
-                centerResult: center_result_val
-                alignCorners: align_corners_val
-                layout: layout as u64
+            let tensor: *mut AnyObject = msg_send![self.0, resizeNearestWithTensor: images_tensor.0,
+                sizeTensor: size_tensor.0,
+                nearestRoundingMode: nearest_rounding_mode as u64,
+                centerResult: center_result_val,
+                alignCorners: align_corners_val,
+                layout: layout as u64,
                 name: name_obj
             ];
             
@@ -191,11 +191,11 @@ impl MPSGraph {
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut AnyObject = msg_send![self.0, resizeBilinearWithTensor: images_tensor.0
-                sizeTensor: size_tensor.0
-                centerResult: center_result_val
-                alignCorners: align_corners_val
-                layout: layout as u64
+            let tensor: *mut AnyObject = msg_send![self.0, resizeBilinearWithTensor: images_tensor.0,
+                sizeTensor: size_tensor.0,
+                centerResult: center_result_val,
+                alignCorners: align_corners_val,
+                layout: layout as u64,
                 name: name_obj
             ];
             
@@ -227,11 +227,11 @@ impl MPSGraph {
                 None => std::ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0
-                sizeTensor: size_tensor.0
-                scaleOffsetTensor: scale_offset_tensor.0
-                mode: mode as u64
-                layout: layout as u64
+            let tensor: *mut AnyObject = msg_send![self.0, resizeTensor: images_tensor.0,
+                sizeTensor: size_tensor.0,
+                scaleOffsetTensor: scale_offset_tensor.0,
+                mode: mode as u64,
+                layout: layout as u64,
                 name: name_obj
             ];
             
@@ -268,12 +268,12 @@ impl MPSGraph {
             let center_result_val = if center_result { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
             
-            let tensor: *mut AnyObject = msg_send![self.0, resizeWithGradientTensor: gradient.0
-                input: input.0
-                mode: mode as u64
-                centerResult: center_result_val
-                alignCorners: align_corners_val
-                layout: layout as u64
+            let tensor: *mut AnyObject = msg_send![self.0, resizeWithGradientTensor: gradient.0,
+                input: input.0,
+                mode: mode as u64,
+                centerResult: center_result_val,
+                alignCorners: align_corners_val,
+                layout: layout as u64,
                 name: name_obj
             ];
             

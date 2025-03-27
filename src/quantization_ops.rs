@@ -37,10 +37,10 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, quantizeTensor: tensor.0
-                scale: scale
-                zeroPoint: zero_point
-                dataType: data_type as u64
+                self.0, quantizeTensor: tensor.0,
+                scale: scale,
+                zeroPoint: zero_point,
+                dataType: data_type as u64,
                 name: name_obj
             ];
             
@@ -80,10 +80,10 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, dequantizeTensor: tensor.0
-                scale: scale
-                zeroPoint: zero_point
-                dataType: data_type as u64
+                self.0, dequantizeTensor: tensor.0,
+                scale: scale,
+                zeroPoint: zero_point,
+                dataType: data_type as u64,
                 name: name_obj
             ];
             
@@ -125,11 +125,11 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, quantizeTensor: tensor.0
-                scaleTensor: scale_tensor.0
-                zeroPoint: zero_point
-                dataType: data_type as u64
-                axis: axis
+                self.0, quantizeTensor: tensor.0,
+                scaleTensor: scale_tensor.0,
+                zeroPoint: zero_point,
+                dataType: data_type as u64,
+                axis: axis,
                 name: name_obj
             ];
             
@@ -171,11 +171,11 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, dequantizeTensor: tensor.0
-                scaleTensor: scale_tensor.0
-                zeroPoint: zero_point
-                dataType: data_type as u64
-                axis: axis
+                self.0, dequantizeTensor: tensor.0,
+                scaleTensor: scale_tensor.0,
+                zeroPoint: zero_point,
+                dataType: data_type as u64,
+                axis: axis,
                 name: name_obj
             ];
             
@@ -217,11 +217,11 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, quantizeTensor: tensor.0
-                scaleTensor: scale_tensor.0
-                zeroPointTensor: zero_point_tensor.0
-                dataType: data_type as u64
-                axis: axis
+                self.0, quantizeTensor: tensor.0,
+                scaleTensor: scale_tensor.0,
+                zeroPointTensor: zero_point_tensor.0,
+                dataType: data_type as u64,
+                axis: axis,
                 name: name_obj
             ];
             
@@ -263,11 +263,11 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, dequantizeTensor: tensor.0
-                scaleTensor: scale_tensor.0
-                zeroPointTensor: zero_point_tensor.0
-                dataType: data_type as u64
-                axis: axis
+                self.0, dequantizeTensor: tensor.0,
+                scaleTensor: scale_tensor.0,
+                zeroPointTensor: zero_point_tensor.0,
+                dataType: data_type as u64,
+                axis: axis,
                 name: name_obj
             ];
             
@@ -303,8 +303,8 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, dequantizeTensor: tensor.0
-                LUTTensor: lut_tensor.0
+                self.0, dequantizeTensor: tensor.0,
+                LUTTensor: lut_tensor.0,
                 name: name_obj
             ];
             
@@ -341,9 +341,9 @@ impl MPSGraph {
         
         unsafe {
             let result: *mut AnyObject = msg_send![
-                self.0, dequantizeTensor: tensor.0
-                LUTTensor: lut_tensor.0
-                axis: axis
+                self.0, dequantizeTensor: tensor.0,
+                LUTTensor: lut_tensor.0,
+                axis: axis,
                 name: name_obj
             ];
             
