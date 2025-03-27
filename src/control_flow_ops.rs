@@ -4,7 +4,12 @@ use std::ffi::c_void;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
 use crate::operation::MPSGraphOperation;
-use crate::core::NSString;
+use objc2_foundation::NSString;
+use crate::core::AsRawObject;
+use objc2::msg_send;
+
+// Import the block_kit crate for Objective-C blocks
+use block_kit::{Block, RcBlock};
 
 /// Control flow operations for MPSGraph
 ///
@@ -42,20 +47,19 @@ impl MPSGraph {
             };
             
             // Convert operations to NSArray
-            let operations_array = crate::core::NSArray::from_objects(
-                &operations.iter().map(|op| op.0).collect::<Vec<_>>()
-            );
+            let operations_ptr: Vec<*mut AnyObject> = operations.iter().map(|op| op.0).collect();
+            let operations_array = crate::core::create_ns_array_from_pointers(&operations_ptr);
             
             // Create the block callback
-            let block = ConcreteBlock::new(move || {
+            let block = RcBlock::new(move || {
                 // Call the user's block
                 let tensors = dependent_block();
                 // Convert Vec<MPSGraphTensor> to NSArray of pointers
-                let tensor_ptrs: Vec<*mut Object> = tensors.iter().map(|t| t.0).collect();
-                let tensor_array = crate::core::NSArray::from_objects(&tensor_ptrs);
+                let tensor_ptrs: Vec<*mut AnyObject> = tensors.iter().map(|t| t.0).collect();
+                let tensor_array = crate::core::create_ns_array_from_pointers(&tensor_ptrs);
                 // Return the NSArray pointer
-                tensor_array.0
-            }).copy();
+                tensor_array
+            });
             
             // Call the Objective-C method
             let result_array: *mut AnyObject = msg_send![
@@ -110,30 +114,30 @@ impl MPSGraph {
             };
             
             // Create the then block callback
-            let then_callback = ConcreteBlock::new(move || {
+            let then_callback = RcBlock::new(move || {
                 // Call the user's block
                 let tensors = then_block();
                 // Convert Vec<MPSGraphTensor> to NSArray of pointers
-                let tensor_ptrs: Vec<*mut Object> = tensors.iter().map(|t| t.0).collect();
-                let tensor_array = crate::core::NSArray::from_objects(&tensor_ptrs);
+                let tensor_ptrs: Vec<*mut AnyObject> = tensors.iter().map(|t| t.0).collect();
+                let tensor_array = crate::core::create_ns_array_from_pointers(&tensor_ptrs);
                 // Return the NSArray pointer
-                tensor_array.0
-            }).copy();
+                tensor_array
+            });
             
             // Create the else block callback if provided
             let else_callback = if let Some(else_fn) = else_block {
-                let block = ConcreteBlock::new(move || {
+                let block = RcBlock::new(move || {
                     // Call the user's block
                     let tensors = else_fn();
                     // Convert Vec<MPSGraphTensor> to NSArray of pointers
-                    let tensor_ptrs: Vec<*mut Object> = tensors.iter().map(|t| t.0).collect();
-                    let tensor_array = crate::core::NSArray::from_objects(&tensor_ptrs);
+                    let tensor_ptrs: Vec<*mut AnyObject> = tensors.iter().map(|t| t.0).collect();
+                    let tensor_array = crate::core::create_ns_array_from_pointers(&tensor_ptrs);
                     // Return the NSArray pointer
-                    tensor_array.0
-                }).copy();
-                &*block as *const _ as *mut c_void
+                    tensor_array
+                });
+                Some(block)
             } else {
-                std::ptr::null_mut()
+                None
             };
             
             // Call the Objective-C method
@@ -199,7 +203,7 @@ impl MPSGraph {
                 let inputs_count: usize = msg_send![inputs, count];
                 let mut input_tensors = Vec::with_capacity(inputs_count);
                 for i in 0..inputs_count {
-                    let tensor: *mut AnyObject = msg_send![inputs, objectAtIndex: i,];
+                    let tensor: *mut AnyObject = msg_send![inputs, objectAtIndex: i];
                     input_tensors.push(MPSGraphTensor(tensor));
                 }
                 
@@ -213,7 +217,7 @@ impl MPSGraph {
                 if !result_tensors.is_empty() {
                     let result_ptrs: Vec<*mut Object> = result_tensors.iter().map(|t| t.0).collect();
                     for i in 0..result_ptrs.len() {
-                        let _: () = msg_send![results, addObject: result_ptrs[i],];
+                        let _: () = msg_send![results, addObject: result_ptrs[i]];
                     }
                 }
                 
@@ -227,7 +231,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![body_args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut AnyObject = msg_send![body_args, objectAtIndex: i,,];
+                    let tensor: *mut AnyObject = msg_send![body_args, objectAtIndex: i];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -311,7 +315,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i,,,];
+                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -393,7 +397,7 @@ impl MPSGraph {
                 let args_count: usize = msg_send![args, count];
                 let mut body_arguments = Vec::with_capacity(args_count);
                 for i in 0..args_count {
-                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i,];
+                    let tensor: *mut AnyObject = msg_send![args, objectAtIndex: i];
                     body_arguments.push(MPSGraphTensor(tensor));
                 }
                 
@@ -432,75 +436,9 @@ impl MPSGraph {
     }
 }
 
-/// A concrete implementation of an Objective-C block
-#[repr(C)]
-struct ConcreteBlock<F> {
-    isa:  *const c_void,
-    flags:  usize,
-    reserved:  usize,
-    invoke:  *const c_void,
-    descriptor:  *const BlockDescriptor,
-    closure:  F,
-}
 
-/// Block descriptor containing size and copy/dispose functions
-#[repr(C)]
-struct BlockDescriptor {
-    reserved:  usize,
-    size:  usize,
-    copy_helper:  *const c_void,
-    dispose_helper:  *const c_void,
-}
-
-impl<F> ConcreteBlock<F> {
-    /// Creates a new ConcreteBlock with the given closure
-    fn new(closure: F) -> Self {
-        ConcreteBlock {
-            isa:  0 as *const _,
-            flags:  0,
-            reserved:  0,
-            invoke:  0 as *const _,
-            descriptor:  0 as *const _,
-            closure,
-        }
-    }
-    
-    /// Creates a copy of the block that can be passed to Objective-C
-    fn copy(self) -> *mut Self {
-        unsafe {
-            // Try to use the system Block_copy function first
-            #[cfg(target_os = "macos")]
-            {
-                let copied = Block_copy(&self as *const _ as *const c_void);
-                if !copied.is_null() {
-                    return copied as *mut Self;
-                }
-            }
-            
-            // If that fails, fall back to our alternative implementation
-            let copied = block_copy(&self as *const _ as *const c_void);
-            copied as *mut Self
-        }
-    }
-}
-
-// Allow Block_copy to be used
-extern "C" {
-    fn Block_copy(block: *const c_void) -> *mut c_void;
-}
-
-// Alternative implementation using objc_msgSend if Block_copy isn't found
-fn block_copy(block: *const c_void) -> *mut c_void {
-    unsafe {
-        let cls = objc2::runtime::AnyClass::get(std::ffi::CStr::from_bytes_with_nul(b("NSBlock").unwrap_or_else(|| {
-            objc2::runtime::AnyClass::get(std::ffi::CStr::from_bytes_with_nul(b("NSObject").unwrap()
-        });
-        let block_obj = block as *mut objc::runtime::Object;
-        let copied: *mut objc::runtime::Object = msg_send![block_obj, copy];
-        copied as *mut c_void
-    }
-}
-
+#[cfg(test)]
+mod tests {
     use super::*;
     use crate::core::MPSDataType;
     use crate::device::MPSGraphDevice;
