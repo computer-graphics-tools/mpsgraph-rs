@@ -11,11 +11,11 @@ In this session, we've addressed several major gaps in the API mapping, includin
 7. Fixed memory management with proper objc_retain/objc_release
 8. Implemented full memory operations support with complex constants in memory_ops.rs
 9. Implemented comprehensive arithmetic operations in arithmetic_ops.rs with unary, binary, ternary, and complex operations
+10. Implemented complete pooling operations with 2D and 4D support, descriptors, and gradient operations in pooling_ops.rs
 
 The main pending work includes:
 
-1. Creating pooling operations in pooling_ops.rs
-2. Creating a comprehensive reduction_ops.rs implementation
+1. Creating a comprehensive reduction_ops.rs implementation
 
 Below is the full status of all modules:
 
@@ -239,31 +239,42 @@ Below is the full status of all modules:
   - **Missing in Rust**: The `applyStochasticGradientDescent` method that directly updates a variable operation
   - **Action Required**: Implement `MPSGraphVariableOp` struct and complete the missing method
 
-27. [ ] MPSGraphPoolingOps.h
+27. [x] MPSGraphPoolingOps.h
 
-- ⚠️ Completely missing from the Rust bindings
-- Issues:
-  - **Missing in Rust**: Descriptor implementations:
-    - `MPSGraphPooling2DOpDescriptor`
-    - `MPSGraphPooling4DOpDescriptor`
-  - **Missing in Rust**: 2D pooling operations:
-    - `maxPooling2DWithSourceTensor:descriptor:name:`
-    - `averagePooling2DWithSourceTensor:descriptor:name:`
-    - `l2NormPooling2DWithSourceTensor:descriptor:name:`
-  - **Missing in Rust**: 4D pooling operations:
-    - Similar 4D operations for max, average, and l2norm pooling
-  - **Missing in Rust**: All gradient operations:
-    - `maxPooling2DGradientWithGradientTensor:sourceTensor:descriptor:name:`
-    - `averagePooling2DGradientWithGradientTensor:sourceTensor:descriptor:name:`
-    - `l2NormPooling2DGradientWithGradientTensor:sourceTensor:descriptor:name:`
-    - Corresponding gradient operations for 4D pooling
-  - **Action Required**: 
-    1. Create a new `pooling_ops.rs` file
-    2. Implement the descriptor structs with proper builder methods
-    3. Implement all 2D and 4D pooling operations
-    4. Implement all gradient operations
-    5. Ensure proper memory management with objc_retain/objc_release
-    6. Follow consistent API patterns with Option<&str> for optional name parameters
+- ✅ Fully implemented in `pooling_ops.rs`
+- Implementations:
+  - ✅ Enums:
+    - `MPSGraphPoolingReturnIndicesMode` for specifying how to return indices from max pooling
+    - `MPSGraphTensorNamedDataLayout` for specifying NCHW or NHWC data layouts
+    - `MPSGraphPaddingStyle` for specifying padding modes
+  - ✅ Descriptor implementations:
+    - `MPSGraphPooling2DOpDescriptor` with full constructor and builder methods
+    - `MPSGraphPooling4DOpDescriptor` with full constructor and builder methods
+  - ✅ 2D pooling operations:
+    - `max_pooling_2d`
+    - `max_pooling_2d_return_indices`
+    - `avg_pooling_2d`
+    - `l2_norm_pooling_2d`
+  - ✅ 4D pooling operations:
+    - `max_pooling_4d`
+    - `max_pooling_4d_return_indices`
+    - `avg_pooling_4d`
+    - `l2_norm_pooling_4d`
+  - ✅ Gradient operations for 2D pooling:
+    - `max_pooling_2d_gradient`
+    - `max_pooling_2d_gradient_with_indices`
+    - `max_pooling_2d_gradient_with_indices_tensor`
+    - `avg_pooling_2d_gradient`
+    - `l2_norm_pooling_2d_gradient`
+  - ✅ Gradient operations for 4D pooling:
+    - `max_pooling_4d_gradient`
+    - `max_pooling_4d_gradient_with_indices`
+    - `max_pooling_4d_gradient_with_indices_tensor`
+    - `avg_pooling_4d_gradient`
+    - `l2_norm_pooling_4d_gradient`
+- ✅ Proper memory management with objc_retain/objc_release
+- ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 28. [x] MPSGraphQuantizationOps.h
 
