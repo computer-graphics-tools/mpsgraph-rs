@@ -99,27 +99,28 @@ fn main() {
     
     // Prepare feeds and targets
     let mut feeds = HashMap::new();
-    feeds.insert(&a, a_tensor.tensor_data);
-    feeds.insert(&b, b_tensor.tensor_data);
+    feeds.insert(&a, a_tensor.tensor_data.clone());
+    feeds.insert(&b, b_tensor.tensor_data.clone());
     
     println!("Executing matrix multiplication...");
     
-    // Use run_with_command_queue since that's what's available
-    // The graph will create and manage the command buffer internally
-    let outputs = graph.run_with_command_queue(
+    // Map our outputs - clone the tensor_data to avoid ownership issues
+    let mut output_map = HashMap::new();
+    output_map.insert(&result, result_tensor.tensor_data.clone());
+    
+    // Execute graph with our inputs and output buffers
+    graph.run_with_command_queue_feeds_outputs(
         &command_queue,
         feeds,
-        &[&result]
+        output_map
     );
     
     // Now read the result directly from the MTLBuffer
+    println!("Reading result from buffer...");
     let result_floats = result_tensor.get_f32_data(result_size);
+    println!("Result data: {:?}", result_floats);
     
-    // Expected result of matrix multiplication
-    // [1, 2, 3] [1, 2]   [22, 28]
-    // [4, 5, 6] [3, 4] = [49, 64]
-    //           [5, 6]
-    
+    // Display the matrices and result
     println!("Matrix A ({m}x{k}):");
     for i in 0..m {
         let row: Vec<f32> = a_data[i*k..(i+1)*k].to_vec();

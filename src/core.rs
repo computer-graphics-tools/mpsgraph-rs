@@ -1,6 +1,5 @@
-use objc2::runtime::{AnyObject};
+use objc2::runtime::AnyObject;
 use objc2::msg_send;
-use objc2::rc::Retained;
 
 // Import and re-export Foundation types for use in other modules
 pub use objc2_foundation::{NSArray, NSNumber, NSString, NSDictionary, NSError, NSData};
@@ -44,31 +43,22 @@ pub fn create_ns_array_from_pointers(objects: &[*mut AnyObject]) -> *mut AnyObje
 // Helper function to create NSArray from i64 slice
 pub fn create_ns_array_from_i64_slice(values: &[i64]) -> *mut AnyObject {
     unsafe {
-        // Create NSNumbers for each value
-        let class_name = c"NSNumber";
-        if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-            // Create NSNumber objects for each value
-            let numbers: Vec<objc2::rc::Retained<NSNumber>> = values.iter()
-                .map(|&value| {
-                    let number_ptr: *mut NSNumber = msg_send![cls, numberWithLongLong:value];
-                    objc2::rc::Retained::from_raw(number_ptr).unwrap_or_else(|| panic!("Failed to create NSNumber"))
-                })
-                .collect();
-            
-            // Convert to slice of references
-            let number_refs: Vec<&NSNumber> = numbers.iter().map(|n| n.as_ref()).collect();
-            
-            // Create NSArray from the NSNumber objects
-            let array = NSArray::from_slice(&number_refs);
-            
-            // Get pointer to the array and retain it manually
-            let ptr: *mut AnyObject = std::mem::transmute::<&NSArray<NSNumber>, *mut AnyObject>(array.as_ref());
-            objc2::ffi::objc_retain(ptr as *mut _);
-            
-            ptr
-        } else {
-            panic!("NSNumber class not found");
-        }
+        // Create NSNumber objects for each value using objc2-foundation's NSNumber
+        let numbers: Vec<objc2::rc::Retained<NSNumber>> = values.iter()
+            .map(|&value| NSNumber::new_i64(value))
+            .collect();
+        
+        // Convert to slice of references
+        let number_refs: Vec<&NSNumber> = numbers.iter().map(|n| n.as_ref()).collect();
+        
+        // Create NSArray from the NSNumber objects
+        let array = NSArray::from_slice(&number_refs);
+        
+        // Get pointer to the array and retain it manually
+        let ptr: *mut AnyObject = std::mem::transmute::<&NSArray<NSNumber>, *mut AnyObject>(array.as_ref());
+        objc2::ffi::objc_retain(ptr as *mut _);
+        
+        ptr
     }
 }
 
@@ -88,8 +78,10 @@ pub fn create_ns_dictionary_from_pointers(keys: &[*mut AnyObject], objects: &[*m
             .map(|&ptr| &*ptr.cast::<objc2::runtime::AnyObject>())
             .collect();
         
-        // Create dictionary using Objective-C method
+        // Get the NSDictionary class
         let cls = objc2::runtime::AnyClass::get(c"NSDictionary").unwrap();
+        
+        // Create dictionary using Objective-C method
         let dict_ptr: *mut AnyObject = msg_send![cls, 
             dictionaryWithObjects: obj_refs.as_ptr(), 
             forKeys: key_refs.as_ptr(), 
@@ -102,9 +94,6 @@ pub fn create_ns_dictionary_from_pointers(keys: &[*mut AnyObject], objects: &[*m
 }
 
 // Implementations for other types will be added as needed
-use std::ffi::c_void;
-use std::fmt;
-use std::ptr;
 // We might need these later
 // use std::ops::Deref;
 

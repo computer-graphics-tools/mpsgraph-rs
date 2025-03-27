@@ -2,7 +2,7 @@ use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use std::fmt;
 use metal::Buffer;
-use metal::foreign_types::ForeignType;
+use metal::foreign_types::{ForeignType, ForeignTypeRef};
 use objc2_foundation::NSData;
 use crate::core::MPSDataType;
 use crate::shape::MPSShape;
@@ -147,8 +147,9 @@ impl MPSGraphTensorData {
     /// Returns the data type of this tensor data
     pub fn data_type(&self) -> MPSDataType {
         unsafe {
-            let data_type_val: u64 = msg_send![self.0, dataType];
-            std::mem::transmute(data_type_val as u32)
+            // Use u32 for dataType since that matches NSUInteger on most platforms
+            let data_type_val: u32 = msg_send![self.0, dataType];
+            std::mem::transmute(data_type_val)
         }
     }
     
@@ -164,6 +165,40 @@ impl MPSGraphTensorData {
         }
     }
     
+    /// Copy the tensor data to a Metal buffer
+    pub fn copy_to_buffer(&self, buffer: &Buffer) {
+        unsafe {
+            // Get the MTLBuffer backing this tensor data (if any)
+            let source_buffer_ptr: *mut AnyObject = msg_send![self.0, mpsndArrayData];
+            
+            if source_buffer_ptr.is_null() {
+                // If there's no direct buffer access, we might need to use a different approach
+                // For simplicity, just print an error for now
+                println!("Warning: Could not get direct buffer access to tensor data");
+                return;
+            }
+            
+            // Get size of both buffers to ensure we don't copy too much
+            let source_size = {
+                let size: u64 = msg_send![source_buffer_ptr, length];
+                size as usize
+            };
+            
+            let dest_size = buffer.length() as usize;
+            let copy_size = std::cmp::min(source_size, dest_size);
+            
+            // Get source and destination pointers
+            let source_ptr = {
+                let ptr: *mut std::ffi::c_void = msg_send![source_buffer_ptr, contents];
+                ptr
+            };
+            
+            let dest_ptr = buffer.contents();
+            
+            // Copy the data directly
+            std::ptr::copy_nonoverlapping(source_ptr, dest_ptr, copy_size);
+        }
+    }
 }
 
 impl Drop for MPSGraphTensorData {

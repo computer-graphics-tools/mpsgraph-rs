@@ -654,6 +654,52 @@ impl MPSGraph {
         }
     }
     
+    /// Runs the graph with a command queue, feeds and outputs specified
+    pub fn run_with_command_queue_feeds_outputs(&self,
+                                              command_queue: &CommandQueue,
+                                              feeds: HashMap<&MPSGraphTensor, MPSGraphTensorData>,
+                                              results_dict: HashMap<&MPSGraphTensor, MPSGraphTensorData>) {
+        unsafe {
+            // Get the queue pointer
+            let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create the results dictionary
+            let mut results_keys = Vec::with_capacity(results_dict.len());
+            let mut results_values = Vec::with_capacity(results_dict.len());
+            
+            for (tensor, data) in results_dict {
+                results_keys.push(tensor.0);
+                results_values.push(data.0);
+            }
+            
+            let results_dict_obj = crate::core::create_ns_dictionary_from_pointers(&results_keys, &results_values);
+            
+            // Run the graph with both feeds and results dictionaries
+            println!("Executing graph with feeds and outputs...");
+            let _: () = msg_send![self.0, runWithMTLCommandQueue: queue_ptr,
+                feeds: feed_dict,
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
+                resultsDictionary: results_dict_obj,
+            ];
+            println!("Graph execution completed.");
+            
+            // Release dictionaries
+            objc2::ffi::objc_release(feed_dict as *mut _);
+            objc2::ffi::objc_release(results_dict_obj as *mut _);
+        }
+    }
+    
     /// Helper method to convert an NSDictionary to a Rust HashMap
     fn convert_dictionary_to_hash_map(&self, dictionary: *mut AnyObject) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
         unsafe {
@@ -662,11 +708,14 @@ impl MPSGraph {
             // Get an enumerator for the dictionary keys
             let enumerator: *mut AnyObject = msg_send![dictionary, keyEnumerator];
             
+            // Use a mutable variable for the key outside the loop condition
+            let mut key: *mut AnyObject;
+            
             while {
-                let key: *mut AnyObject = msg_send![enumerator, nextObject];
+                // nextObject both advances the enumerator AND returns the current object
+                key = msg_send![enumerator, nextObject];
                 !key.is_null()
             } {
-                let key: *mut AnyObject = msg_send![enumerator, currentObject];
                 let value: *mut AnyObject = msg_send![dictionary, objectForKey: key];
                 
                 // Retain the objects to avoid them being deallocated
