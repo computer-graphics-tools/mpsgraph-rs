@@ -79,7 +79,7 @@ impl MPSGraph {
                 None => ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, shapeOfTensor: x.0
+            let tensor: *mut AnyObject = msg_send![self.0, shapeOfTensor: x.0,
                 name: name_obj
             ];
             
@@ -96,8 +96,8 @@ impl MPSGraph {
                 None => ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, castTensor: x.0
-                toType: data_type as u32
+            let tensor: *mut AnyObject = msg_send![self.0, castTensor: x.0,
+                toType: data_type as u32,
                 name: name_obj
             ];
             
@@ -122,8 +122,8 @@ impl MPSGraph {
             // Create NSArray of tensor pointers
             let tensor_array = crate::core::create_ns_array_from_pointers(&raw_tensors);
             
-            let tensor: *mut AnyObject = msg_send![self.0, stackTensors: tensor_array
-                axis: axis
+            let tensor: *mut AnyObject = msg_send![self.0, stackTensors: tensor_array,
+                axis: axis,
                 name: name_obj
             ];
             
@@ -142,9 +142,9 @@ impl MPSGraph {
                 None => ptr::null_mut(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, splitTensor: x.0
-                numSplits: num_splits
-                axis: axis
+            let result: *mut AnyObject = msg_send![self.0, splitTensor: x.0,
+                numSplits: num_splits,
+                axis: axis,
                 name: name_obj
             ];
             
@@ -174,8 +174,8 @@ impl MPSGraph {
             
             let axes_array = create_ns_array_from_i64_slice(axes);
             
-            let tensor: *mut AnyObject = msg_send![self.0, squeezeTensor: x.0
-                axes: axes_array
+            let tensor: *mut AnyObject = msg_send![self.0, squeezeTensor: x.0,
+                axes: axes_array,
                 name: name_obj
             ];
             
@@ -196,8 +196,8 @@ impl MPSGraph {
             
             let axes_array = create_ns_array_from_i64_slice(axes);
             
-            let tensor: *mut AnyObject = msg_send![self.0, expandDimsTensor: x.0
-                axes: axes_array
+            let tensor: *mut AnyObject = msg_send![self.0, expandDimsTensor: x.0,
+                axes: axes_array,
                 name: name_obj
             ];
             
@@ -218,8 +218,8 @@ impl MPSGraph {
             
             let multiples_array = create_ns_array_from_i64_slice(multiples);
             
-            let tensor: *mut AnyObject = msg_send![self.0, tileTensor: x.0
-                withMultiples: multiples_array
+            let tensor: *mut AnyObject = msg_send![self.0, tileTensor: x.0,
+                withMultiples: multiples_array,
                 name: name_obj
             ];
             
@@ -240,9 +240,9 @@ impl MPSGraph {
             
             let padding_array = create_ns_array_from_i64_slice(padding);
             
-            let tensor: *mut AnyObject = msg_send![self.0, padTensor: x.0
-                paddings: padding_array
-                constantValue: constant as f64
+            let tensor: *mut AnyObject = msg_send![self.0, padTensor: x.0,
+                paddings: padding_array,
+                constantValue: constant as f64,
                 name: name_obj
             ];
             
@@ -261,8 +261,8 @@ impl MPSGraph {
                 None => ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, spaceToDepthWithTensor: x.0
-                blockSize: block_size
+            let tensor: *mut AnyObject = msg_send![self.0, spaceToDepthWithTensor: x.0,
+                blockSize: block_size,
                 name: name_obj
             ];
             
@@ -279,8 +279,8 @@ impl MPSGraph {
                 None => ptr::null_mut(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, depthToSpaceWithTensor: x.0
-                blockSize: block_size
+            let tensor: *mut AnyObject = msg_send![self.0, depthToSpaceWithTensor: x.0,
+                blockSize: block_size,
                 name: name_obj
             ];
             
@@ -299,8 +299,8 @@ impl MPSGraph {
             
             let axes_array = create_ns_array_from_i64_slice(axes);
             
-            let tensor: *mut AnyObject = msg_send![self.0, reverseTensor: x.0
-                axes: axes_array
+            let tensor: *mut AnyObject = msg_send![self.0, reverseTensor: x.0,
+                axes: axes_array,
                 name: name_obj
             ];
             
