@@ -17,6 +17,7 @@ pub mod arithmetic_ops;
 pub mod reduction_ops;
 pub mod tensor_shape_ops;
 pub mod matrix_ops;
+pub mod matrix_inverse_ops;
 pub mod convolution_ops;
 pub mod convolution_transpose_ops;
 pub mod depthwise_convolution_ops;
