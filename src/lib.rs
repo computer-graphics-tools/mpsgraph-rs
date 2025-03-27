@@ -48,13 +48,13 @@ pub mod memory_ops;
 pub mod sparse_ops;
 
 // Re-export most commonly used types
-pub use core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile};
+pub use core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile, MPSGraphExecutionStage};
 pub use device::MPSGraphDevice;
 pub use graph::MPSGraph;
 pub use tensor::MPSGraphTensor;
 pub use tensor_data::MPSGraphTensorData;
 pub use operation::MPSGraphOperation;
-pub use executable::MPSGraphExecutable;
+pub use executable::{MPSGraphExecutable, MPSGraphCompilationDescriptor, MPSGraphExecutionDescriptor};
 pub use random_ops::{MPSGraphRandomDistribution, MPSGraphRandomNormalSamplingMethod, MPSGraphRandomOpDescriptor};
 pub use loss_ops::MPSGraphLossReductionType;
 pub use rnn_ops::{MPSGraphRNNActivation, MPSGraphSingleGateRNNDescriptor, MPSGraphLSTMDescriptor, MPSGraphGRUDescriptor};
@@ -72,13 +72,13 @@ pub use sparse_ops::{MPSGraphSparseStorageType, MPSGraphCreateSparseOpDescriptor
 
 /// Convenience prelude module with most commonly used items
 pub mod prelude {
-    pub use crate::core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization};
+    pub use crate::core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile, MPSGraphExecutionStage};
     pub use crate::device::MPSGraphDevice;
     pub use crate::graph::MPSGraph;
     pub use crate::tensor::MPSGraphTensor;
     pub use crate::tensor_data::MPSGraphTensorData;
     pub use crate::operation::MPSGraphOperation;
-    pub use crate::executable::MPSGraphExecutable;
+    pub use crate::executable::{MPSGraphExecutable, MPSGraphCompilationDescriptor, MPSGraphExecutionDescriptor};
     pub use crate::random_ops::{MPSGraphRandomDistribution, MPSGraphRandomNormalSamplingMethod, MPSGraphRandomOpDescriptor};
     pub use crate::loss_ops::MPSGraphLossReductionType;
     pub use crate::rnn_ops::{MPSGraphRNNActivation, MPSGraphSingleGateRNNDescriptor, MPSGraphLSTMDescriptor, MPSGraphGRUDescriptor};

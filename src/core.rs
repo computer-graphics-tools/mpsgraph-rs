@@ -469,6 +469,25 @@ impl OurNSArray {
         Self::from_objects(&raw_objects)
     }
     
+    /// Creates an NSArray from a slice of i64 values
+    pub fn from_i64_slice(integers: &[i64]) -> Self {
+        unsafe {
+            // Create NSNumbers for each integer
+            let class_name = c"NSNumber";
+            let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
+            
+            let ns_numbers: Vec<*mut AnyObject> = integers.iter()
+                .map(|&i| {
+                    let number: *mut AnyObject = msg_send![cls, numberWithLongLong:i];
+                    objc2::ffi::objc_retain(number as *mut _);
+                    number
+                })
+                .collect();
+            
+            Self::from_objects(&ns_numbers)
+        }
+    }
+    
     #[allow(dead_code)]
     pub fn count(&self) -> usize {
         unsafe {

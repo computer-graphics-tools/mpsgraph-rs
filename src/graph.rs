@@ -9,8 +9,9 @@ use objc2_foundation::{NSString, NSData};
 use crate::core::{MPSDataType, MPSShape, MPSGraphOptions, OurNSString, OurNSArray, OurNSDictionary, AsRawObject};
 use crate::tensor::MPSGraphTensor;
 use crate::tensor_data::MPSGraphTensorData;
-use crate::executable::MPSGraphExecutable;
+use crate::executable::{MPSGraphExecutable, MPSGraphCompilationDescriptor, MPSGraphExecutionDescriptor};
 use crate::device::MPSGraphDevice;
+use crate::operation::MPSGraphOperation;
 
 #[link(name = "MetalPerformanceShadersGraph", kind = "framework")]
 extern "C" {
@@ -164,17 +165,21 @@ impl MPSGraph {
                device:  Option<&MPSGraphDevice>,
                feeds:  HashMap<&MPSGraphTensor, MPSShape>,
                targets:  &[&MPSGraphTensor],
-               name:  Option<&str>) -> MPSGraphExecutable {
+               _name:  Option<&str>) -> MPSGraphExecutable {
+        // Use newer compile method with null descriptor for backward compatibility
+        self.compile_with_descriptor(device, feeds, targets, None)
+    }
+    
+    /// Compiles the graph for the given feeds and targets using a compilation descriptor
+    pub fn compile_with_descriptor(&self, 
+                              device:  Option<&MPSGraphDevice>,
+                              feeds:  HashMap<&MPSGraphTensor, MPSShape>,
+                              targets:  &[&MPSGraphTensor],
+                              descriptor:  Option<&MPSGraphCompilationDescriptor>) -> MPSGraphExecutable {
         unsafe {
             // Create device object if provided
             let device_obj = match device {
                 Some(dev) => dev.0,
-                None => std::ptr::null_mut(),
-            };
-            
-            // Create name string if provided
-            let name_obj = match name {
-                Some(s) => OurNSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -196,12 +201,18 @@ impl MPSGraph {
             
             let targets_array = OurNSArray::from_objects(&targets_raw);
             
+            // Get descriptor pointer if provided
+            let descriptor_ptr = match descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut(),
+            };
+            
             // Compile the graph
             let executable: *mut AnyObject = msg_send![self.0, compileWithDevice: device_obj, 
                 feeds: feed_dict.0, 
                 targetTensors: targets_array.0, 
                 targetOperations: std::ptr::null_mut::<AnyObject>(), 
-                name: name_obj,
+                compilationDescriptor: descriptor_ptr,
             ];
             
             let executable = objc2::ffi::objc_retain(executable as *mut _) as *mut AnyObject;
@@ -486,6 +497,189 @@ impl MPSGraph {
                 targetTensors: targets_array.0, 
                 targetOperations: std::ptr::null_mut::<AnyObject>(), 
                 options: options.unwrap_or(MPSGraphOptions::Default) as u64
+            ];
+            
+            // Parse the results
+            let mut output = HashMap::new();
+            
+            // Check if results is valid
+            if results.is_null() {
+                return output;
+            }
+            
+            // Get all keys
+            let keys: *mut AnyObject = msg_send![results, allKeys];
+            let keys_count: usize = msg_send![keys, count];
+            
+            for i in 0..keys_count {
+                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
+                if key.is_null() {
+                    continue;
+                }
+                
+                let value: *mut AnyObject = msg_send![results, objectForKey: key];
+                if value.is_null() {
+                    continue;
+                }
+                
+                // Retain objects to manage their memory
+                let _: () = msg_send![key, retain];
+                let _: () = msg_send![value, retain];
+                
+                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
+            }
+            
+            // Release temporary objects
+            objc2::ffi::objc_release(results as *mut _);
+            
+            output
+        }
+    }
+    
+    /// Run the graph asynchronously with the given feeds and targets
+    pub fn run_async(
+        &self,
+        feeds:  HashMap<MPSGraphTensor, MPSGraphTensorData>,
+        targets:  &[MPSGraphTensor],
+        operations:  Option<&[MPSGraphOperation]>,
+        descriptor:  Option<&MPSGraphExecutionDescriptor>
+    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Create feed dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = OurNSArray::from_objects(&targets_raw);
+            
+            // Create operations array if provided
+            let operations_ptr = match operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    
+                    let ops_array = OurNSArray::from_objects(&ops_raw);
+                    ops_array.0
+                },
+                None => std::ptr::null_mut(),
+            };
+            
+            // Get descriptor pointer if provided
+            let descriptor_ptr = match descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut(),
+            };
+            
+            // Run the graph
+            let results: *mut AnyObject = msg_send![self.0, runAsyncWithFeeds: feed_dict.0, 
+                targetTensors: targets_array.0, 
+                targetOperations: operations_ptr, 
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Parse the results
+            let mut output = HashMap::new();
+            
+            // Check if results is valid
+            if results.is_null() {
+                return output;
+            }
+            
+            // Get all keys
+            let keys: *mut AnyObject = msg_send![results, allKeys];
+            let keys_count: usize = msg_send![keys, count];
+            
+            for i in 0..keys_count {
+                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
+                if key.is_null() {
+                    continue;
+                }
+                
+                let value: *mut AnyObject = msg_send![results, objectForKey: key];
+                if value.is_null() {
+                    continue;
+                }
+                
+                // Retain objects to manage their memory
+                let _: () = msg_send![key, retain];
+                let _: () = msg_send![value, retain];
+                
+                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
+            }
+            
+            // Release temporary objects
+            objc2::ffi::objc_release(results as *mut _);
+            
+            output
+        }
+    }
+    
+    /// Run the graph asynchronously with a command queue
+    pub fn run_async_with_command_queue(
+        &self,
+        command_queue:  &CommandQueue,
+        feeds:  HashMap<MPSGraphTensor, MPSGraphTensorData>,
+        targets:  &[MPSGraphTensor],
+        operations:  Option<&[MPSGraphOperation]>,
+        descriptor:  Option<&MPSGraphExecutionDescriptor>
+    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Create feed dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = OurNSArray::from_objects(&targets_raw);
+            
+            // Create operations array if provided
+            let operations_ptr = match operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    
+                    let ops_array = OurNSArray::from_objects(&ops_raw);
+                    ops_array.0
+                },
+                None => std::ptr::null_mut(),
+            };
+            
+            // Get descriptor pointer if provided
+            let descriptor_ptr = match descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut(),
+            };
+            
+            // Run the graph
+            let command_queue_ptr = command_queue.as_ptr() as *mut std::ffi::c_void;
+            let results: *mut AnyObject = msg_send![self.0, runAsyncWithMTLCommandQueue: command_queue_ptr, 
+                feeds: feed_dict.0, 
+                targetTensors: targets_array.0, 
+                targetOperations: operations_ptr, 
+                executionDescriptor: descriptor_ptr,
             ];
             
             // Parse the results
