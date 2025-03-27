@@ -659,7 +659,8 @@ impl MPSGraph {
         &self,
         command_queue: &CommandQueue,
         feeds: HashMap<&MPSGraphTensor, &MPSGraphTensorData>,
-        results_dict: HashMap<&MPSGraphTensor, &MPSGraphTensorData>
+        results_dict: HashMap<&MPSGraphTensor, &MPSGraphTensorData>,
+        _execution_descriptor: Option<&MPSGraphExecutionDescriptor> // Ignored for now, not supported in this API
     ) {
         unsafe {
             // Get the queue pointer
@@ -688,13 +689,12 @@ impl MPSGraph {
             let results_dict_obj = crate::core::create_ns_dictionary_from_pointers(&results_keys, &results_values);
             
             // Run the graph with both feeds and results dictionaries
-            println!("Executing graph with feeds and outputs...");
+            // Note: ExecutionDescriptor is not supported in this API method
             let _: () = msg_send![self.0, runWithMTLCommandQueue: queue_ptr,
                 feeds: feed_dict,
                 targetOperations: std::ptr::null_mut::<AnyObject>(),
                 resultsDictionary: results_dict_obj,
             ];
-            println!("Graph execution completed.");
             
             // Release dictionaries
             objc2::ffi::objc_release(feed_dict as *mut _);

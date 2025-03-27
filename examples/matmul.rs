@@ -1,4 +1,5 @@
 use mpsgraph::prelude::*;
+use mpsgraph::executable::MPSGraphExecutionDescriptor;
 use metal::{Device, MTLResourceOptions, Buffer};
 use std::collections::HashMap;
 
@@ -108,10 +109,15 @@ fn main() {
     output_map.insert(&result, &result_tensor.tensor_data);
     
     // Execute graph with our inputs and output buffers
+    // Create execution descriptor that waits until completed
+    let mut execution_descriptor = MPSGraphExecutionDescriptor::new();
+    execution_descriptor.set_wait_until_completed(true);
+    
     graph.run_with_command_queue_feeds_outputs(
         &command_queue,
         feeds,
-        output_map
+        output_map,
+        Some(&execution_descriptor)
     );
     
     // Now read the result directly from the MTLBuffer
