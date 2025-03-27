@@ -10,12 +10,12 @@ In this session, we've addressed several major gaps in the API mapping, includin
 6. Updated API signatures to match Objective-C method parameters
 7. Fixed memory management with proper objc_retain/objc_release
 8. Implemented full memory operations support with complex constants in memory_ops.rs
+9. Implemented comprehensive arithmetic operations in arithmetic_ops.rs with unary, binary, ternary, and complex operations
 
 The main pending work includes:
 
-1. Implementing arithmetic operations in arithmetic_ops.rs
-2. Creating pooling operations in pooling_ops.rs
-3. Creating a comprehensive reduction_ops.rs implementation
+1. Creating pooling operations in pooling_ops.rs
+2. Creating a comprehensive reduction_ops.rs implementation
 
 Below is the full status of all modules:
 
@@ -29,30 +29,34 @@ Below is the full status of all modules:
      - ✅ `leaky_relu_gradient_with_incoming_gradient`
      - ✅ `leaky_relu_with_alpha_tensor`
    - **Extra in Rust**: Methods not in ObjC header that need review/removal: `prelu`, `gelu`, `hard_sigmoid`, `softplus`, `log_softmax`
-2. [ ] MPSGraphArithmeticOps.h
-   - ⚠️ Requires implementation in a dedicated file
-   - Issues:
-     - **Structure Issue**: Arithmetic operations are currently implemented in `graph.rs` instead of a dedicated file
-     - **Missing in Rust**: Many operations including:
-       - Identity: `identityWithTensor`
-       - Exponential: `exponentBase2WithTensor`, `exponentBase10WithTensor`
-       - Logarithmic: `logarithmBase2WithTensor`, `logarithmBase10WithTensor`
-       - Mathematical: `absoluteSquareWithTensor`, `sign`, `signbit`, `ceil`, `floor`, `round`, `rint`
-       - Trigonometric: `sinh`, `cosh`, inverse trigonometric functions
-     - **Missing in Rust**: Complex arithmetic operations including:
-       - `realPartOfTensor`
-       - `imaginaryPartOfTensor`
-       - `complexTensorWithRealTensor`
-     - **Missing in Rust**: Bitwise operations including:
-       - `bitwiseNOT`
-       - `bitwisePopulationCount`
-       - `bitwiseAND`, `bitwiseOR`, `bitwiseXOR`
-   - **Action Required**: 
-     1. Create a comprehensive implementation in `arithmetic_ops.rs`
-     2. Move existing arithmetic operations from graph.rs
-     3. Implement all missing operations to match the Objective-C header
-     4. Ensure proper memory management with objc_retain/objc_release
-     5. Follow consistent API patterns with Option<&str> for optional name parameters
+2. [x] MPSGraphArithmeticOps.h
+   - ✅ Fully implemented in `arithmetic_ops.rs`
+   - Implementations:
+     - ✅ Unary operations:
+       - Identity: `identity`
+       - Exponential: `exp`, `exp2`, `exp10`
+       - Logarithmic: `log`, `log2`, `log10`
+       - Mathematical: `square`, `sqrt`, `rsqrt`, `reciprocal`, `abs`, `abs_square`, `negative`, `sign`, `signbit`, `ceil`, `floor`, `round`, `rint`, `erf`, `truncate`
+       - Trigonometric: `sin`, `cos`, `tan`, `sinh`, `cosh`, `tanh`, `asin`, `acos`, `atan`, `asinh`, `acosh`, `atanh`
+       - Testing: `is_infinite`, `is_finite`, `is_nan`
+       - Logical: `logical_not`
+       - Bitwise: `bitwise_not`, `bitwise_population_count`
+     - ✅ Binary operations:
+       - Basic: `add`, `subtract`, `multiply`, `divide`, `modulo`, `power`
+       - Comparison: `minimum`, `maximum`, `minimum_with_nan_propagation`, `maximum_with_nan_propagation`
+       - Boolean: `equal`, `not_equal`, `less_than`, `less_than_or_equal_to`, `greater_than`, `greater_than_or_equal_to`
+       - Logical: `logical_and`, `logical_or`, `logical_nand`, `logical_nor`, `logical_xor`, `logical_xnor`
+       - Bitwise: `bitwise_and`, `bitwise_or`, `bitwise_xor`, `left_shift`, `right_shift`
+       - Advanced: `atan2`, `division_no_nan`, `floor_modulo`
+     - ✅ Ternary operations: `select`, `clamp`
+     - ✅ Complex arithmetic operations:
+       - `real_part`
+       - `imaginary_part`
+       - `complex_with_real_imaginary`
+       - `conjugate`
+   - ✅ Proper memory management with objc_retain/objc_release
+   - ✅ Consistent API patterns with Option<&str> for optional name parameters
+   - **API Completeness**: All operations from the Objective-C header are now implemented
 3. [x] MPSGraphAutomaticDifferentiation.h
    - Note: Implemented in `gradient_ops.rs` with a different name but equivalent functionality
    - The Rust implementation is named `gradient_for_primary_tensor` instead of the Swift name `gradients(of:with:name:)`
