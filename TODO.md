@@ -16,7 +16,7 @@ In this session, we've addressed several major gaps in the API mapping, includin
 
 All major API components have now been implemented! The codebase now provides a comprehensive Rust wrapper for the MPSGraph framework.
 
-Below is the full status of all modules:
+Below is the full status of all modules and what's still needed:
 
 
 1. [x] MPSGraphActivationOps.h
@@ -115,14 +115,21 @@ Below is the full status of all modules:
 - Fully implemented in `device.rs`
 - Provides all the functionality from the Objective-C API
 
-12. [x] MPSGraphExecutable.h
+12. [ ] MPSGraphExecutable.h
 
 - Partially implemented in `executable.rs`
 - Issues:
-  - **Missing in Rust**: `MPSGraphExecutableExecutionDescriptor` implementation
-  - **Missing in Rust**: `MPSGraphExecutableSerializationDescriptor` implementation
-  - **Missing in Rust**: Serialization and deserialization methods
-  - **Missing in Rust**: Asynchronous execution methods with completion handlers
+  - **Missing in Rust**: `MPSGraphExecutableExecutionDescriptor` needs completion with proper event handling (waitForEvent and signalEvent methods)
+  - **Missing in Rust**: `MPSGraphExecutableSerializationDescriptor` implementation needs to be added
+  - **Missing in Rust**: Serialization and deserialization methods:
+    - `serializeToMPSGraphPackageAtURL:descriptor:`
+    - `initWithMPSGraphPackageAtURL:compilationDescriptor:`
+    - `initWithCoreMLPackageAtURL:compilationDescriptor:`
+  - **Missing in Rust**: Asynchronous execution methods with completion handlers:
+    - `runAsyncWithMTLCommandQueue:inputsArray:resultsArray:executionDescriptor:`
+  - **Missing in Rust**: Specialization methods:
+    - `specializeWithDevice:inputTypes:compilationDescriptor:`
+    - `getOutputTypesWithDevice:inputTypes:compilationDescriptor:`
   - **API Mismatch**: Some method signatures don't match the latest API
 
 13. [x] MPSGraphFourierTransformOps.h
@@ -335,14 +342,20 @@ Below is the full status of all modules:
   - Dequantization operations
   - LUT-based dequantization
 
-29. [x] MPSGraphRNNOps.h
+29. [ ] MPSGraphRNNOps.h
 
 - Partially implemented in `rnn_ops.rs`
 - Issues:
-  - **API Mismatch**: The Rust implementation is using older method signatures that don't match the latest API
-  - **Missing in Rust**: Some of the RNN gradient operations
-  - **API Usage**: Current implementation defines custom methods that use different parameter names
-  - **Action Required**: Update implementation to use the latest API methods and signatures
+  - **API Mismatch**: The Rust implementation needs to be updated with descriptor properties that match the API:
+    - Add missing `reverse`, `bidirectional`, `produceCell`, `forgetGateLast`, and other properties
+  - **Missing in Rust**: Need to implement all RNN gradient operations from the API:
+    - `singleGateRNNGradientsWithSourceTensor`
+    - `LSTMGradientsWithSourceTensor`
+    - `GRUGradientsWithSourceTensor`
+  - **Missing in Rust**: Needs to implement all variants of the RNN operations:
+    - Multiple variants of `singleGateRNN`, `LSTM`, and `GRU` methods with different parameter combinations
+  - **API Usage**: Update implementation to use consistent parameter names that match the ObjC API
+  - **Action Required**: Complete revision to match the latest API signatures
 
 30. [x] MPSGraphRandomOps.h
 
@@ -376,14 +389,18 @@ Below is the full status of all modules:
 - ✅ Consistent parameter ordering across all functions
 - **API Completeness**: All operations from the Objective-C header are now implemented
 
-32. [x] MPSGraphResizeOps.h
+32. [ ] MPSGraphResizeOps.h
 
 - Partially implemented in `resize_ops.rs`
 - Issues:
-  - **Missing in Rust**: Several newer resize operations added in iOS 16+ and macOS 13+
-  - **Missing in Rust**: Some gradient operations for resize
-  - **API Mismatch**: Parameter ordering and naming conventions differ from the Objective-C API
-  - **Action Required**: Implement missing resize operations, especially for newer rounding modes
+  - **Missing in Rust**: Need to implement newer resize operations:
+    - Operations introduced in iOS 16+ and macOS 13+
+    - Operations that support different interpolation modes
+    - Operations that support different rounding modes
+  - **Missing in Rust**: Need to implement gradient operations:
+    - Gradient operations for all resize modes
+  - **API Mismatch**: Update parameter ordering and naming to match the Objective-C API
+  - **Action Required**: Complete implementation of all resize operations in the header
 
 33. [x] MPSGraphSampleGridOps.h
 
@@ -491,7 +508,7 @@ Below is the full status of all modules:
   - Gradient operations for TopK and BottomK
   - Support for specifying axes or using default (minor dimension)
 
-42. [x] MPSGraph.h
+42. [ ] MPSGraph.h
 
 - ✅ Mostly implemented in `graph.rs` with improvements in `executable.rs`
 - Implementations:
@@ -499,11 +516,36 @@ Below is the full status of all modules:
   - ✅ `MPSGraphExecutionDescriptor` in `executable.rs`
   - ✅ Updated `run_with_command_queue_feeds_outputs` to include execution descriptor parameter
 - Issues:
-  - **API Limitation**: `run_with_command_queue_feeds_outputs` ignores execution descriptor because the underlying Objective-C API method `runWithMTLCommandQueue:feeds:targetOperations:resultsDictionary:` doesn't accept an execution descriptor
-  - **Missing in Rust**: Most of the asynchronous execution methods
-  - **API Mismatch**: Some method names differ between Rust and Objective-C
-- **API Documentation Added**: Updated method signature indicates that execution descriptor is not fully supported
+  - **Missing in Rust**: Need to implement asynchronous execution methods:
+    - Methods with completion handlers
+    - Methods for specialization and optimization
+  - **API Mismatch**: Ensure method names and signatures match the Objective-C API
+  - **Action Required**: Complete implementation of modern execution and compilation methods
 
 43. [x] MetalPerformanceShadersGraph.h
 
 - This is just a header file that imports all other headers, not requiring specific implementation
+
+## Summary of Remaining Work
+
+1. **MPSGraphExecutable.h**:
+   - Complete `MPSGraphExecutableExecutionDescriptor` implementation with event handling
+   - Add `MPSGraphExecutableSerializationDescriptor` implementation
+   - Implement serialization/deserialization methods
+   - Implement asynchronous execution methods with completion handlers
+   - Add specialization methods
+
+2. **MPSGraphRNNOps.h**:
+   - Update descriptors with all properties from the latest API
+   - Implement all RNN gradient operations
+   - Implement all variants of the RNN operations
+   - Ensure parameter names match ObjC API
+
+3. **MPSGraphResizeOps.h**:
+   - Implement newer resize operations from iOS 16+ and macOS 13+
+   - Add gradient operations for resize
+   - Update parameter ordering and naming
+
+4. **MPSGraph.h**:
+   - Implement remaining asynchronous execution methods
+   - Add methods for specialization and optimization

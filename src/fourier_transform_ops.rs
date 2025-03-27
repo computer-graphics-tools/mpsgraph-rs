@@ -1,11 +1,14 @@
 use objc2::runtime::AnyObject;
 use objc2::msg_send;
+use objc2::rc::Retained;
 use objc2_foundation::{NSArray, NSNumber};
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
 use crate::core::{NSString, AsRawObject};
 
 /// Scaling mode for FFT operations
+///
+/// Available since macOS 14.0, iOS 17.0, tvOS 17.0
 #[repr(u64)]
 #[derive(Debug, Copy, Clone)]
 pub enum MPSGraphFFTScalingMode {
@@ -18,6 +21,8 @@ pub enum MPSGraphFFTScalingMode {
 }
 
 /// Descriptor for FFT operations
+///
+/// Available since macOS 14.0, iOS 17.0, tvOS 17.0
 pub struct MPSGraphFFTDescriptor(pub(crate) *mut AnyObject);
 
 impl Default for MPSGraphFFTDescriptor {
@@ -121,6 +126,10 @@ impl MPSGraph {
     /// # Returns
     /// 
     /// A transformed tensor
+    ///
+    /// # Availability
+    ///
+    /// Available since macOS 14.0, iOS 17.0, tvOS 17.0
     pub fn fast_fourier_transform(
         &self,
         tensor: &MPSGraphTensor,
@@ -134,13 +143,13 @@ impl MPSGraph {
         };
         
         // Convert axes to NSArray
-        let axes_array = unsafe {
-            let axes_numbers: Vec<&NSNumber> = axes.iter()
-                .map(|&x| NSNumber::from_u64(x).as_ref())
-                .collect();
-            let ns_array = NSArray::from_slice(&axes_numbers);
-            ns_array.as_raw_object()
-        };
+        let axes_numbers: Vec<Retained<NSNumber>> = axes.iter()
+            .map(|&x| NSNumber::new_u64(x))
+            .collect();
+        
+        let refs: Vec<&NSNumber> = axes_numbers.iter().map(|n| n.as_ref()).collect();
+        let ns_array = NSArray::from_slice(&refs);
+        let axes_array = ns_array.as_raw_object();
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
@@ -167,6 +176,10 @@ impl MPSGraph {
     /// # Returns
     /// 
     /// A transformed tensor
+    ///
+    /// # Availability
+    ///
+    /// Available since macOS 14.0, iOS 17.0, tvOS 17.0
     pub fn fast_fourier_transform_with_tensor_axes(
         &self,
         tensor: &MPSGraphTensor,
@@ -204,6 +217,10 @@ impl MPSGraph {
     /// # Returns
     /// 
     /// A complex tensor in Hermitean format
+    ///
+    /// # Availability
+    ///
+    /// Available since macOS 14.0, iOS 17.0, tvOS 17.0
     pub fn real_to_hermitean_fft(
         &self,
         tensor: &MPSGraphTensor,
@@ -217,13 +234,13 @@ impl MPSGraph {
         };
         
         // Convert axes to NSArray
-        let axes_array = unsafe {
-            let axes_numbers: Vec<&NSNumber> = axes.iter()
-                .map(|&x| NSNumber::from_u64(x).as_ref())
-                .collect();
-            let ns_array = NSArray::from_slice(&axes_numbers);
-            ns_array.as_raw_object()
-        };
+        let axes_numbers: Vec<Retained<NSNumber>> = axes.iter()
+            .map(|&x| NSNumber::new_u64(x))
+            .collect();
+        
+        let refs: Vec<&NSNumber> = axes_numbers.iter().map(|n| n.as_ref()).collect();
+        let ns_array = NSArray::from_slice(&refs);
+        let axes_array = ns_array.as_raw_object();
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
@@ -250,6 +267,10 @@ impl MPSGraph {
     /// # Returns
     /// 
     /// A complex tensor in Hermitean format
+    ///
+    /// # Availability
+    ///
+    /// Available since macOS 14.0, iOS 17.0, tvOS 17.0
     pub fn real_to_hermitean_fft_with_tensor_axes(
         &self,
         tensor: &MPSGraphTensor,
@@ -287,6 +308,10 @@ impl MPSGraph {
     /// # Returns
     /// 
     /// A real tensor
+    ///
+    /// # Availability
+    ///
+    /// Available since macOS 14.0, iOS 17.0, tvOS 17.0
     pub fn hermitean_to_real_fft(
         &self,
         tensor: &MPSGraphTensor,
@@ -300,13 +325,13 @@ impl MPSGraph {
         };
         
         // Convert axes to NSArray
-        let axes_array = unsafe {
-            let axes_numbers: Vec<&NSNumber> = axes.iter()
-                .map(|&x| NSNumber::from_u64(x).as_ref())
-                .collect();
-            let ns_array = NSArray::from_slice(&axes_numbers);
-            ns_array.as_raw_object()
-        };
+        let axes_numbers: Vec<Retained<NSNumber>> = axes.iter()
+            .map(|&x| NSNumber::new_u64(x))
+            .collect();
+        
+        let refs: Vec<&NSNumber> = axes_numbers.iter().map(|n| n.as_ref()).collect();
+        let ns_array = NSArray::from_slice(&refs);
+        let axes_array = ns_array.as_raw_object();
         
         unsafe {
             let tensor: *mut AnyObject = msg_send![
@@ -333,6 +358,10 @@ impl MPSGraph {
     /// # Returns
     /// 
     /// A real tensor
+    ///
+    /// # Availability
+    ///
+    /// Available since macOS 14.0, iOS 17.0, tvOS 17.0
     pub fn hermitean_to_real_fft_with_tensor_axes(
         &self,
         tensor: &MPSGraphTensor,
@@ -376,6 +405,7 @@ impl MPSGraph {
     /// # Deprecated
     ///
     /// This method uses the older API. Consider using `fast_fourier_transform` instead.
+    #[deprecated(since = "0.1.0", note = "Use `fast_fourier_transform` instead")]
     pub fn forward_fft(
         &self,
         real: &MPSGraphTensor,
@@ -428,6 +458,7 @@ impl MPSGraph {
     ///
     /// This method uses the older API. Consider using `fast_fourier_transform` instead
     /// with `descriptor.set_inverse(true)`.
+    #[deprecated(since = "0.1.0", note = "Use `fast_fourier_transform` with `descriptor.set_inverse(true)` instead")]
     pub fn inverse_fft(
         &self,
         real: &MPSGraphTensor,
@@ -478,6 +509,7 @@ impl MPSGraph {
     /// # Deprecated
     ///
     /// This method uses the older API. Consider using `real_to_hermitean_fft` instead.
+    #[deprecated(since = "0.1.0", note = "Use `real_to_hermitean_fft` instead")]
     pub fn forward_real_fft(
         &self,
         real: &MPSGraphTensor,
@@ -527,6 +559,7 @@ impl MPSGraph {
     /// # Deprecated
     ///
     /// This method uses the older API. Consider using `hermitean_to_real_fft` instead.
+    #[deprecated(since = "0.1.0", note = "Use `hermitean_to_real_fft` instead")]
     pub fn inverse_real_fft(
         &self,
         real: &MPSGraphTensor,
