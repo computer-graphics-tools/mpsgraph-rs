@@ -12,10 +12,9 @@ In this session, we've addressed several major gaps in the API mapping, includin
 8. Implemented full memory operations support with complex constants in memory_ops.rs
 9. Implemented comprehensive arithmetic operations in arithmetic_ops.rs with unary, binary, ternary, and complex operations
 10. Implemented complete pooling operations with 2D and 4D support, descriptors, and gradient operations in pooling_ops.rs
+11. Implemented comprehensive reduction operations in reduction_ops.rs with single-axis and multi-axis variants
 
-The main pending work includes:
-
-1. Creating a comprehensive reduction_ops.rs implementation
+All major API components have now been implemented! The codebase now provides a comprehensive Rust wrapper for the MPSGraph framework.
 
 Below is the full status of all modules:
 
@@ -302,37 +301,29 @@ Below is the full status of all modules:
   - State management for random number generation
   - Dropout operations
 
-31. [ ] MPSGraphReductionOps.h
+31. [x] MPSGraphReductionOps.h
 
-- ⚠️ Partially implemented but needs reorganization
-- Current state:
-  - **Structure Issue**: Reduction operations are implemented in `graph.rs` but should be in a dedicated file
-  - **File Status**: Empty `reduction_ops.rs` file exists but needs to be populated
-- Issues:
-  - **Missing in Rust**: Key reduction operations:
-    - `reductionProductWithTensor:axes:name:`
-    - `reductionANDWithTensor:axes:name:`
-    - `reductionORWithTensor:axes:name:`
-    - `reductionXORWithTensor:axes:name:`
-  - **Missing in Rust**: Single-axis variants:
-    - `reductionSumWithTensor:axis:name:`
-    - `reductionMinWithTensor:axis:name:`
-    - `reductionMaxWithTensor:axis:name:`
-    - Other single-axis variants for all operations
-  - **Missing in Rust**: Arg-max/min operations:
-    - `reductionArgMaxWithTensor:axis:name:`
-    - `reductionArgMinWithTensor:axis:name:`
-  - **API Mismatch**: Inconsistent naming:
-    - Current implementation uses Rust-style naming (`reduction_sum`) instead of matching the Objective-C API (`reductionSumWithTensor:axes:name:`)
-    - Parameter ordering doesn't match the Objective-C API
-  - **Action Required**: 
-    1. Create a comprehensive implementation in `reduction_ops.rs`
-    2. Move existing reduction operations from `graph.rs`
-    3. Implement all missing reduction operations
-    4. Add single-axis variants for all operations
-    5. Implement arg-max/min operations
-    6. Ensure proper memory management with objc_retain/objc_release
-    7. Follow consistent API patterns with Option<&str> for optional name parameters
+- ✅ Fully implemented in `reduction_ops.rs`
+- Implementations:
+  - ✅ Basic reduction operations:
+    - `reduction_sum_with_tensor_axis` and `reduction_sum_with_tensor_axes`
+    - `reduction_maximum_with_tensor_axis` and `reduction_maximum_with_tensor_axes`
+    - `reduction_minimum_with_tensor_axis` and `reduction_minimum_with_tensor_axes`
+    - `reduction_product_with_tensor_axis` and `reduction_product_with_tensor_axes`
+  - ✅ NaN-handling operations:
+    - `reduction_maximum_propagate_nan_with_tensor_axis` and `reduction_maximum_propagate_nan_with_tensor_axes`
+    - `reduction_minimum_propagate_nan_with_tensor_axis` and `reduction_minimum_propagate_nan_with_tensor_axes`
+  - ✅ Logical operations:
+    - `reduction_and_with_tensor_axis` and `reduction_and_with_tensor_axes`
+    - `reduction_or_with_tensor_axis` and `reduction_or_with_tensor_axes`
+    - `reduction_xor_with_tensor_axis` and `reduction_xor_with_tensor_axes`
+  - ✅ Argmax/Argmin operations:
+    - `reduction_arg_maximum_with_tensor_axis`
+    - `reduction_arg_minimum_with_tensor_axis`
+- ✅ Proper memory management with objc_retain/objc_release
+- ✅ Consistent API patterns with Option<&str> for optional name parameters
+- ✅ Consistent parameter ordering across all functions
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 32. [x] MPSGraphResizeOps.h
 
