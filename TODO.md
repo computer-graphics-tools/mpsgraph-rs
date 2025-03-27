@@ -9,13 +9,13 @@ In this session, we've addressed several major gaps in the API mapping, includin
 5. Implemented MPSGraphCompilationDescriptor and MPSGraphExecutionDescriptor
 6. Updated API signatures to match Objective-C method parameters
 7. Fixed memory management with proper objc_retain/objc_release
+8. Implemented full memory operations support with complex constants in memory_ops.rs
 
 The main pending work includes:
 
 1. Implementing arithmetic operations in arithmetic_ops.rs
 2. Creating pooling operations in pooling_ops.rs
-3. Moving memory operations from graph.rs to memory_ops.rs 
-4. Creating a comprehensive reduction_ops.rs implementation
+3. Creating a comprehensive reduction_ops.rs implementation
 
 Below is the full status of all modules:
 
@@ -30,12 +30,29 @@ Below is the full status of all modules:
      - ✅ `leaky_relu_with_alpha_tensor`
    - **Extra in Rust**: Methods not in ObjC header that need review/removal: `prelu`, `gelu`, `hard_sigmoid`, `softplus`, `log_softmax`
 2. [ ] MPSGraphArithmeticOps.h
-   - Note: Arithmetic operations are implemented in `graph.rs` instead of a separate file. Consider moving them to `arithmetic_ops.rs` for better organization.
+   - ⚠️ Requires implementation in a dedicated file
    - Issues:
-     - **Missing in Rust**: Many operations including `identityWithTensor`, `exponentBase2WithTensor`, `exponentBase10WithTensor`, `logarithmBase2WithTensor`, `logarithmBase10WithTensor`, `absoluteSquareWithTensor`, `sign`, `signbit`, `ceil`, `floor`, `round`, `rint`, `sinh`, `cosh`, trigonometric inverse functions, etc.
-     - **Missing in Rust**: Complex arithmetic operations including `realPartOfTensor`, `imaginaryPartOfTensor`, `complexTensorWithRealTensor`
-     - **Missing in Rust**: Bitwise operations including `bitwiseNOT`, `bitwisePopulationCount`, `bitwiseAND`, etc.
-   - **Action Required**: Create a comprehensive implementation in `arithmetic_ops.rs` file with all operations from the Objective-C header
+     - **Structure Issue**: Arithmetic operations are currently implemented in `graph.rs` instead of a dedicated file
+     - **Missing in Rust**: Many operations including:
+       - Identity: `identityWithTensor`
+       - Exponential: `exponentBase2WithTensor`, `exponentBase10WithTensor`
+       - Logarithmic: `logarithmBase2WithTensor`, `logarithmBase10WithTensor`
+       - Mathematical: `absoluteSquareWithTensor`, `sign`, `signbit`, `ceil`, `floor`, `round`, `rint`
+       - Trigonometric: `sinh`, `cosh`, inverse trigonometric functions
+     - **Missing in Rust**: Complex arithmetic operations including:
+       - `realPartOfTensor`
+       - `imaginaryPartOfTensor`
+       - `complexTensorWithRealTensor`
+     - **Missing in Rust**: Bitwise operations including:
+       - `bitwiseNOT`
+       - `bitwisePopulationCount`
+       - `bitwiseAND`, `bitwiseOR`, `bitwiseXOR`
+   - **Action Required**: 
+     1. Create a comprehensive implementation in `arithmetic_ops.rs`
+     2. Move existing arithmetic operations from graph.rs
+     3. Implement all missing operations to match the Objective-C header
+     4. Ensure proper memory management with objc_retain/objc_release
+     5. Follow consistent API patterns with Option<&str> for optional name parameters
 3. [x] MPSGraphAutomaticDifferentiation.h
    - Note: Implemented in `gradient_ops.rs` with a different name but equivalent functionality
    - The Rust implementation is named `gradient_for_primary_tensor` instead of the Swift name `gradients(of:with:name:)`
@@ -156,18 +173,21 @@ Below is the full status of all modules:
   - **Missing in Rust**: The `scaledDotProductAttention` operations introduced in macOS 15.0, iOS 18.0, macCatalyst 18.0, tvOS 18.0
   - **Action Required**: Implement the missing operations
 
-20. [ ] MPSGraphMemoryOps.h
+20. [x] MPSGraphMemoryOps.h
 
-- Partially implemented in `graph.rs` and should be moved to `memory_ops.rs`
-- Issues:
-  - **Implemented in Rust**: `placeholder` and `constant` operations in graph.rs
-  - **Missing in Rust**: `variable`, `readVariable`, and `assignVariable` operations
-  - **Missing in Rust**: Complex constant operations introduced in macOS 14.0, iOS 17.0, tvOS 17.0
-  - **Missing in Rust**: `variableFromTensor` operation introduced in macOS 15.0, iOS 18.0, macCatalyst 18.0, tvOS 18.0
-  - **Action Required**: 
-     1. Create a new `memory_ops.rs` file and move existing memory operations from graph.rs
-     2. Implement the missing operations
-     3. Add proper documentation for the operations
+- ✅ Fully implemented in `memory_ops.rs`
+- Implementations:
+  - ✅ Moved the basic operations from `graph.rs` to `memory_ops.rs`
+  - ✅ Implemented `variable`, `readVariable`, and `assignVariable` operations
+  - ✅ Added complex constant operations support with multiple variants:
+     - `complex_constant`
+     - `complex_constant_with_type`
+     - `complex_constant_with_shape`
+  - ✅ Implemented `variableFromTensor` operation
+  - ✅ Added comprehensive documentation for all operations
+  - ✅ Proper memory management with objc_retain/objc_release
+  - ✅ Consistent API patterns with Option<&str> for optional name parameters
+- **API Completeness**: All operations from the Objective-C header are now implemented
 
 21. [x] MPSGraphNonMaximumSuppressionOps.h
 
@@ -217,13 +237,29 @@ Below is the full status of all modules:
 
 27. [ ] MPSGraphPoolingOps.h
 
-- Not implemented in the Rust bindings
+- ⚠️ Completely missing from the Rust bindings
 - Issues:
-  - **Missing in Rust**: `MPSGraphPooling2DOpDescriptor` implementation
-  - **Missing in Rust**: `MPSGraphPooling4DOpDescriptor` implementation
-  - **Missing in Rust**: All 2D and 4D pooling operations including max_pooling, average_pooling, l2norm_pooling operations
-  - **Missing in Rust**: All gradient operations for pooling operations
-  - **Action Required**: Create a full implementation in `pooling_ops.rs`
+  - **Missing in Rust**: Descriptor implementations:
+    - `MPSGraphPooling2DOpDescriptor`
+    - `MPSGraphPooling4DOpDescriptor`
+  - **Missing in Rust**: 2D pooling operations:
+    - `maxPooling2DWithSourceTensor:descriptor:name:`
+    - `averagePooling2DWithSourceTensor:descriptor:name:`
+    - `l2NormPooling2DWithSourceTensor:descriptor:name:`
+  - **Missing in Rust**: 4D pooling operations:
+    - Similar 4D operations for max, average, and l2norm pooling
+  - **Missing in Rust**: All gradient operations:
+    - `maxPooling2DGradientWithGradientTensor:sourceTensor:descriptor:name:`
+    - `averagePooling2DGradientWithGradientTensor:sourceTensor:descriptor:name:`
+    - `l2NormPooling2DGradientWithGradientTensor:sourceTensor:descriptor:name:`
+    - Corresponding gradient operations for 4D pooling
+  - **Action Required**: 
+    1. Create a new `pooling_ops.rs` file
+    2. Implement the descriptor structs with proper builder methods
+    3. Implement all 2D and 4D pooling operations
+    4. Implement all gradient operations
+    5. Ensure proper memory management with objc_retain/objc_release
+    6. Follow consistent API patterns with Option<&str> for optional name parameters
 
 28. [x] MPSGraphQuantizationOps.h
 
@@ -253,17 +289,35 @@ Below is the full status of all modules:
 
 31. [ ] MPSGraphReductionOps.h
 
-- Partially implemented in `graph.rs` (not in a dedicated file)
+- ⚠️ Partially implemented but needs reorganization
+- Current state:
+  - **Structure Issue**: Reduction operations are implemented in `graph.rs` but should be in a dedicated file
+  - **File Status**: Empty `reduction_ops.rs` file exists but needs to be populated
 - Issues:
-  - **Missing in Rust**: Several reduction operations like product, AND, OR, etc.
-  - **Missing in Rust**: Single-axis variants of reduction operations
-  - **Missing in Rust**: Arg-max/min operations
-  - **API Mismatch**: Current implementation uses Rust-style naming instead of matching the Objective-C API
+  - **Missing in Rust**: Key reduction operations:
+    - `reductionProductWithTensor:axes:name:`
+    - `reductionANDWithTensor:axes:name:`
+    - `reductionORWithTensor:axes:name:`
+    - `reductionXORWithTensor:axes:name:`
+  - **Missing in Rust**: Single-axis variants:
+    - `reductionSumWithTensor:axis:name:`
+    - `reductionMinWithTensor:axis:name:`
+    - `reductionMaxWithTensor:axis:name:`
+    - Other single-axis variants for all operations
+  - **Missing in Rust**: Arg-max/min operations:
+    - `reductionArgMaxWithTensor:axis:name:`
+    - `reductionArgMinWithTensor:axis:name:`
+  - **API Mismatch**: Inconsistent naming:
+    - Current implementation uses Rust-style naming (`reduction_sum`) instead of matching the Objective-C API (`reductionSumWithTensor:axes:name:`)
+    - Parameter ordering doesn't match the Objective-C API
   - **Action Required**: 
-    1. Create a dedicated `reduction_ops.rs` file (it exists but is empty)
-    2. Move existing reduction operations from graph.rs
-    3. Implement missing reduction operations
-    4. Ensure proper naming conventions and parameters match the Objective-C API
+    1. Create a comprehensive implementation in `reduction_ops.rs`
+    2. Move existing reduction operations from `graph.rs`
+    3. Implement all missing reduction operations
+    4. Add single-axis variants for all operations
+    5. Implement arg-max/min operations
+    6. Ensure proper memory management with objc_retain/objc_release
+    7. Follow consistent API patterns with Option<&str> for optional name parameters
 
 32. [x] MPSGraphResizeOps.h
 
