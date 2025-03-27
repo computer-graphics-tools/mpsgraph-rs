@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 use std::convert::AsRef;
 use std::ptr;
 use crate::core::MPSDataType;
-use crate::core::MPSShape;
+use crate::shape::MPSShape;
 use crate::operation::MPSGraphOperation;
 
 /// A wrapper for MPSGraphTensor objects

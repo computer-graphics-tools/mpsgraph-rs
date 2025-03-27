@@ -49,10 +49,10 @@ impl MPSGraph {
                 .collect();
             
             // Create an NSArray from the raw pointers
-            let array = crate::core::OurNSArray::from_objects(&tensor_ptrs);
+            let array = crate::core::create_ns_array_from_pointers(&tensor_ptrs);
             
             // Call the Objective-C method
-            let dict: *mut AnyObject = msg_send![self.0, gradientForPrimaryTensor: primary_tensor.0, withTensors: array.0, name: name_obj,];
+            let dict: *mut AnyObject = msg_send![self.0, gradientForPrimaryTensor: primary_tensor.0, withTensors: array, name: name_obj,];
             
             // We need to manually parse the NSDictionary since we can't directly use the new objc2 version
             // Convert NSDictionary to HashMap manually

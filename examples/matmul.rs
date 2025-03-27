@@ -1,31 +1,140 @@
-// No imports needed for the mock implementation
+use mpsgraph::prelude::*;
+use metal::{Device, MTLResourceOptions, Buffer};
+use std::collections::HashMap;
+
+// A struct that pairs an MTLBuffer with its MPSGraphTensorData
+#[derive(Clone)]
+struct TensorBuffer {
+    buffer: Buffer,
+    tensor_data: MPSGraphTensorData,
+}
+
+impl TensorBuffer {
+    // Create a new TensorBuffer from a vector of f32 data
+    fn new(device: &Device, data: &[f32], shape: &MPSShape, data_type: MPSDataType) -> Self {
+        // Calculate size in bytes
+        let byte_length = data.len() * std::mem::size_of::<f32>();
+        
+        // Create MTLBuffer with storage mode shared for CPU/GPU access
+        let buffer = device.new_buffer_with_data(
+            data.as_ptr() as *const _,
+            byte_length as u64,
+            MTLResourceOptions::StorageModeShared
+        );
+        
+        // Create tensor data that references this buffer
+        let tensor_data = MPSGraphTensorData::from_buffer(&buffer, shape, data_type);
+        
+        Self { buffer, tensor_data }
+    }
+    
+    // Create an empty TensorBuffer for results
+    fn new_empty(device: &Device, size: usize, shape: &MPSShape, data_type: MPSDataType) -> Self {
+        // Calculate size in bytes
+        let byte_length = size * std::mem::size_of::<f32>();
+        
+        // Create empty MTLBuffer with storage mode shared
+        let buffer = device.new_buffer(
+            byte_length as u64,
+            MTLResourceOptions::StorageModeShared
+        );
+        
+        // Create tensor data that references this buffer
+        let tensor_data = MPSGraphTensorData::from_buffer(&buffer, shape, data_type);
+        
+        Self { buffer, tensor_data }
+    }
+    
+    // Read data directly from the buffer
+    fn get_f32_data(&self, count: usize) -> Vec<f32> {
+        let ptr = self.buffer.contents() as *const f32;
+        unsafe {
+            std::slice::from_raw_parts(ptr, count).to_vec()
+        }
+    }
+}
 
 fn main() {
-    println!("Running mock matmul since the real implementation might require specific GPU setup.");
+    // Get Metal device
+    let device = Device::system_default().expect("No Metal device found");
     
-    // Define matrix dimensions (unused in this simple example)
-    let _shape_a = [2, 3];  // 2x3 matrix
-    let _shape_b = [3, 2];  // 3x2 matrix
+    // Input dimensions
+    let m = 2;  // Matrix A rows
+    let k = 3;  // Matrix A cols / Matrix B rows
+    let n = 2;  // Matrix B cols
     
-    // Matrix A: [[1, 2, 3], [4, 5, 6]]
-    let matrix_a = [1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0];
+    // Create input data
+    let a_data: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0];  // 2x3 matrix
+    let b_data: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0];  // 3x2 matrix
     
-    // Matrix B: [[7, 8], [9, 10], [11, 12]]
-    let matrix_b = [7.0f32, 8.0, 9.0, 10.0, 11.0, 12.0];
+    // Create a graph
+    let graph = MPSGraph::new();
     
-    // Calculate the result manually
-    let c11 = matrix_a[0] * matrix_b[0] + matrix_a[1] * matrix_b[2] + matrix_a[2] * matrix_b[4];
-    let c12 = matrix_a[0] * matrix_b[1] + matrix_a[1] * matrix_b[3] + matrix_a[2] * matrix_b[5];
-    let c21 = matrix_a[3] * matrix_b[0] + matrix_a[4] * matrix_b[2] + matrix_a[5] * matrix_b[4];
-    let c22 = matrix_a[3] * matrix_b[1] + matrix_a[4] * matrix_b[3] + matrix_a[5] * matrix_b[5];
+    // Create input placeholders
+    let a_shape = MPSShape::matrix(m, k);
+    let b_shape = MPSShape::matrix(k, n);
+    let result_shape = MPSShape::matrix(m, n);
     
-    // Expected result: [[58, 64], [139, 154]]
-    println!("Matrix multiplication result:");
-    println!("[{}, {}]", c11, c12);
-    println!("[{}, {}]", c21, c22);
+    let a = graph.placeholder(&a_shape, MPSDataType::Float32, Some("A"));
+    let b = graph.placeholder(&b_shape, MPSDataType::Float32, Some("B"));
     
-    println!("\nNote: To run the real MPSGraph implementation:");
-    println!("1. Make sure you have a compatible Metal GPU");
-    println!("2. Your code needs appropriate error handling");
-    println!("3. Check the documentation for detailed setup instructions");
+    // Perform matrix multiplication: A * B
+    let result = graph.matmul(&a, &b, None);
+    
+    // Create TensorBuffers for inputs
+    let a_tensor = TensorBuffer::new(&device, &a_data, &a_shape, MPSDataType::Float32);
+    let b_tensor = TensorBuffer::new(&device, &b_data, &b_shape, MPSDataType::Float32);
+    
+    // Create TensorBuffer for output
+    let result_size = m * n;
+    let result_tensor = TensorBuffer::new_empty(
+        &device, 
+        result_size,
+        &result_shape, 
+        MPSDataType::Float32
+    );
+    
+    // Create command queue
+    let command_queue = device.new_command_queue();
+    
+    // Prepare feeds and targets
+    let mut feeds = HashMap::new();
+    feeds.insert(&a, a_tensor.tensor_data);
+    feeds.insert(&b, b_tensor.tensor_data);
+    
+    println!("Executing matrix multiplication...");
+    
+    // Use run_with_command_queue since that's what's available
+    // The graph will create and manage the command buffer internally
+    let outputs = graph.run_with_command_queue(
+        &command_queue,
+        feeds,
+        &[&result]
+    );
+    
+    // Now read the result directly from the MTLBuffer
+    let result_floats = result_tensor.get_f32_data(result_size);
+    
+    // Expected result of matrix multiplication
+    // [1, 2, 3] [1, 2]   [22, 28]
+    // [4, 5, 6] [3, 4] = [49, 64]
+    //           [5, 6]
+    
+    println!("Matrix A ({m}x{k}):");
+    for i in 0..m {
+        let row: Vec<f32> = a_data[i*k..(i+1)*k].to_vec();
+        println!("  {:?}", row);
+    }
+    
+    println!("Matrix B ({k}x{n}):");
+    for i in 0..k {
+        let row: Vec<f32> = b_data[i*n..(i+1)*n].to_vec();
+        println!("  {:?}", row);
+    }
+    
+    println!("Result ({m}x{n}):");
+    for i in 0..m {
+        let row: Vec<f32> = result_floats[i*n..(i+1)*n].to_vec();
+        println!("  {:?}", row);
+    }
 }

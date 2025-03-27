@@ -1,7 +1,8 @@
 use objc2::runtime::AnyObject;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{MPSShape, MPSDataType, NSString, AsRawObject};
+use crate::core::{MPSDataType, NSString, AsRawObject};
+use crate::shape::MPSShape;
 
 /// Random distribution types supported by MPSGraph
 #[repr(u64)]

@@ -24,6 +24,182 @@
 - **Memory Management**: Ensure proper resource cleanup with Drop implementations
 - **Comments**: Document public APIs with doc comments
 
+## Working with Metal (MTLBuffer, MTLDevice, CommandQueue, CommandBuffer)
+
+### MTLDevice
+
+The `MTLDevice` represents the GPU. Most Metal objects are created from a device:
+
+```rust
+// Get the default system device
+let device = Device::system_default().expect("No device found");
+
+// Create resources using the device
+let buffer = device.new_buffer(size_in_bytes, MTLResourceOptions::StorageModeShared);
+let command_queue = device.new_command_queue();
+```
+
+### MTLBuffer
+
+Metal buffers store data that can be accessed by the GPU:
+
+```rust
+// Create a buffer with shared storage mode (accessible by both CPU and GPU)
+let buffer = device.new_buffer(
+    size_in_bytes,
+    MTLResourceOptions::StorageModeShared
+);
+
+// Create a buffer from existing data
+let data = vec![1u32, 2, 3, 4];
+let buffer = device.new_buffer_with_data(
+    data.as_ptr().cast(),
+    std::mem::size_of_val(&data) as u64,
+    MTLResourceOptions::StorageModeShared
+);
+
+// Access buffer contents from CPU (for shared mode buffers)
+let contents = unsafe {
+    std::slice::from_raw_parts(
+        buffer.contents().cast::<u32>(),
+        buffer.length() as usize / std::mem::size_of::<u32>()
+    )
+};
+
+// Modify buffer contents
+unsafe {
+    let ptr = buffer.contents().cast::<u32>();
+    *ptr = 42;
+}
+```
+
+### MTLCommandQueue
+
+Command queues manage the execution of command buffers:
+
+```rust
+// Create a command queue
+let command_queue = device.new_command_queue();
+
+// Get a new command buffer from the queue
+let command_buffer = command_queue.new_command_buffer();
+```
+
+### MTLCommandBuffer
+
+Command buffers contain the commands to be executed by the GPU:
+
+```rust
+// Create a command buffer
+let command_buffer = command_queue.new_command_buffer();
+
+// Get an encoder from the command buffer
+let compute_encoder = command_buffer.new_compute_command_encoder();
+
+// Set up compute work with encoder
+compute_encoder.set_compute_pipeline_state(&pipeline_state);
+compute_encoder.set_buffer(0, Some(&input_buffer), 0);
+compute_encoder.set_buffer(1, Some(&output_buffer), 0);
+
+// Configure thread groups and dispatch
+let thread_group_size = MTLSize { width: 16, height: 1, depth: 1 };
+let thread_groups = MTLSize { 
+    width: (size + 15) / 16, 
+    height: 1, 
+    depth: 1 
+};
+compute_encoder.dispatch_thread_groups(thread_groups, thread_group_size);
+
+// Finish encoding
+compute_encoder.end_encoding();
+
+// Submit work to GPU
+command_buffer.commit();
+
+// Wait for completion (synchronously)
+command_buffer.wait_until_completed();
+
+// Alternatively, use completion handler (asynchronously)
+command_buffer.add_completed_handler(|buffer| {
+    println!("Command buffer completed with status: {:?}", buffer.status());
+});
+command_buffer.commit();
+```
+
+### Putting It All Together
+
+Example workflow for a compute operation:
+
+```rust
+// Get device
+let device = Device::system_default().expect("No device found");
+
+// Create buffers
+let input_data = vec![1.0f32, 2.0, 3.0, 4.0];
+let input_buffer = device.new_buffer_with_data(
+    input_data.as_ptr().cast(),
+    (input_data.len() * std::mem::size_of::<f32>()) as u64,
+    MTLResourceOptions::StorageModeShared
+);
+
+let output_buffer = device.new_buffer(
+    (input_data.len() * std::mem::size_of::<f32>()) as u64,
+    MTLResourceOptions::StorageModeShared
+);
+
+// Create compute pipeline
+let library = device.new_library_with_source(
+    "kernel void square(device float *input [[buffer(0)]],
+                       device float *output [[buffer(1)]],
+                       uint id [[thread_position_in_grid]]) {
+        output[id] = input[id] * input[id];
+    }",
+    &CompileOptions::new()
+).unwrap();
+
+let kernel = library.get_function("square", None).unwrap();
+let pipeline_state = device.new_compute_pipeline_state_with_function(&kernel).unwrap();
+
+// Create command queue and buffer
+let command_queue = device.new_command_queue();
+let command_buffer = command_queue.new_command_buffer();
+
+// Set up and execute compute work
+let compute_encoder = command_buffer.new_compute_command_encoder();
+compute_encoder.set_compute_pipeline_state(&pipeline_state);
+compute_encoder.set_buffer(0, Some(&input_buffer), 0);
+compute_encoder.set_buffer(1, Some(&output_buffer), 0);
+
+let thread_group_size = MTLSize { width: 1, height: 1, depth: 1 };
+let thread_groups = MTLSize { width: input_data.len() as u64, height: 1, depth: 1 };
+compute_encoder.dispatch_thread_groups(thread_groups, thread_group_size);
+compute_encoder.end_encoding();
+
+// Submit and wait
+command_buffer.commit();
+command_buffer.wait_until_completed();
+
+// Read results
+let results = unsafe {
+    std::slice::from_raw_parts(
+        output_buffer.contents().cast::<f32>(),
+        input_data.len()
+    )
+};
+println!("Results: {:?}", results);
+```
+
+### Best Practices
+
+1. **Resource Management**: Release resources when done (Metal-rs handles this with Drop)
+2. **Buffer Options**: Choose appropriate storage mode for your use case:
+   - `StorageModeShared`: Accessible by both CPU and GPU, but slower
+   - `StorageModeManaged`: CPU and GPU have separate copies, synchronization managed by driver
+   - `StorageModePrivate`: GPU-only access, fastest for GPU-only data
+3. **Multiple Encoders**: You can create multiple encoders for different work in the same command buffer
+4. **Synchronization**: Use events and fences for cross-command buffer synchronization
+5. **Autorelease Pool**: Always wrap Metal code in `objc::rc::autoreleasepool` to prevent memory leaks
+
 ## Working with objc2
 
 ### Overview
@@ -578,6 +754,7 @@ Objective-C classes can be accessed and used in several ways:
 13. **Retained Types**: Use `Retained<T>` when working with collections to ensure proper memory management
 14. **Reference Counting**: Understand that most Foundation types use reference counting similar to Rust's `Rc` or `Arc`
 15. **Thread Safety**: Consider thread safety when using Foundation types across threads
+16. **IMPORTANT: Avoid Custom Foundation Type Wrappers**: Never create custom wrappers like `OurNSString`, `OurNSArray`, or `OurNSDictionary`. Always use the `objc2-foundation` types (`NSString`, `NSArray`, `NSDictionary`) directly instead.
 
 ### Additional objc2-foundation Types
 

@@ -5,6 +5,7 @@ extern crate objc2;
 pub mod core;
 pub mod device;
 pub mod graph;
+pub mod shape;
 pub mod tensor;
 pub mod tensor_data;
 pub mod operation;
@@ -48,7 +49,8 @@ pub mod memory_ops;
 pub mod sparse_ops;
 
 // Re-export most commonly used types
-pub use core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile, MPSGraphExecutionStage};
+pub use core::{MPSDataType, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile, MPSGraphExecutionStage};
+pub use shape::MPSShape;
 pub use device::MPSGraphDevice;
 pub use graph::MPSGraph;
 pub use tensor::MPSGraphTensor;
@@ -72,7 +74,8 @@ pub use sparse_ops::{MPSGraphSparseStorageType, MPSGraphCreateSparseOpDescriptor
 
 /// Convenience prelude module with most commonly used items
 pub mod prelude {
-    pub use crate::core::{MPSDataType, MPSShape, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile, MPSGraphExecutionStage};
+    pub use crate::core::{MPSDataType, MPSGraphOptions, MPSGraphOptimization, MPSGraphOptimizationProfile, MPSGraphExecutionStage};
+    pub use crate::shape::MPSShape;
     pub use crate::device::MPSGraphDevice;
     pub use crate::graph::MPSGraph;
     pub use crate::tensor::MPSGraphTensor;

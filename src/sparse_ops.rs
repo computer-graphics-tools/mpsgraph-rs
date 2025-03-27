@@ -3,7 +3,8 @@ use objc2::msg_send;
 use objc2_foundation::{NSArray, NSString};
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{MPSShape, MPSDataType, AsRawObject};
+use crate::core::{MPSDataType, AsRawObject};
+use crate::shape::MPSShape;
 
 /// The sparse storage options for MPSGraph sparse operations.
 #[repr(u64)]

@@ -2,7 +2,8 @@ use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, MPSShape, AsRawObject};
+use crate::core::{NSString, AsRawObject};
+use crate::shape::MPSShape;
 use crate::convolution_transpose_ops::{TensorNamedDataLayout, PaddingStyle};
 
 /// Descriptor for 2D depthwise convolution operations

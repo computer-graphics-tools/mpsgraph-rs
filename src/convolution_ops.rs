@@ -3,7 +3,7 @@ use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
 use objc2_foundation::NSString;
-use crate::core::{OurNSString, AsRawObject};
+use crate::core::AsRawObject;
 
 /// Convolution operations for MPSGraph
 impl MPSGraph {
@@ -17,7 +17,7 @@ impl MPSGraph {
                        name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => OurNSString::from_str(s).as_raw_object(),
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             
@@ -56,7 +56,7 @@ impl MPSGraph {
                                 name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => OurNSString::from_str(s).as_raw_object(),
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             

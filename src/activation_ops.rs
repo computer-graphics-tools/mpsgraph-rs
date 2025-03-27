@@ -2,7 +2,8 @@ use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{OurNSString, AsRawObject};
+use objc2_foundation::NSString;
+use crate::core::AsRawObject;
 
 /// Activation operations for MPSGraph
 impl MPSGraph {
@@ -10,7 +11,7 @@ impl MPSGraph {
     pub fn leaky_relu(&self, x: &MPSGraphTensor, alpha: f32, name: Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => OurNSString::from_str(s).as_raw_object(),
+                Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
             

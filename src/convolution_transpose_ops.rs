@@ -5,7 +5,8 @@ const NO: bool = false;
 const YES: bool = true;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, MPSShape, AsRawObject};
+use crate::core::{NSString, AsRawObject};
+use crate::shape::MPSShape;
 
 /// Defines the data layout for tensors
 #[repr(u64)]

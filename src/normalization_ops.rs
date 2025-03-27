@@ -2,7 +2,8 @@ use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, OurNSArray, AsRawObject};
+use crate::core::AsRawObject;
+use objc2_foundation::NSString;
 
 /// Normalization operations for MPSGraph
 impl MPSGraph {
@@ -27,11 +28,11 @@ impl MPSGraph {
         };
         
         // Convert the axes to NSArray of NSNumbers
-        let axes_array = OurNSArray::from_i64_slice(axes);
+        let axes_array = crate::core::create_ns_array_from_i64_slice(axes);
         
         unsafe {
             let result: *mut AnyObject = msg_send![self.0, meanOfTensor: tensor.0,
-                axes: axes_array.0,
+                axes: axes_array,
                 name: name_obj,
             ];
             
@@ -63,12 +64,12 @@ impl MPSGraph {
         };
         
         // Convert the axes to NSArray of NSNumbers
-        let axes_array = OurNSArray::from_i64_slice(axes);
+        let axes_array = crate::core::create_ns_array_from_i64_slice(axes);
         
         unsafe {
             let result: *mut AnyObject = msg_send![self.0, varianceOfTensor: tensor.0,
                 meanTensor: mean_tensor.0,
-                axes: axes_array.0,
+                axes: axes_array,
                 name: name_obj,
             ];
             
@@ -98,11 +99,11 @@ impl MPSGraph {
         };
         
         // Convert the axes to NSArray of NSNumbers
-        let axes_array = OurNSArray::from_i64_slice(axes);
+        let axes_array = crate::core::create_ns_array_from_i64_slice(axes);
         
         unsafe {
             let result: *mut AnyObject = msg_send![self.0, varianceOfTensor: tensor.0,
-                axes: axes_array.0,
+                axes: axes_array,
                 name: name_obj,
             ];
             
@@ -193,14 +194,14 @@ impl MPSGraph {
         };
         
         // Convert the axes to NSArray of NSNumbers
-        let axes_array = OurNSArray::from_i64_slice(axes);
+        let axes_array = crate::core::create_ns_array_from_i64_slice(axes);
         
         unsafe {
             let result: *mut AnyObject = msg_send![self.0, normalizationGammaGradientWithIncomingGradientTensor: incoming_gradient.0,
                 sourceTensor: source.0,
                 meanTensor: mean.0,
                 varianceTensor: variance.0,
-                reductionAxes: axes_array.0,
+                reductionAxes: axes_array,
                 epsilon: epsilon,
                 name: name_obj,
             ];
@@ -233,12 +234,12 @@ impl MPSGraph {
         };
         
         // Convert the axes to NSArray of NSNumbers
-        let axes_array = OurNSArray::from_i64_slice(axes);
+        let axes_array = crate::core::create_ns_array_from_i64_slice(axes);
         
         unsafe {
             let result: *mut AnyObject = msg_send![self.0, normalizationBetaGradientWithIncomingGradientTensor: incoming_gradient.0,
                 sourceTensor: source.0,
-                reductionAxes: axes_array.0,
+                reductionAxes: axes_array,
                 name: name_obj,
             ];
             
@@ -297,7 +298,7 @@ impl MPSGraph {
         };
         
         // Convert the axes to NSArray of NSNumbers
-        let axes_array = OurNSArray::from_i64_slice(axes);
+        let axes_array = crate::core::create_ns_array_from_i64_slice(axes);
         
         unsafe {
             let result: *mut AnyObject = msg_send![self.0, normalizationGradientWithIncomingGradientTensor: incoming_gradient.0,
@@ -307,7 +308,7 @@ impl MPSGraph {
                 gammaTensor: gamma_obj,
                 gammaGradientTensor: gamma_gradient_obj,
                 betaGradientTensor: beta_gradient_obj,
-                reductionAxes: axes_array.0,
+                reductionAxes: axes_array,
                 epsilon: epsilon,
                 name: name_obj,
             ];

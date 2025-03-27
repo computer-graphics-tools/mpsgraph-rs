@@ -5,7 +5,7 @@ use metal::Buffer;
 use metal::foreign_types::ForeignType;
 use objc2_foundation::NSData;
 use crate::core::MPSDataType;
-use crate::core::MPSShape;
+use crate::shape::MPSShape;
 
 /// A wrapper for MPSGraphTensorData objects
 pub struct MPSGraphTensorData(pub(crate) *mut AnyObject);

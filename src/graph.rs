@@ -2,11 +2,12 @@ use objc2::runtime::AnyObject;
 use objc2::msg_send;
 use std::fmt;
 use std::collections::HashMap;
-use std::ffi::c_void;
-use metal::CommandQueue;
+use metal::{CommandQueue, CommandBuffer, SharedEvent};
 use metal::foreign_types::ForeignType;
-use objc2_foundation::{NSString, NSData};
-use crate::core::{MPSDataType, MPSShape, MPSGraphOptions, OurNSString, OurNSArray, OurNSDictionary, AsRawObject};
+use objc2_foundation::NSData;
+use crate::core::{MPSDataType, MPSGraphOptions, AsRawObject};
+use crate::shape::MPSShape;
+use objc2_foundation::NSString;
 use crate::tensor::MPSGraphTensor;
 use crate::tensor_data::MPSGraphTensorData;
 use crate::executable::{MPSGraphExecutable, MPSGraphCompilationDescriptor, MPSGraphExecutionDescriptor};
@@ -48,21 +49,15 @@ impl MPSGraph {
     /// Sets the options for this graph
     pub fn set_options(&self, options: MPSGraphOptions) {
         unsafe {
-            let _: () = msg_send![self.0, setOptions: options as u64];
+            let _: () = msg_send![self.0, setOptions:options as u64];
         }
     }
     
-    /// Gets the current options for this graph
-    pub fn options(&self) -> MPSGraphOptions {
-        unsafe {
-            let value: u64 = msg_send![self.0, options];
-            std::mem::transmute(value)
-        }
-    }
-    
-    /// Creates a placeholder tensor in the graph using shape dimensions
-    /// This is a convenience method that converts shape dimensions to an MPSShape
-    pub fn placeholder_with_shape(&self, shape_dims: &[usize], data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
+    /// Creates a placeholder tensor with dimensions
+    pub fn placeholder_with_shape(&self, 
+                     shape_dims: &[usize], 
+                     data_type: MPSDataType, 
+                     name: Option<&str>) -> MPSGraphTensor {
         let shape = MPSShape::from_slice(shape_dims);
         self.placeholder(&shape, data_type, name)
     }
@@ -71,8 +66,8 @@ impl MPSGraph {
     pub fn placeholder(&self, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => OurNSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
+                Some(s) => NSString::from_str(s).as_raw_object(),
+                None => std::ptr::null_mut::<AnyObject>(),
             };
             
             let tensor: *mut AnyObject = msg_send![self.0, placeholderWithShape: shape.0,
@@ -80,78 +75,44 @@ impl MPSGraph {
                 name: name_obj,
             ];
             
-            // Retain using objc2 functions
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
     
-    /// Creates a constant tensor with scalar value, specifying shape explicitly
-    pub fn constant_scalar_with_shape(&self, value: f32, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
-        // Use constant_from_bytes to implement this method
-        // We need to workaround issues with method resolution in the Objective-C API
-        let data = [value];
-        self.constant_from_bytes(&data, shape, data_type, name)
+    /// Creates a constant tensor with given values and dimensions
+    pub fn constant_with_shape(&self, 
+                    values:  &[f32], 
+                    shape_dims:  &[usize], 
+                    name:  Option<&str>) -> MPSGraphTensor {
+        let shape = MPSShape::from_slice(shape_dims);
+        self.constant(values, &shape, name)
     }
     
-    /// Creates a constant tensor with data from a slice
-    /// Creates a tensor filled with zeros that has the same shape as the input tensor
-    pub fn zeros_like(&self, tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
+    /// Creates a constant tensor with given values and shape
+    pub fn constant(&self, 
+                  values:  &[f32], 
+                  shape:  &MPSShape, 
+                  name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
                 Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
+                None => std::ptr::null_mut::<AnyObject>(),
             };
             
-            let result: *mut AnyObject = msg_send![self.0, zerosLikeTensor: tensor.0,
-                name: name_obj,
-            ];
-            
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
-            MPSGraphTensor(result)
-        }
-    }
-    
-    /// Creates a scalar constant tensor with the given value
-    pub fn constant_scalar_value<T: Copy>(&self, value: T, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
-        // Create a slice with a single value
-        let data = [value];
-        let shape = MPSShape::scalar();
-        self.constant_from_bytes(&data, &shape, data_type, name)
-    }
-    
-    /// Legacy method for backward compatibility
-    pub fn constant_scalar(&self, value: f32, shape: &MPSShape, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
-        self.constant_scalar_with_shape(value, shape, data_type, name)
-    }
-    
-    /// Creates a constant tensor from raw bytes
-    pub fn constant_from_bytes<T: Copy>(&self, 
-                                data:  &[T], 
-                                shape:  &MPSShape, 
-                                data_type:  MPSDataType, 
-                                name:  Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let _data_ptr = data.as_ptr() as *const c_void;
-            let _data_len = std::mem::size_of_val(data); // Used for debugging
-            
-            // Create NSData for the input data
-            let data_size = std::mem::size_of_val(data);
-            let ns_data = NSData::with_bytes(std::slice::from_raw_parts(
-                data.as_ptr() as *const u8,
-                data_size
+            // Create NSData with float values
+            let data = NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<f32>()
             ));
-            let ns_data_ptr = ns_data.as_raw_object();
             
-            // Try a different method name or signature
-            let tensor: *mut AnyObject = msg_send![self.0, constantWithSharedData: ns_data_ptr,
-                shape:  shape.0,
-                dataType:  data_type as u32,
+            // Get raw NSData pointer for Objective-C
+            let data_ptr: *mut AnyObject = std::mem::transmute::<&NSData, *mut AnyObject>(data.as_ref());
+            
+            // Create constant tensor
+            let tensor: *mut AnyObject = msg_send![self.0, constantWithData: data_ptr,
+                shape: shape.0,
+                dataType: MPSDataType::Float32 as u32,
                 name: name_obj,
             ];
             
@@ -160,58 +121,122 @@ impl MPSGraph {
         }
     }
     
-    /// Compiles the graph for the given feeds and targets
-    pub fn compile(&self, 
-               device:  Option<&MPSGraphDevice>,
-               feeds:  HashMap<&MPSGraphTensor, MPSShape>,
-               targets:  &[&MPSGraphTensor],
-               _name:  Option<&str>) -> MPSGraphExecutable {
-        // Use newer compile method with null descriptor for backward compatibility
-        self.compile_with_descriptor(device, feeds, targets, None)
-    }
-    
-    /// Compiles the graph for the given feeds and targets using a compilation descriptor
-    pub fn compile_with_descriptor(&self, 
-                              device:  Option<&MPSGraphDevice>,
-                              feeds:  HashMap<&MPSGraphTensor, MPSShape>,
-                              targets:  &[&MPSGraphTensor],
-                              descriptor:  Option<&MPSGraphCompilationDescriptor>) -> MPSGraphExecutable {
+    /// Creates a constant with given scalar value
+    pub fn constant_scalar(&self, 
+                         value:  f32, 
+                         data_type:  MPSDataType, 
+                         name:  Option<&str>) -> MPSGraphTensor {
         unsafe {
-            // Create device object if provided
-            let device_obj = match device {
-                Some(dev) => dev.0,
-                None => std::ptr::null_mut(),
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).as_raw_object(),
+                None => std::ptr::null_mut::<AnyObject>(),
             };
             
-            // Create feeds dictionary
+            let tensor: *mut AnyObject = msg_send![self.0, constantWithScalar: value as f64,
+                dataType: data_type as u32,
+                name: name_obj,
+            ];
+            
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            MPSGraphTensor(tensor)
+        }
+    }
+    
+    /// Creates a random uniform tensor with given shape
+    pub fn random_uniform(&self, 
+                        shape:  &MPSShape, 
+                        lower_bound:  f32, 
+                        upper_bound:  f32, 
+                        data_type:  MPSDataType, 
+                        seed:  u32, 
+                        name:  Option<&str>) -> MPSGraphTensor {
+        unsafe {
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).as_raw_object(),
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Create the random tensor
+            let tensor: *mut AnyObject = msg_send![self.0, randomUniformTensorWithShape: shape.0,
+                lowerBound: lower_bound as f64,
+                upperBound: upper_bound as f64,
+                dataType: data_type as u32,
+                seed: seed,
+                name: name_obj,
+            ];
+            
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            MPSGraphTensor(tensor)
+        }
+    }
+    
+    /// Creates a random normal tensor with given shape
+    pub fn random_normal(&self, 
+                       shape:  &MPSShape, 
+                       mean:  f32, 
+                       stddev:  f32, 
+                       data_type:  MPSDataType, 
+                       seed:  u32, 
+                       name:  Option<&str>) -> MPSGraphTensor {
+        unsafe {
+            let name_obj = match name {
+                Some(s) => NSString::from_str(s).as_raw_object(),
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Create the random tensor
+            let tensor: *mut AnyObject = msg_send![self.0, randomNormalTensorWithShape: shape.0,
+                mean: mean as f64,
+                standardDeviation: stddev as f64,
+                dataType: data_type as u32,
+                seed: seed,
+                name: name_obj,
+            ];
+            
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            MPSGraphTensor(tensor)
+        }
+    }
+    
+    /// Compiles the graph against a given set of feeds and targets
+    pub fn compile(&self,
+                 device:  &MPSGraphDevice,
+                 feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                 targets:  &[MPSGraphTensor],
+                 descriptor:  Option<&MPSGraphCompilationDescriptor>) -> MPSGraphExecutable {
+        unsafe {
+            // Get the device pointer
+            let device_obj = device.0;
+            
+            // Create the feeds dictionary
             let mut feed_keys = Vec::with_capacity(feeds.len());
             let mut feed_values = Vec::with_capacity(feeds.len());
             
-            for (tensor, shape) in feeds {
+            for (tensor, data) in feeds {
                 feed_keys.push(tensor.0);
-                feed_values.push(shape.0);
+                feed_values.push(data.0);
             }
             
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
             
             // Create targets array
             let targets_raw: Vec<*mut AnyObject> = targets.iter()
                 .map(|t| t.0)
                 .collect();
             
-            let targets_array = OurNSArray::from_objects(&targets_raw);
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
             
             // Get descriptor pointer if provided
             let descriptor_ptr = match descriptor {
                 Some(desc) => desc.0,
-                None => std::ptr::null_mut(),
+                None => std::ptr::null_mut::<AnyObject>(),
             };
             
             // Compile the graph
             let executable: *mut AnyObject = msg_send![self.0, compileWithDevice: device_obj, 
-                feeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>(), 
+                feeds: feed_dict, 
+                targetTensors: targets_array,
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
                 compilationDescriptor: descriptor_ptr,
             ];
             
@@ -220,12 +245,18 @@ impl MPSGraph {
         }
     }
     
-    /// Runs the graph with the given feeds and returns the targets
-    pub fn run_legacy(&self,
-           feeds:  HashMap<&MPSGraphTensor, MPSGraphTensorData>,
-           targets:  &[&MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+    /// Compiles the graph against a given set of feeds, targets, and target operations
+    pub fn compile_with_targets_and_ops(&self,
+                                      device:  &MPSGraphDevice,
+                                      feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                      targets:  &[MPSGraphTensor],
+                                      target_ops:  &[MPSGraphOperation],
+                                      descriptor:  Option<&MPSGraphCompilationDescriptor>) -> MPSGraphExecutable {
         unsafe {
-            // Create feed dictionary
+            // Get the device pointer
+            let device_obj = device.0;
+            
+            // Create the feeds dictionary
             let mut feed_keys = Vec::with_capacity(feeds.len());
             let mut feed_values = Vec::with_capacity(feeds.len());
             
@@ -234,65 +265,47 @@ impl MPSGraph {
                 feed_values.push(data.0);
             }
             
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
             
             // Create targets array
             let targets_raw: Vec<*mut AnyObject> = targets.iter()
                 .map(|t| t.0)
                 .collect();
             
-            let targets_array = OurNSArray::from_objects(&targets_raw);
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
             
-            // Run the graph - fixing the syntax for objc2
-            let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>(),
+            // Create ops array
+            let ops_raw: Vec<*mut AnyObject> = target_ops.iter()
+                .map(|op| op.0)
+                .collect();
+            
+            let ops_array = crate::core::create_ns_array_from_pointers(&ops_raw);
+            
+            // Get descriptor pointer if provided
+            let descriptor_ptr = match descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Compile the graph
+            let executable: *mut AnyObject = msg_send![self.0, compileWithDevice: device_obj, 
+                feeds: feed_dict, 
+                targetTensors: targets_array,
+                targetOperations: ops_array,
+                compilationDescriptor: descriptor_ptr,
             ];
             
-            // Parse the results
-            let mut output = HashMap::new();
-            
-            // Check if results is valid
-            if results.is_null() {
-                return output;
-            }
-            
-            // Get all keys
-            let keys: *mut AnyObject = msg_send![results, allKeys];
-            let keys_count: usize = msg_send![keys, count];
-            
-            for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
-                if key.is_null() {
-                    continue;
-                }
-                
-                let value: *mut AnyObject = msg_send![results, objectForKey: key];
-                if value.is_null() {
-                    continue;
-                }
-                
-                // Retain objects to manage their memory
-                let _: () = msg_send![key, retain];
-                let _: () = msg_send![value, retain];
-                
-                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
-            }
-            
-            // Release temporary objects
-            objc2::ffi::objc_release(results as *mut _);
-            
-            output
+            let executable = objc2::ffi::objc_retain(executable as *mut _) as *mut AnyObject;
+            MPSGraphExecutable(executable)
         }
     }
     
-    /// Runs the graph with the given MTL command queue
-    pub fn run_with_command_queue(&self,
-                             command_queue:  &CommandQueue,
-                             feeds:  HashMap<&MPSGraphTensor, MPSGraphTensorData>,
-                             targets:  &[&MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+    /// Runs the graph synchronously against a given set of feeds and returns a result dictionary
+    pub fn run_with_feeds(&self,
+                       feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                       targets:  &[MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
         unsafe {
-            // Create feed dictionary
+            // Create the feeds dictionary
             let mut feed_keys = Vec::with_capacity(feeds.len());
             let mut feed_values = Vec::with_capacity(feeds.len());
             
@@ -301,435 +314,371 @@ impl MPSGraph {
                 feed_values.push(data.0);
             }
             
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
             
             // Create targets array
             let targets_raw: Vec<*mut AnyObject> = targets.iter()
                 .map(|t| t.0)
                 .collect();
             
-            let targets_array = OurNSArray::from_objects(&targets_raw);
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
             
             // Run the graph
-            // Convert the Metal command queue pointer to void* to avoid RefEncode issues
-            let cmd_queue_ptr = command_queue.as_ptr() as *mut std::ffi::c_void;
-            
-            let results: *mut AnyObject = msg_send![self.0, runWithMTLCommandQueue: cmd_queue_ptr, 
-                feeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
+            let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict, 
+                targetTensors: targets_array,
                 targetOperations: std::ptr::null_mut::<AnyObject>(),
             ];
             
-            // Parse the results
-            let mut output = HashMap::new();
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
             
-            // Check if results is valid
-            if results.is_null() {
-                return output;
-            }
-            
-            // Get all keys
-            let keys: *mut AnyObject = msg_send![results, allKeys];
-            let keys_count: usize = msg_send![keys, count];
-            
-            for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
-                if key.is_null() {
-                    continue;
-                }
-                
-                let value: *mut AnyObject = msg_send![results, objectForKey: key];
-                if value.is_null() {
-                    continue;
-                }
-                
-                // Retain objects to manage their memory
-                let _: () = msg_send![key, retain];
-                let _: () = msg_send![value, retain];
-                
-                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
-            }
-            
-            // Release temporary objects
+            // Release the results dictionary
             objc2::ffi::objc_release(results as *mut _);
             
-            output
+            result_hash
         }
     }
     
-    /// Execute the graph and return results
-    pub fn run_graph(
-        &self,
-        targets:  &[MPSGraphTensor],
-        device:  &crate::device::MPSGraphDevice,
-        options:  Option<MPSGraphOptions>
-    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
-        // Empty feeds
-        let feeds = HashMap::new();
-        self.run_with_feeds(&feeds, targets, device, options)
-    }
-    
-    /// Legacy run method for backward compatibility with tests
-    pub fn run(
-        &self,
-        feeds: HashMap<&MPSGraphTensor, MPSGraphTensorData>,
-        targets: &[&MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
-        println!("DEBUG run: Starting run method");
-        println!("DEBUG run: Running with {} feeds and {} targets", feeds.len(), targets.len());
-
+    /// Runs the graph synchronously against a given set of feeds and returns a result dictionary
+    /// with target operations specified
+    pub fn run_with_feeds_and_ops(&self,
+                               feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                               targets:  &[MPSGraphTensor],
+                               target_ops:  &[MPSGraphOperation]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
         unsafe {
-            // Create feed dictionary
+            // Create the feeds dictionary
             let mut feed_keys = Vec::with_capacity(feeds.len());
             let mut feed_values = Vec::with_capacity(feeds.len());
             
-            for (tensor, data) in &feeds {
+            for (tensor, data) in feeds {
                 feed_keys.push(tensor.0);
                 feed_values.push(data.0);
             }
             
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
             
             // Create targets array
             let targets_raw: Vec<*mut AnyObject> = targets.iter()
                 .map(|t| t.0)
                 .collect();
             
-            let targets_array = OurNSArray::from_objects(&targets_raw);
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
             
-            // Run the graph with the updated message syntax for objc2
-            println!("DEBUG run: About to execute graph");
-            let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>(),
+            // Create ops array
+            let ops_raw: Vec<*mut AnyObject> = target_ops.iter()
+                .map(|op| op.0)
+                .collect();
+            
+            let ops_array = crate::core::create_ns_array_from_pointers(&ops_raw);
+            
+            // Run the graph
+            let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict, 
+                targetTensors: targets_array,
+                targetOperations: ops_array,
             ];
-            println!("DEBUG run: Got results pointer: {:p}", results);
             
-            // Parse the results
-            let mut output = HashMap::new();
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
             
-            // Check if results is valid
-            if results.is_null() {
-                println!("DEBUG run: Results pointer is null");
-                return output;
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Runs the graph synchronized against a given device
+    pub fn run_with_feeds_on_device(&self,
+                                 device:  &MPSGraphDevice,
+                                 feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                 targets:  &[MPSGraphTensor]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the device pointer
+            let device_obj = device.0;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
             }
             
-            // Get all keys
-            println!("DEBUG run: Getting keys");
-            let keys: *mut AnyObject = msg_send![results, allKeys];
-            if keys.is_null() {
-                println!("DEBUG run: Keys pointer is null");
-                return output;
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Run the graph
+            let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict, 
+                targetTensors: targets_array,
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
+                onDevice: device_obj,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Runs the graph synchronously on a device with both target tensors and operations
+    pub fn run_with_feeds_and_ops_on_device(&self,
+                                         device:  &MPSGraphDevice,
+                                         feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                         targets:  &[MPSGraphTensor],
+                                         target_ops:  &[MPSGraphOperation]) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the device pointer
+            let device_obj = device.0;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
             }
             
-            let keys_count: usize = msg_send![keys, count];
-            println!("DEBUG run: Found {} keys", keys_count);
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
             
-            for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
-                if key.is_null() {
-                    println!("DEBUG run: Key {} is null", i);
-                    continue;
-                }
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Create ops array
+            let ops_raw: Vec<*mut AnyObject> = target_ops.iter()
+                .map(|op| op.0)
+                .collect();
+            
+            let ops_array = crate::core::create_ns_array_from_pointers(&ops_raw);
+            
+            // Run the graph
+            let results: *mut AnyObject = msg_send![self.0, runWithFeeds: feed_dict, 
+                targetTensors: targets_array,
+                targetOperations: ops_array,
+                onDevice: device_obj,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Enqueue a graph run on a command queue
+    pub fn encode_to_command_queue(&self,
+                                device:  &MPSGraphDevice,
+                                command_queue:  &CommandQueue,
+                                feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                targets:  &[MPSGraphTensor],
+                                execution_descriptor:  Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the device pointer
+            let device_obj = device.0;
+            
+            // Get the queue pointer
+            let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Encode and run the graph
+            let results: *mut AnyObject = msg_send![self.0, encodeToCommandQueueAndReturnError: queue_ptr,
+                feeds: feed_dict,
+                targetTensors: targets_array,
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
+                executionDescriptor: descriptor_ptr,
+                error: std::ptr::null_mut::<AnyObject>(),
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Encode and run a graph on a command buffer
+    pub fn encode_to_command_buffer(&self,
+                                 command_buffer:  &CommandBuffer,
+                                 feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                 targets:  &[MPSGraphTensor],
+                                 execution_descriptor:  Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the buffer pointer
+            let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Encode and run the graph
+            let results: *mut AnyObject = msg_send![self.0, encodeToCommandBuffer: buffer_ptr,
+                feeds: feed_dict,
+                targetTensors: targets_array,
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Encodes and runs a graph on a command buffer with a completed event
+    pub fn encode_to_command_buffer_with_event(&self,
+                                            command_buffer:  &CommandBuffer,
+                                            feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                            targets:  &[MPSGraphTensor],
+                                            execution_descriptor:  Option<&MPSGraphExecutionDescriptor>,
+                                            event:  Option<&SharedEvent>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the buffer pointer
+            let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = targets.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Get event pointer if provided
+            let event_ptr = match event {
+                Some(evt) => evt.as_ptr() as *mut AnyObject,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Encode and run the graph
+            let results: *mut AnyObject = msg_send![self.0, encodeToCommandBuffer: buffer_ptr,
+                feeds: feed_dict,
+                targetTensors: targets_array,
+                targetOperations: std::ptr::null_mut::<AnyObject>(),
+                executionDescriptor: descriptor_ptr,
+                waitEvent: event_ptr,
+                signalEvent: event_ptr,
+                signalValue: 1,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Helper method to convert an NSDictionary to a Rust HashMap
+    fn convert_dictionary_to_hash_map(&self, dictionary: *mut AnyObject) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            let mut result = HashMap::new();
+            
+            // Get an enumerator for the dictionary keys
+            let enumerator: *mut AnyObject = msg_send![dictionary, keyEnumerator];
+            
+            while {
+                let key: *mut AnyObject = msg_send![enumerator, nextObject];
+                !key.is_null()
+            } {
+                let key: *mut AnyObject = msg_send![enumerator, currentObject];
+                let value: *mut AnyObject = msg_send![dictionary, objectForKey: key];
                 
-                let value: *mut AnyObject = msg_send![results, objectForKey: key];
-                if value.is_null() {
-                    println!("DEBUG run: Value for key {} is null", i);
-                    continue;
-                }
-                
-                // Retain objects to manage their memory
+                // Retain the objects to avoid them being deallocated
                 objc2::ffi::objc_retain(key as *mut _);
                 objc2::ffi::objc_retain(value as *mut _);
                 
-                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
-            }
-            
-            // Release temporary objects
-            objc2::ffi::objc_release(results as *mut _);
-            
-            println!("DEBUG run: Successfully completed");
-            output
-        }
-    }
-    
-    /// Execute the graph with feeds and return results
-    pub fn run_with_feeds(
-        &self,
-        feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
-        targets:  &[MPSGraphTensor],
-        device:  &crate::device::MPSGraphDevice,
-        options:  Option<MPSGraphOptions>
-    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
-        unsafe {
-            // Get Metal device
-            let metal_device_ptr: *mut AnyObject = msg_send![device.0, mtlDevice];
-            // Convert from Object to MTLDevice
-            let mtl_device_ptr = metal_device_ptr as *mut std::ffi::c_void as *mut metal::MTLDevice;
-            let metal_device = metal::Device::from_ptr(mtl_device_ptr);
-            
-            // Create command queue
-            let command_queue = metal_device.new_command_queue();
-            
-            // Create feed dictionary
-            let mut feed_keys = Vec::with_capacity(feeds.len());
-            let mut feed_values = Vec::with_capacity(feeds.len());
-            
-            for (tensor, data) in feeds {
-                feed_keys.push(tensor.0);
-                feed_values.push(data.0);
-            }
-            
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
-            
-            // Create targets array
-            let targets_raw: Vec<*mut AnyObject> = targets.iter()
-                .map(|t| t.0)
-                .collect();
-            
-            let targets_array = OurNSArray::from_objects(&targets_raw);
-            
-            // Run the graph
-            // Convert MTLCommandQueue pointer to void* first to avoid RefEncode trait issues
-            let cmd_queue_ptr = command_queue.as_ptr() as *mut std::ffi::c_void;
-            
-            let results: *mut AnyObject = msg_send![self.0, runWithMTLCommandQueue: cmd_queue_ptr, 
-                feeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
-                targetOperations: std::ptr::null_mut::<AnyObject>(), 
-                options: options.unwrap_or(MPSGraphOptions::Default) as u64
-            ];
-            
-            // Parse the results
-            let mut output = HashMap::new();
-            
-            // Check if results is valid
-            if results.is_null() {
-                return output;
-            }
-            
-            // Get all keys
-            let keys: *mut AnyObject = msg_send![results, allKeys];
-            let keys_count: usize = msg_send![keys, count];
-            
-            for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
-                if key.is_null() {
-                    continue;
-                }
+                // Create Rust wrappers
+                let tensor = MPSGraphTensor(key);
+                let tensor_data = MPSGraphTensorData(value);
                 
-                let value: *mut AnyObject = msg_send![results, objectForKey: key];
-                if value.is_null() {
-                    continue;
-                }
-                
-                // Retain objects to manage their memory
-                let _: () = msg_send![key, retain];
-                let _: () = msg_send![value, retain];
-                
-                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
-            }
-            
-            // Release temporary objects
-            objc2::ffi::objc_release(results as *mut _);
-            
-            output
-        }
-    }
-    
-    /// Run the graph asynchronously with the given feeds and targets
-    pub fn run_async(
-        &self,
-        feeds:  HashMap<MPSGraphTensor, MPSGraphTensorData>,
-        targets:  &[MPSGraphTensor],
-        operations:  Option<&[MPSGraphOperation]>,
-        descriptor:  Option<&MPSGraphExecutionDescriptor>
-    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
-        unsafe {
-            // Create feed dictionary
-            let mut feed_keys = Vec::with_capacity(feeds.len());
-            let mut feed_values = Vec::with_capacity(feeds.len());
-            
-            for (tensor, data) in feeds {
-                feed_keys.push(tensor.0);
-                feed_values.push(data.0);
-            }
-            
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
-            
-            // Create targets array
-            let targets_raw: Vec<*mut AnyObject> = targets.iter()
-                .map(|t| t.0)
-                .collect();
-            
-            let targets_array = OurNSArray::from_objects(&targets_raw);
-            
-            // Create operations array if provided
-            let operations_ptr = match operations {
-                Some(ops) => {
-                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
-                        .map(|op| op.0)
-                        .collect();
-                    
-                    let ops_array = OurNSArray::from_objects(&ops_raw);
-                    ops_array.0
-                },
-                None => std::ptr::null_mut(),
-            };
-            
-            // Get descriptor pointer if provided
-            let descriptor_ptr = match descriptor {
-                Some(desc) => desc.0,
-                None => std::ptr::null_mut(),
-            };
-            
-            // Run the graph
-            let results: *mut AnyObject = msg_send![self.0, runAsyncWithFeeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
-                targetOperations: operations_ptr, 
-                executionDescriptor: descriptor_ptr,
-            ];
-            
-            // Parse the results
-            let mut output = HashMap::new();
-            
-            // Check if results is valid
-            if results.is_null() {
-                return output;
-            }
-            
-            // Get all keys
-            let keys: *mut AnyObject = msg_send![results, allKeys];
-            let keys_count: usize = msg_send![keys, count];
-            
-            for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
-                if key.is_null() {
-                    continue;
-                }
-                
-                let value: *mut AnyObject = msg_send![results, objectForKey: key];
-                if value.is_null() {
-                    continue;
-                }
-                
-                // Retain objects to manage their memory
-                let _: () = msg_send![key, retain];
-                let _: () = msg_send![value, retain];
-                
-                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
-            }
-            
-            // Release temporary objects
-            objc2::ffi::objc_release(results as *mut _);
-            
-            output
-        }
-    }
-    
-    /// Run the graph asynchronously with a command queue
-    pub fn run_async_with_command_queue(
-        &self,
-        command_queue:  &CommandQueue,
-        feeds:  HashMap<MPSGraphTensor, MPSGraphTensorData>,
-        targets:  &[MPSGraphTensor],
-        operations:  Option<&[MPSGraphOperation]>,
-        descriptor:  Option<&MPSGraphExecutionDescriptor>
-    ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
-        unsafe {
-            // Create feed dictionary
-            let mut feed_keys = Vec::with_capacity(feeds.len());
-            let mut feed_values = Vec::with_capacity(feeds.len());
-            
-            for (tensor, data) in feeds {
-                feed_keys.push(tensor.0);
-                feed_values.push(data.0);
-            }
-            
-            let feed_dict = OurNSDictionary::from_keys_and_objects(&feed_keys, &feed_values);
-            
-            // Create targets array
-            let targets_raw: Vec<*mut AnyObject> = targets.iter()
-                .map(|t| t.0)
-                .collect();
-            
-            let targets_array = OurNSArray::from_objects(&targets_raw);
-            
-            // Create operations array if provided
-            let operations_ptr = match operations {
-                Some(ops) => {
-                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
-                        .map(|op| op.0)
-                        .collect();
-                    
-                    let ops_array = OurNSArray::from_objects(&ops_raw);
-                    ops_array.0
-                },
-                None => std::ptr::null_mut(),
-            };
-            
-            // Get descriptor pointer if provided
-            let descriptor_ptr = match descriptor {
-                Some(desc) => desc.0,
-                None => std::ptr::null_mut(),
-            };
-            
-            // Run the graph
-            let command_queue_ptr = command_queue.as_ptr() as *mut std::ffi::c_void;
-            let results: *mut AnyObject = msg_send![self.0, runAsyncWithMTLCommandQueue: command_queue_ptr, 
-                feeds: feed_dict.0, 
-                targetTensors: targets_array.0, 
-                targetOperations: operations_ptr, 
-                executionDescriptor: descriptor_ptr,
-            ];
-            
-            // Parse the results
-            let mut output = HashMap::new();
-            
-            // Check if results is valid
-            if results.is_null() {
-                return output;
-            }
-            
-            // Get all keys
-            let keys: *mut AnyObject = msg_send![results, allKeys];
-            let keys_count: usize = msg_send![keys, count];
-            
-            for i in 0..keys_count {
-                let key: *mut AnyObject = msg_send![keys, objectAtIndex: i];
-                if key.is_null() {
-                    continue;
-                }
-                
-                let value: *mut AnyObject = msg_send![results, objectForKey: key];
-                if value.is_null() {
-                    continue;
-                }
-                
-                // Retain objects to manage their memory
-                let _: () = msg_send![key, retain];
-                let _: () = msg_send![value, retain];
-                
-                output.insert(MPSGraphTensor(key), MPSGraphTensorData(value));
-            }
-            
-            // Release temporary objects
-            objc2::ffi::objc_release(results as *mut _);
-            
-            output
-        }
-    }
-    
-    /// Returns all placeholder tensors in this graph
-    pub fn placeholder_tensors(&self) -> Vec<MPSGraphTensor> {
-        unsafe {
-            let tensors: *mut AnyObject = msg_send![self.0, placeholderTensors];
-            let count: usize = msg_send![tensors, count];
-            let mut result = Vec::with_capacity(count);
-            
-            for i in 0..count {
-                let tensor: *mut AnyObject = msg_send![tensors, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-                result.push(MPSGraphTensor(tensor));
+                // Add to the result HashMap
+                result.insert(tensor, tensor_data);
             }
             
             result
@@ -737,281 +686,25 @@ impl MPSGraph {
     }
 }
 
-// Standard arithmetic operations extension
+// Concatenation operations extension
 impl MPSGraph {
-    /// Creates an addition operation
-    pub fn add(&self, lhs: &MPSGraphTensor, rhs: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
+    /// Creates a concatenation operation
+    pub fn concatenate(&self, tensors: &[MPSGraphTensor], dimension: i64, name: Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
                 Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
+                None => std::ptr::null_mut::<AnyObject>(),
             };
             
-            let tensor: *mut AnyObject = msg_send![self.0, additionWithPrimaryTensor: lhs.0,
-                secondaryTensor: rhs.0,
-                name: name_obj,
-            ];
+            // Create array of tensors
+            let tensors_raw: Vec<*mut AnyObject> = tensors.iter()
+                .map(|t| t.0)
+                .collect();
             
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a subtraction operation
-    pub fn subtract(&self, lhs: &MPSGraphTensor, rhs: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
+            let tensors_array = crate::core::create_ns_array_from_pointers(&tensors_raw);
             
-            let tensor: *mut AnyObject = msg_send![self.0, subtractionWithPrimaryTensor: lhs.0, 
-                secondaryTensor: rhs.0, 
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a multiplication operation
-    pub fn multiply(&self, lhs: &MPSGraphTensor, rhs: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, multiplicationWithPrimaryTensor: lhs.0, 
-                secondaryTensor: rhs.0, 
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a division operation
-    pub fn divide(&self, lhs: &MPSGraphTensor, rhs: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, divisionWithPrimaryTensor: lhs.0,
-                secondaryTensor: rhs.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a power operation (x^y)
-    pub fn power(&self, lhs: &MPSGraphTensor, rhs: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, powerWithPrimaryTensor: lhs.0,
-                secondaryTensor: rhs.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a negation operation (-x)
-    pub fn negative(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, negativeWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates an absolute value operation (|x|)
-    pub fn abs(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, absoluteWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-}
-
-// Math functions extension
-impl MPSGraph {
-    /// Creates an exponent operation (e^x)
-    pub fn exp(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, exponentWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a logarithm operation (ln(x))
-    pub fn log(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, logarithmWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a square root operation (sqrt(x))
-    pub fn sqrt(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, squareRootWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a reciprocal square root operation (1/sqrt(x))
-    pub fn rsqrt(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reciprocalSquareRootWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a square operation (x^2)
-    pub fn square(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, squareWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a type cast operation to convert tensor to another data type
-    pub fn cast(&self, x: &MPSGraphTensor, data_type: MPSDataType, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, castTensor: x.0,
-                toType: data_type as u64,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a sine operation (sin(x))
-    pub fn sin(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, sineWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a cosine operation (cos(x))
-    pub fn cos(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, cosineWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a tangent operation (tan(x))
-    pub fn tan(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, tangentWithTensor: x.0,
+            let tensor: *mut AnyObject = msg_send![self.0, concatenationWithTensors: tensors_array,
+                dimension: dimension,
                 name: name_obj,
             ];
             
@@ -1027,8 +720,8 @@ impl MPSGraph {
     pub fn transpose(&self, x: &MPSGraphTensor, dimensions: &[usize], name: Option<&str>) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
-                Some(s) => OurNSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
+                Some(s) => NSString::from_str(s).as_raw_object(),
+                None => std::ptr::null_mut::<AnyObject>(),
             };
             
             // Create a shape object from the dimensions for convenience
@@ -1036,230 +729,7 @@ impl MPSGraph {
             
             // Create the operation
             let tensor: *mut AnyObject = msg_send![self.0, transposeTensor: x.0,
-                dimension: dimensions_shape.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-}
-
-// Activation functions extension
-impl MPSGraph {
-    /// Creates a ReLU activation
-    pub fn relu(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reLUWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a sigmoid activation
-    pub fn sigmoid(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, sigmoidWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a tanh activation
-    pub fn tanh(&self, x: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, tanhWithTensor: x.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a softmax activation
-    pub fn softmax(&self, x: &MPSGraphTensor, axis: i64, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, softMaxWithTensor: x.0,
-                axis: axis,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-}
-
-// Tensor shape operations extension
-impl MPSGraph {
-    /// Reshapes a tensor to a new shape
-    pub fn reshape(&self, x: &MPSGraphTensor, new_shape: &MPSShape, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reshapeTensor: x.0,
-                withShape: new_shape.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a broadcast operation to expand a tensor to a larger shape
-    pub fn broadcast(&self, x: &MPSGraphTensor, shape: &MPSShape, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            let tensor: *mut AnyObject = msg_send![self.0, broadcastTensor: x.0,
-                toShape: shape.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a concatenation operation along the specified axis
-    pub fn concatenate(&self, tensors: &[&MPSGraphTensor], dimension: usize, name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            // Convert tensors to NSArray
-            let tensors_raw: Vec<*mut AnyObject> = tensors.iter()
-                .map(|t| t.0)
-                .collect();
-            
-            let tensors_array = crate::core::OurNSArray::from_objects(&tensors_raw);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, concatenationWithTensors: tensors_array.0,
-                dimension: dimension,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-}
-
-// Reduction operations extension
-impl MPSGraph {
-    /// Creates a sum reduction along specified axes
-    pub fn reduce_sum(&self, x: &MPSGraphTensor, axes: &[usize], name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            // Convert axes to NSArray of NSNumbers
-            let axes_shape = MPSShape::from_slice(axes);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reductionSumWithTensor: x.0,
-                axes: axes_shape.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a mean reduction along specified axes
-    pub fn reduce_mean(&self, x: &MPSGraphTensor, axes: &[usize], name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            // Convert axes to NSArray of NSNumbers
-            let axes_shape = MPSShape::from_slice(axes);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reductionMeanWithTensor: x.0,
-                axes: axes_shape.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a max reduction along specified axes
-    pub fn reduce_max(&self, x: &MPSGraphTensor, axes: &[usize], name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            // Convert axes to NSArray of NSNumbers
-            let axes_shape = MPSShape::from_slice(axes);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reductionMaximumWithTensor: x.0,
-                axes: axes_shape.0,
-                name: name_obj,
-            ];
-            
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
-            MPSGraphTensor(tensor)
-        }
-    }
-    
-    /// Creates a min reduction along specified axes
-    pub fn reduce_min(&self, x: &MPSGraphTensor, axes: &[usize], name: Option<&str>) -> MPSGraphTensor {
-        unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut(),
-            };
-            
-            // Convert axes to NSArray of NSNumbers
-            let axes_shape = MPSShape::from_slice(axes);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, reductionMinimumWithTensor: x.0,
-                axes: axes_shape.0,
+                permutation: dimensions_shape.0,
                 name: name_obj,
             ];
             
@@ -1272,6 +742,7 @@ impl MPSGraph {
 impl Drop for MPSGraph {
     fn drop(&mut self) {
         unsafe {
+            // Convert to NSObject and release
             if !self.0.is_null() {
                 objc2::ffi::objc_release(self.0 as *mut _);
             }
@@ -1282,11 +753,12 @@ impl Drop for MPSGraph {
 impl Clone for MPSGraph {
     fn clone(&self) -> Self {
         unsafe {
+            // Retain and return new instance
             if !self.0.is_null() {
                 let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
                 MPSGraph(obj)
             } else {
-                MPSGraph(std::ptr::null_mut())
+                MPSGraph(std::ptr::null_mut::<AnyObject>())
             }
         }
     }
@@ -1294,6 +766,13 @@ impl Clone for MPSGraph {
 
 impl fmt::Debug for MPSGraph {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MPSGraph")
+        f.debug_struct("MPSGraph")
+            .finish()
     }
+}
+
+// Helper function to create NSArray from dimensions
+fn create_dimensions(dimensions: &[usize]) -> *mut AnyObject {
+    let shape = MPSShape::from_slice(dimensions);
+    shape.0
 }

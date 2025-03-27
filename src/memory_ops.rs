@@ -4,7 +4,8 @@ use objc2_foundation;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
 use crate::operation::MPSGraphOperation;
-use crate::core::{NSString, MPSShape, MPSDataType, AsRawObject};
+use crate::core::{NSString, MPSDataType, AsRawObject};
+use crate::shape::MPSShape;
 
 /// Memory operations for MPSGraph
 impl MPSGraph {
