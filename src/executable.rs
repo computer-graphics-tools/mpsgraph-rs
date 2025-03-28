@@ -94,6 +94,94 @@ impl MPSGraphExecutable {
         }
     }
     
+    /// Execute the graph asynchronously on a command queue
+    ///
+    /// This method runs the executable asynchronously and returns immediately.
+    /// When execution completes, the completion handler will be called.
+    ///
+    /// - Parameters:
+    ///   - command_queue: The Metal command queue to use for execution
+    ///   - feeds: A dictionary mapping input tensors to their values
+    ///   - output_tensors: An array of tensors whose values should be computed
+    ///   - execution_descriptor: Descriptor controlling execution options
+    ///   - completion_handler: A callback to be invoked when execution completes
+    pub fn run_async_with_command_queue(
+        &self, 
+        command_queue: &metal::CommandQueue,
+        feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>, 
+        output_tensors: &[MPSGraphTensor],
+        execution_descriptor: &MPSGraphExecutionDescriptor,
+        // Note: The completion handler is not fully implemented yet
+    ) -> MPSGraphExecutionResult {
+        unsafe {
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create output tensors array
+            let output_tensors_raw: Vec<*mut AnyObject> = output_tensors.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let output_tensors_array = crate::core::create_ns_array_from_pointers(&output_tensors_raw);
+            
+            // Get the command queue pointer
+            let command_queue_ptr = command_queue.as_ptr() as *mut AnyObject;
+            
+            // Run the executable asynchronously
+            // Note: We're ignoring the completion handler for now
+            let results: *mut AnyObject = msg_send![self.0, runAsyncWithMTLCommandQueue: command_queue_ptr,
+                feeds: feed_dict,
+                outputTensors: output_tensors_array,
+                executionDescriptor: execution_descriptor.0,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Serializes the executable to a file URL
+    ///
+    /// - Parameters:
+    ///   - url: The URL where the executable will be saved
+    ///   - descriptor: A descriptor controlling serialization options
+    ///
+    /// - Returns: true if serialization was successful
+    pub fn serialize_to_url(&self, url: &url::Url, descriptor: &MPSGraphExecutableSerializationDescriptor) -> bool {
+        unsafe {
+            // Convert URL to NSURL
+            let nsurl_class = objc2::runtime::AnyClass::get(c"NSURL").unwrap();
+            let url_string = NSString::from_str(url.as_str());
+            let nsurl: *mut AnyObject = msg_send![nsurl_class, URLWithString: url_string.as_raw_object()];
+            
+            // Serialize
+            let result: bool = msg_send![
+                self.0,
+                serializeToMPSGraphPackageAtURL: nsurl
+                descriptor: descriptor.0
+            ];
+            
+            // Release NSURL
+            objc2::ffi::objc_release(nsurl as *mut _);
+            
+            result
+        }
+    }
+}
+    
     /// Encode the graph execution to a command buffer
     pub fn encode_to_command_buffer(&self, command_buffer: &CommandBuffer, feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>, output_tensors: &[MPSGraphTensor]) -> MPSGraphExecutionResult {
         unsafe {
@@ -345,6 +433,127 @@ impl MPSGraphExecutionDescriptor {
         unsafe {
             let _: () = msg_send![self.0, setCompletionHandler: handler];
         }
+    }
+    
+    /// Wait for a Metal shared event with a specific value before scheduling execution
+    /// 
+    /// - Parameters:
+    ///   - event: The MTLSharedEvent to wait on
+    ///   - value: The value to wait for
+    pub fn wait_for_event(&self, event: &metal::SharedEvent, value: u64) {
+        unsafe {
+            let event_ptr = event.as_ptr() as *mut AnyObject;
+            let _: () = msg_send![self.0, waitForEvent: event_ptr value: value];
+        }
+    }
+    
+    /// Signal a Metal shared event with a value at a specific execution stage
+    /// 
+    /// - Parameters:
+    ///   - event: The MTLSharedEvent to signal
+    ///   - execution_stage: The stage at which to signal the event
+    ///   - value: The value to signal with
+    pub fn signal_event(&self, event: &metal::SharedEvent, execution_stage: MPSGraphExecutionStage, value: u64) {
+        unsafe {
+            let event_ptr = event.as_ptr() as *mut AnyObject;
+            let _: () = msg_send![self.0, signalEvent: event_ptr atExecutionEvent: execution_stage as u64 value: value];
+        }
+    }
+}
+
+/// Represents the stages of execution for a graph
+#[repr(u64)]
+#[derive(Debug, Copy, Clone)]
+pub enum MPSGraphExecutionStage {
+    /// Execution is completed
+    Completed = 0,
+}
+
+/// Represents the deployment platform for a graph
+#[repr(u64)]
+#[derive(Debug, Copy, Clone)]
+pub enum MPSGraphDeploymentPlatform {
+    /// macOS platform
+    MacOS = 0,
+    /// iOS platform
+    IOS = 1,
+    /// tvOS platform
+    TVOS = 2,
+    /// visionOS platform
+    VisionOS = 3,
+}
+
+/// A wrapper for MPSGraphExecutableSerializationDescriptor
+pub struct MPSGraphExecutableSerializationDescriptor(pub(crate) *mut AnyObject);
+
+impl MPSGraphExecutableSerializationDescriptor {
+    /// Create a new serialization descriptor
+    pub fn new() -> Self {
+        unsafe {
+            let class_name = c"MPSGraphExecutableSerializationDescriptor";
+            let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
+            let obj: *mut AnyObject = msg_send![cls, alloc];
+            let descriptor: *mut AnyObject = msg_send![obj, init];
+            MPSGraphExecutableSerializationDescriptor(descriptor)
+        }
+    }
+    
+    /// Set append flag - if true, appends to existing file instead of overwriting
+    pub fn set_append(&self, append: bool) {
+        unsafe {
+            let _: () = msg_send![self.0, setAppend: append];
+        }
+    }
+    
+    /// Set deployment platform
+    pub fn set_deployment_platform(&self, platform: MPSGraphDeploymentPlatform) {
+        unsafe {
+            let _: () = msg_send![self.0, setDeploymentPlatform: platform as u64];
+        }
+    }
+    
+    /// Set minimum deployment target as a string (e.g., "13.0")
+    pub fn set_minimum_deployment_target(&self, target: &str) {
+        unsafe {
+            let target_str = NSString::from_str(target);
+            let _: () = msg_send![self.0, setMinimumDeploymentTarget: target_str.as_raw_object()];
+        }
+    }
+}
+
+impl Default for MPSGraphExecutableSerializationDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for MPSGraphExecutableSerializationDescriptor {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.0.is_null() {
+                objc2::ffi::objc_release(self.0 as *mut _);
+            }
+        }
+    }
+}
+
+impl Clone for MPSGraphExecutableSerializationDescriptor {
+    fn clone(&self) -> Self {
+        unsafe {
+            if !self.0.is_null() {
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                MPSGraphExecutableSerializationDescriptor(obj)
+            } else {
+                MPSGraphExecutableSerializationDescriptor(ptr::null_mut())
+            }
+        }
+    }
+}
+
+impl fmt::Debug for MPSGraphExecutableSerializationDescriptor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MPSGraphExecutableSerializationDescriptor")
+            .finish()
     }
 }
 
