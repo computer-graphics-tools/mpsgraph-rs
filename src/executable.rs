@@ -180,23 +180,23 @@ impl MPSGraphExecutable {
             // Get the command queue pointer
             let command_queue_ptr = command_queue.as_ptr() as *mut AnyObject;
             
-            // Run the executable asynchronously
+            // Run the executable
             let results: *mut AnyObject;
             
             if let Some(callback) = completion_handler {
-                // For now, we'll use the synchronous version rather than the block-based one
-                // This is a workaround until we properly implement Objective-C block support
+                // For now, we'll use the synchronous version since true Objective-C blocks support 
+                // is complex to implement correctly with the current crate versions.
                 results = msg_send![self.0, runAsyncWithMTLCommandQueue: command_queue_ptr,
                     feeds: feed_dict,
                     outputTensors: output_tensors_array,
                     executionDescriptor: execution_descriptor.0,
                 ];
                 
-                // After getting results, call the callback directly
-                // This isn't truly asynchronous but preserves the callback behavior
+                // Get the results and call the callback directly
                 let result_hash = convert_dictionary_to_hash_map(results);
-                // We'll call it directly since we don't have thread module imported anymore
-                callback(result_hash);
+                
+                // Execute callback synchronously
+                callback(result_hash.clone());
             } else {
                 // No completion handler provided
                 results = msg_send![self.0, runAsyncWithMTLCommandQueue: command_queue_ptr,
@@ -695,9 +695,6 @@ impl fmt::Debug for MPSGraphCompilationDescriptor {
     }
 }
 
-// Callbacks for MPSGraph operations use Objective-C blocks
-// We use the block crate to convert Rust closures to Objective-C blocks
-
 /// A wrapper for MPSGraphExecutionDescriptor
 pub struct MPSGraphExecutionDescriptor(pub(crate) *mut AnyObject);
 
@@ -714,43 +711,38 @@ impl MPSGraphExecutionDescriptor {
     }
     
     /// Set wait until completed flag
+    ///
+    /// If set to true, the execution will block until completed (synchronous behavior).
+    /// This provides a simpler alternative to using callbacks for synchronization.
+    ///
+    /// - Parameter wait: Whether to wait until execution completes
     pub fn set_wait_until_completed(&self, wait: bool) {
         unsafe {
             let _: () = msg_send![self.0, setWaitUntilCompleted: wait];
         }
     }
     
-    /// Set scheduled handler
-    ///
-    /// The handler will be called when the graph execution is scheduled.
-    ///
-    /// - Parameter enabled: Whether to enable or disable scheduling notification
-    pub fn set_scheduled_handler(&self, enabled: bool) {
+    /// Set the state of the execution descriptor to prefer synchronous execution
+    /// 
+    /// This is a simplified alternative to using callbacks which can be complex with Objective-C blocks.
+    /// It configures the descriptor to wait until execution is completed, effectively making
+    /// execution synchronous.
+    pub fn prefer_synchronous_execution(&self) {
         unsafe {
-            // For now, we'll just enable/disable the handler 
-            // but not actually pass a handler closure
-            if enabled {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: true];
-            } else {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: false];
-            }
+            // Set wait until completed to true
+            let _: () = msg_send![self.0, setWaitUntilCompleted: true];
         }
     }
     
-    /// Set completion handler
+    /// Set the state of the execution descriptor to prefer asynchronous execution
     ///
-    /// The handler will be called when execution completes.
-    ///
-    /// - Parameter enabled: Whether to enable or disable completion notification
-    pub fn set_completion_handler(&self, enabled: bool) {
+    /// This configures the descriptor for asynchronous execution, but note that
+    /// true callback support requires proper Objective-C block implementations
+    /// which are not fully supported in this version.
+    pub fn prefer_asynchronous_execution(&self) {
         unsafe {
-            // For now, we'll just enable/disable the handler 
-            // but not actually pass a handler closure
-            if enabled {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: true];
-            } else {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: false];
-            }
+            // Set wait until completed to false
+            let _: () = msg_send![self.0, setWaitUntilCompleted: false];
         }
     }
     
@@ -928,43 +920,38 @@ impl MPSGraphExecutableExecutionDescriptor {
     }
     
     /// Set wait until completed flag
+    ///
+    /// If set to true, the execution will block until completed (synchronous behavior).
+    /// This provides a simpler alternative to using callbacks for synchronization.
+    ///
+    /// - Parameter wait: Whether to wait until execution completes
     pub fn set_wait_until_completed(&self, wait: bool) {
         unsafe {
             let _: () = msg_send![self.0, setWaitUntilCompleted: wait];
         }
     }
     
-    /// Set scheduled handler
-    ///
-    /// The handler will be called when the executable execution is scheduled.
-    ///
-    /// - Parameter enabled: Whether to enable or disable scheduling notification
-    pub fn set_scheduled_handler(&self, enabled: bool) {
+    /// Set the state of the execution descriptor to prefer synchronous execution
+    /// 
+    /// This is a simplified alternative to using callbacks which can be complex with Objective-C blocks.
+    /// It configures the descriptor to wait until execution is completed, effectively making
+    /// execution synchronous.
+    pub fn prefer_synchronous_execution(&self) {
         unsafe {
-            // For now, we'll just enable/disable the handler 
-            // but not actually pass a handler closure
-            if enabled {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: true];
-            } else {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: false];
-            }
+            // Set wait until completed to true
+            let _: () = msg_send![self.0, setWaitUntilCompleted: true];
         }
     }
     
-    /// Set completion handler
+    /// Set the state of the execution descriptor to prefer asynchronous execution
     ///
-    /// The handler will be called when execution completes.
-    ///
-    /// - Parameter enabled: Whether to enable or disable completion notification
-    pub fn set_completion_handler(&self, enabled: bool) {
+    /// This configures the descriptor for asynchronous execution, but note that
+    /// true callback support requires proper Objective-C block implementations
+    /// which are not fully supported in this version.
+    pub fn prefer_asynchronous_execution(&self) {
         unsafe {
-            // For now, we'll just enable/disable the handler 
-            // but not actually pass a handler closure
-            if enabled {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: true];
-            } else {
-                let _: () = msg_send![self.0, setWaitUntilCompleted: false];
-            }
+            // Set wait until completed to false
+            let _: () = msg_send![self.0, setWaitUntilCompleted: false];
         }
     }
     

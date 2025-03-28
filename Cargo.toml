@@ -34,5 +34,9 @@ path = "examples/matmul.rs"
 name = "type_test"
 path = "examples/type_test.rs"
 
+[[example]]
+name = "callback_test"
+path = "examples/callback_test.rs"
+
 [package.metadata.macos]
 frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]
