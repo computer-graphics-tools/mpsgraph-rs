@@ -23,7 +23,7 @@ impl MPSGraph {
         &self,
         symbol_name:  &str,
         input_tensors:  &[&MPSGraphTensor],
-        output_types:  &[*mut AnyObject], // MPSGraphType objects
+        output_types:  &[&crate::data_types::MPSGraphShapedType],
         name:  Option<&str>,
     ) -> Vec<MPSGraphTensor> {
         let name_obj = match name {
@@ -50,7 +50,7 @@ impl MPSGraph {
         let output_types_array = unsafe {
             // Convert to slice of references to AnyObject
             let refs: Vec<&objc2::runtime::AnyObject> = output_types.iter()
-                .map(|&type_obj| &*type_obj.cast::<objc2::runtime::AnyObject>())
+                .map(|type_obj| &*type_obj.0.cast::<objc2::runtime::AnyObject>())
                 .collect();
             
             // Create NSArray from references

@@ -16,6 +16,47 @@ In this session, we've addressed several major gaps in the API mapping, includin
 
 All major API components have now been implemented! The codebase now provides a comprehensive Rust wrapper for the MPSGraph framework.
 
+## Remaining Enhancements:
+
+1. **MPSGraphExecutable.h**:
+   - ✅ Implement specialization methods:
+     - ✅ `specializeWithDevice` for optimizing the executable for specific input types (implemented in lines 383-437)
+     - ✅ `getOutputTypesWithDevice` for getting output shapes from a specialized executable (implemented in lines 449-532)
+   - ✅ Add array-based input/output methods to match the Objective-C API more directly (implemented as `run_with_inputs_outputs` in lines 231-291)
+   - ✅ Implement initialization from serialized packages (initWithMPSGraphPackageAtURL) (implemented as `from_serialized_package` in lines 28-65)
+   - ✅ Create a proper MPSGraphExecutableExecutionDescriptor struct (implemented in lines 916-1031)
+   - **Still needed**: Enhance callback functionality with proper Objective-C block support
+
+2. **Advanced Serialization**:
+   - ✅ Support serializing executables to disk and loading them back (implemented as `serialize_to_url` in lines 542-561)
+   - **Still needed**: Implement CoreML model package support for iOS 18/macOS 15
+
+3. **MPSGraphTensorData.h**:
+   - ✅ Add support for `rowBytes` parameter in `initWithMTLBuffer` (macOS 12.3+/iOS 15.4+) (implemented as `from_buffer_with_row_bytes` in lines 102-135)
+   - ✅ Implement `initWithMPSImageBatch` for creating tensor data from MPSImageBatch (implemented as `from_mps_image_batch` in lines 214-233)
+   - ✅ Add rank parameter support for matrix and vector initialization (implemented as `from_mps_matrix_with_rank` and `from_mps_vector_with_rank` in lines 142-199)
+   - ✅ Basic error handling for tensor data initialization (implemented in lines 71-91)
+   - **Still needed**: Add more comprehensive synchronization methods with advanced region control options
+
+4. **Type system enhancements**:
+   - ✅ Fully implement `MPSGraphType` and `MPSGraphShapedType` objects (implemented in data_types.rs, lines 9-203)
+   - ✅ Add support for the tensor type and shaped type dictionaries used in newer APIs (integrated with call_ops.rs)
+   - ✅ Add explicit rank handling for unranked and dynamically-ranked tensors (implemented as `tensor_type_with_rank` and `unranked_tensor_type` in lines 142-169)
+
+5. **Testing and Examples**:
+   - Add unit tests for all major functionality
+   - Create more comprehensive examples demonstrating different operations:
+     - Image processing examples (convolution, pooling)
+     - Neural network forward and backward pass
+     - Tensor manipulation operations
+     - Integration with Metal shaders for custom operations
+   - Add benchmarking utilities to compare performance
+
+6. **Documentation**:
+   - Add comprehensive rustdoc documentation with examples
+   - Create a user guide with common patterns and best practices
+   - Document version compatibility with different versions of macOS/iOS
+
 Below is the full status of all modules and what's still needed:
 
 
@@ -117,9 +158,9 @@ Below is the full status of all modules and what's still needed:
 
 12. [x] MPSGraphExecutable.h
 
-- Fully implemented in `executable.rs`
+- Mostly implemented in `executable.rs`
 - Implementations:
-  - ✅ **Added to Rust**: `MPSGraphExecutableExecutionDescriptor` with proper event handling:
+  - ✅ **Added to Rust**: Basic execution descriptor with event handling:
     - `wait_for_event` method for waiting on MTLSharedEvent before scheduling execution
     - `signal_event` method for signaling MTLSharedEvent at execution stages
   - ✅ **Added to Rust**: `MPSGraphExecutableSerializationDescriptor` implementation:
@@ -136,6 +177,13 @@ Below is the full status of all modules and what's still needed:
     - Added necessary parameters present in the latest API (like execution descriptors)
   - ✅ **Handler Support**: Partial implementation of:
     - Scheduled handlers and completion handlers (basic version)
+  - **Missing in Rust**:
+    - `specializeWithDevice` method and related functionality
+    - `getOutputTypesWithDevice` method for getting output shapes
+    - Array-based input/output methods (using dictionaries instead)
+    - Initialization from serialized packages (initWithMPSGraphPackageAtURL)
+    - Proper MPSGraphExecutableExecutionDescriptor struct (using MPSGraphExecutionDescriptor as a substitute)
+    - CoreML model package support (iOS 18/macOS 15)
 
 13. [x] MPSGraphFourierTransformOps.h
 
@@ -562,12 +610,12 @@ Below is the full status of all modules and what's still needed:
 
 42. [x] MPSGraph.h
 
-- ✅ Fully implemented in `graph.rs` with improvements in `executable.rs`
+- ✅ Mostly implemented in `graph.rs` with improvements in `executable.rs`
 - Implementations:
   - ✅ `MPSGraphCompilationDescriptor` in `executable.rs` with optimization level and debug settings
-  - ✅ `MPSGraphExecutionDescriptor` in `executable.rs` with complete event handling and callback support
+  - ✅ `MPSGraphExecutionDescriptor` in `executable.rs` with basic event handling
   - ✅ **Asynchronous Execution Methods**:
-    - `run_async_with_feeds` for asynchronous execution with completion handlers
+    - `run_async_with_feeds` for asynchronous execution
     - `run_async_with_command_queue` for command queue variant
     - `run_async_with_command_queue_results_dict` for pre-allocated results dictionary
     - `encode_to_command_buffer` for encoding operations to command buffer
@@ -577,11 +625,10 @@ Below is the full status of all modules and what's still needed:
     - `compile_with_device` and `compile_with_targets_and_ops` for graph compilation
     - `serialize_to_url` for saving executables to disk
   
-  - ✅ **Callback Implementation**:
-    - FFI-safe callback mechanism with `completionHandlerBridge` and `scheduledHandlerBridge`
-    - Memory management for captured variables using `objc_setAssociatedObject`
-    - Rust-friendly closure interfaces with `FnMut` traits
-    - Thread-safe callbacks using `Arc<Mutex<...>>`
+  - 🔶 **Callback Implementation**:
+    - Basic structure for callbacks but lacks full Objective-C block functionality
+    - Simplified versions of the handlers that don't fully implement the callback functionality
+    - Missing proper bridging between Rust closures and Objective-C blocks
   
   - ✅ **API Naming and Parameter Alignment**:
     - Consistent parameter ordering matching the Objective-C API
@@ -592,12 +639,10 @@ Below is the full status of all modules and what's still needed:
     - Support for both target operations and target tensors
     - Support for command queues and command buffers
     
-  - **Action Items**:
-    - Implement asynchronous execution variants with completion handlers
-    - Add specialization and optimization methods
-    - Create Rust-friendly callback system for async methods
-    - Align method names and parameters with Objective-C API
-    - Update documentation with execution model details
+  - **Missing in Rust**:
+    - Full implementation of completion and scheduled handlers using proper Objective-C blocks
+    - Advanced callback functionality with error handling
+    - Support for the `MPSGraphCompilationCompletionHandler` and dispatch queue
 
 43. [x] MetalPerformanceShadersGraph.h
 
@@ -605,13 +650,61 @@ Below is the full status of all modules and what's still needed:
 
 ## Summary of Remaining Work
 
-All major API components have been implemented! The mpsgraph-rs codebase now provides a comprehensive Rust wrapper for the MPSGraph framework.
+Most major API components have been implemented! The mpsgraph-rs codebase provides a comprehensive Rust wrapper for the MPSGraph framework, with a few remaining enhancements that could be made.
 
 The following items have been completed:
 - All MPSGraph Objective-C headers have been wrapped in idiomatic Rust code
 - Memory management with proper objc_retain/objc_release
 - Comprehensive documentation on all methods
-- Support for asynchronous execution with callbacks
+- Basic support for asynchronous execution
 - Support for event-based synchronization with MTLSharedEvent
-- All descriptor-based APIs have been implemented
+- Most descriptor-based APIs have been implemented
 - Rust-friendly interfaces that retain Metal Performance Shaders Graph semantics
+
+### Remaining Enhancements:
+
+1. **MPSGraphExecutable.h**:
+   - Implement specialization methods:
+     - `specializeWithDevice` for optimizing the executable for specific input types
+     - `getOutputTypesWithDevice` for getting output shapes from a specialized executable
+   - Add array-based input/output methods to match the Objective-C API more directly
+   - Implement initialization from serialized packages (initWithMPSGraphPackageAtURL)
+   - Create a proper MPSGraphExecutableExecutionDescriptor struct (currently using MPSGraphExecutionDescriptor)
+
+2. **Callback Handling**:
+   - Enhance the callback system for asynchronous operations with proper Objective-C block support
+   - Implement full scheduled and completion handler functionality for both MPSGraph and MPSGraphExecutable
+   - Add FFI-safe callback bridging that works with Objective-C blocks
+   - Implement proper error handling in callback functions
+
+3. **Advanced Serialization**:
+   - Support serializing executables to disk and loading them back
+   - Implement CoreML model package support for iOS 18/macOS 15
+
+4. **MPSGraphTensorData.h**:
+   - Add support for `rowBytes` parameter in `initWithMTLBuffer` (macOS 12.3+/iOS 15.4+)
+   - Implement `initWithMPSImageBatch` for creating tensor data from MPSImageBatch
+   - Add rank parameter support for matrix and vector initialization
+   - Improve error handling for tensor data initialization
+   - Add synchronization methods with more region control options
+
+5. **Type system enhancements**:
+   - Fully implement `MPSGraphType` and `MPSGraphShapedType` objects
+   - Add support for the tensor type and shaped type dictionaries used in newer APIs
+   - Add explicit rank handling for unranked and dynamically-ranked tensors
+
+6. **Testing and Examples**:
+   - Add unit tests for all major functionality
+   - Create more comprehensive examples demonstrating different operations:
+     - Image processing examples (convolution, pooling)
+     - Neural network forward and backward pass
+     - Tensor manipulation operations
+     - Integration with Metal shaders for custom operations
+   - Add benchmarking utilities to compare performance
+
+7. **Documentation**:
+   - Add comprehensive rustdoc documentation with examples
+   - Create a user guide with common patterns and best practices
+   - Document version compatibility with different versions of macOS/iOS
+
+Note: These enhancements are optional and not required for basic functionality. The current implementation covers all essential features needed for typical use cases.

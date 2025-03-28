@@ -31,8 +31,8 @@ name = "matmul"
 path = "examples/matmul.rs"
 
 [[example]]
-name = "mock_matmul"
-path = "examples/mock_matmul.rs"
+name = "type_test"
+path = "examples/type_test.rs"
 
 [package.metadata.macos]
 frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]
