@@ -129,6 +129,32 @@ pub enum MPSDataType {
 }
 
 impl MPSDataType {
+    /// Converts a u32 value to an MPSDataType
+    pub fn from_u32(value: u32) -> Self {
+        match value {
+            // Since we're given the exact value from ObjC, check for exact enum values
+            val if val == MPSDataType::Float32 as u32 => MPSDataType::Float32,
+            val if val == MPSDataType::Float16 as u32 => MPSDataType::Float16, 
+            val if val == MPSDataType::Float64 as u32 => MPSDataType::Float64,
+            val if val == MPSDataType::Int8 as u32 => MPSDataType::Int8,
+            val if val == MPSDataType::Int16 as u32 => MPSDataType::Int16,
+            val if val == MPSDataType::Int32 as u32 => MPSDataType::Int32, 
+            val if val == MPSDataType::Int64 as u32 => MPSDataType::Int64,
+            val if val == MPSDataType::UInt8 as u32 => MPSDataType::UInt8,
+            val if val == MPSDataType::UInt16 as u32 => MPSDataType::UInt16,
+            val if val == MPSDataType::UInt32 as u32 => MPSDataType::UInt32,
+            val if val == MPSDataType::UInt64 as u32 => MPSDataType::UInt64,
+            val if val == MPSDataType::Bool as u32 => MPSDataType::Bool,
+            val if val == MPSDataType::Complex32 as u32 => MPSDataType::Complex32,
+            val if val == MPSDataType::Complex64 as u32 => MPSDataType::Complex64,
+            _ => MPSDataType::Invalid,
+        }
+    }
+    
+    /// Returns the u32 representation of this data type
+    pub fn as_u32(&self) -> u32 {
+        *self as u32
+    }
     /// Returns the size in bytes for this data type
     pub fn size_in_bytes(&self) -> usize {
         match self {
