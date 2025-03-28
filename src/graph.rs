@@ -483,6 +483,373 @@ impl MPSGraph {
         }
     }
     
+    /// Runs the graph asynchronously with feeds and returns the target tensor values
+    ///  
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_tensors: Tensors for which the caller wishes MPSGraphTensorData to be returned
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    /// - Returns: A valid MPSGraphTensor : MPSGraphTensorData dictionary with results
+    pub fn run_async_with_feeds(&self,
+                              feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                              target_tensors: &[MPSGraphTensor],
+                              target_operations: Option<&[MPSGraphOperation]>,
+                              execution_descriptor: Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = target_tensors.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Create operations array if provided
+            let ops_array = match target_operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    crate::core::create_ns_array_from_pointers(&ops_raw)
+                },
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Run the graph asynchronously
+            let results: *mut AnyObject = msg_send![self.0, runAsyncWithFeeds: feed_dict,
+                targetTensors: targets_array,
+                targetOperations: ops_array,
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Runs the graph asynchronously on a command queue
+    ///
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - command_queue: CommandQueue passed to execute the graph on
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_tensors: Tensors for which the caller wishes MPSGraphTensorData to be returned
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    /// - Returns: A valid MPSGraphTensor : MPSGraphTensorData dictionary with results
+    pub fn run_async_with_command_queue(&self,
+                                      command_queue: &CommandQueue,
+                                      feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                      target_tensors: &[MPSGraphTensor],
+                                      target_operations: Option<&[MPSGraphOperation]>,
+                                      execution_descriptor: Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the command queue pointer
+            let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = target_tensors.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Create operations array if provided
+            let ops_array = match target_operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    crate::core::create_ns_array_from_pointers(&ops_raw)
+                },
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Run the graph asynchronously with command queue
+            let results: *mut AnyObject = msg_send![self.0, runAsyncWithMTLCommandQueue: queue_ptr,
+                feeds: feed_dict,
+                targetTensors: targets_array,
+                targetOperations: ops_array,
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Runs the graph asynchronously with a command queue and results dictionary
+    ///
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - command_queue: CommandQueue passed to execute the graph on
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - results_dict: Dictionary of tensors to receive the results
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    pub fn run_async_with_command_queue_results_dict(&self,
+                                                   command_queue: &CommandQueue,
+                                                   feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                                   target_operations: Option<&[MPSGraphOperation]>,
+                                                   results_dict: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                                   execution_descriptor: Option<&MPSGraphExecutionDescriptor>) {
+        unsafe {
+            // Get the command queue pointer
+            let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create the results dictionary
+            let mut results_keys = Vec::with_capacity(results_dict.len());
+            let mut results_values = Vec::with_capacity(results_dict.len());
+            
+            for (tensor, data) in results_dict {
+                results_keys.push(tensor.0);
+                results_values.push(data.0);
+            }
+            
+            let results_dict_obj = crate::core::create_ns_dictionary_from_pointers(&results_keys, &results_values);
+            
+            // Create operations array if provided
+            let ops_array = match target_operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    crate::core::create_ns_array_from_pointers(&ops_raw)
+                },
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Run the graph asynchronously with supplied results dictionary
+            let _: () = msg_send![self.0, runAsyncWithMTLCommandQueue: queue_ptr,
+                feeds: feed_dict,
+                targetOperations: ops_array,
+                resultsDictionary: results_dict_obj,
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Release dictionaries
+            objc2::ffi::objc_release(feed_dict as *mut _);
+            objc2::ffi::objc_release(results_dict_obj as *mut _);
+        }
+    }
+    
+    /// Encodes the graph to a command buffer for execution
+    ///
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - command_buffer: CommandBuffer to encode the graph execution into
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_tensors: Tensors for which the caller wishes MPSGraphTensorData to be returned
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    /// - Returns: A valid MPSGraphTensor : MPSGraphTensorData dictionary with results
+    pub fn encode_to_command_buffer(&self,
+                                  command_buffer: &CommandBuffer,
+                                  feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                  target_tensors: &[MPSGraphTensor],
+                                  target_operations: Option<&[MPSGraphOperation]>,
+                                  execution_descriptor: Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        unsafe {
+            // Get the command buffer pointer
+            let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create targets array
+            let targets_raw: Vec<*mut AnyObject> = target_tensors.iter()
+                .map(|t| t.0)
+                .collect();
+            
+            let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
+            
+            // Create operations array if provided
+            let ops_array = match target_operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    crate::core::create_ns_array_from_pointers(&ops_raw)
+                },
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Encode the graph to command buffer
+            let results: *mut AnyObject = msg_send![self.0, encodeToCommandBuffer: buffer_ptr,
+                feeds: feed_dict,
+                targetTensors: targets_array,
+                targetOperations: ops_array,
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Convert the result dictionary to a Rust HashMap
+            let result_hash = self.convert_dictionary_to_hash_map(results);
+            
+            // Release the results dictionary
+            objc2::ffi::objc_release(results as *mut _);
+            
+            result_hash
+        }
+    }
+    
+    /// Encodes the graph to a command buffer with results dictionary
+    ///
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - command_buffer: CommandBuffer to encode the graph execution into
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - results_dict: Dictionary of tensors to receive the results
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    pub fn encode_to_command_buffer_with_results(&self,
+                                               command_buffer: &CommandBuffer,
+                                               feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                               target_operations: Option<&[MPSGraphOperation]>,
+                                               results_dict: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                               execution_descriptor: Option<&MPSGraphExecutionDescriptor>) {
+        unsafe {
+            // Get the command buffer pointer
+            let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
+            
+            // Create the feeds dictionary
+            let mut feed_keys = Vec::with_capacity(feeds.len());
+            let mut feed_values = Vec::with_capacity(feeds.len());
+            
+            for (tensor, data) in feeds {
+                feed_keys.push(tensor.0);
+                feed_values.push(data.0);
+            }
+            
+            let feed_dict = crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
+            
+            // Create the results dictionary
+            let mut results_keys = Vec::with_capacity(results_dict.len());
+            let mut results_values = Vec::with_capacity(results_dict.len());
+            
+            for (tensor, data) in results_dict {
+                results_keys.push(tensor.0);
+                results_values.push(data.0);
+            }
+            
+            let results_dict_obj = crate::core::create_ns_dictionary_from_pointers(&results_keys, &results_values);
+            
+            // Create operations array if provided
+            let ops_array = match target_operations {
+                Some(ops) => {
+                    let ops_raw: Vec<*mut AnyObject> = ops.iter()
+                        .map(|op| op.0)
+                        .collect();
+                    crate::core::create_ns_array_from_pointers(&ops_raw)
+                },
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut::<AnyObject>(),
+            };
+            
+            // Encode the graph to command buffer with results dictionary
+            let _: () = msg_send![self.0, encodeToCommandBuffer: buffer_ptr,
+                feeds: feed_dict,
+                targetOperations: ops_array,
+                resultsDictionary: results_dict_obj,
+                executionDescriptor: descriptor_ptr,
+            ];
+            
+            // Release dictionaries
+            objc2::ffi::objc_release(feed_dict as *mut _);
+            objc2::ffi::objc_release(results_dict_obj as *mut _);
+        }
+    }
+
     /// Enqueue a graph run on a command queue
     pub fn encode_to_command_queue(&self,
                                 device:  &MPSGraphDevice,
@@ -540,8 +907,8 @@ impl MPSGraph {
         }
     }
     
-    /// Encode and run a graph on a command buffer
-    pub fn encode_to_command_buffer(&self,
+    /// Encode and run a graph on a command buffer (legacy method)
+    pub fn encode_to_command_buffer_legacy(&self,
                                  command_buffer:  &CommandBuffer,
                                  feeds:  &HashMap<MPSGraphTensor, MPSGraphTensorData>,
                                  targets:  &[MPSGraphTensor],

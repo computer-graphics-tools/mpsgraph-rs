@@ -110,7 +110,7 @@ impl MPSGraphSingleGateRNNDescriptor {
     pub fn activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, activation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
 }
@@ -294,7 +294,7 @@ impl MPSGraphLSTMDescriptor {
     pub fn input_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, inputGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
     
@@ -302,7 +302,7 @@ impl MPSGraphLSTMDescriptor {
     pub fn forget_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, forgetGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
     
@@ -310,7 +310,7 @@ impl MPSGraphLSTMDescriptor {
     pub fn cell_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, cellGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
     
@@ -318,7 +318,7 @@ impl MPSGraphLSTMDescriptor {
     pub fn output_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, outputGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
     
@@ -326,7 +326,7 @@ impl MPSGraphLSTMDescriptor {
     pub fn activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, activation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
 }
@@ -511,7 +511,7 @@ impl MPSGraphGRUDescriptor {
     pub fn update_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, updateGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
     
@@ -519,7 +519,7 @@ impl MPSGraphGRUDescriptor {
     pub fn reset_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, resetGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
     
@@ -527,7 +527,7 @@ impl MPSGraphGRUDescriptor {
     pub fn output_gate_activation(&self) -> MPSGraphRNNActivation {
         unsafe {
             let activation_val: u64 = msg_send![self.0, outputGateActivation];
-            std::mem::transmute(activation_val as u32)
+            std::mem::transmute(activation_val)
         }
     }
 }
