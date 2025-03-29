@@ -38,5 +38,9 @@ path = "examples/type_test.rs"
 name = "callback_test"
 path = "examples/callback_test.rs"
 
+[[example]]
+name = "coreml_example"
+path = "examples/coreml_example.rs"
+
 [package.metadata.macos]
 frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]

@@ -23,9 +23,10 @@ impl MPSGraphExecutable {
     ///
     /// - Parameters:
     ///   - url: The URL string where the package is stored (file:// URL)
+    ///   - compilation_descriptor: Optional compilation descriptor for specialization
     ///
     /// - Returns: A new executable instance, or None if creation failed
-    pub fn from_serialized_package(url_string: &str) -> Option<Self> {
+    pub fn from_serialized_package(url_string: &str, compilation_descriptor: Option<&MPSGraphCompilationDescriptor>) -> Option<Self> {
         unsafe {
             // Convert URL to NSURL
             let nsurl_class = objc2::runtime::AnyClass::get(c"NSURL").unwrap();
@@ -40,21 +41,69 @@ impl MPSGraphExecutable {
             let class_name = c"MPSGraphExecutable";
             let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
             
-            // Create error pointer
-            let mut error_ptr: *mut AnyObject = std::ptr::null_mut();
-            
             // Initialize from URL
             let obj: *mut AnyObject = msg_send![cls, alloc];
-            let executable: *mut AnyObject = msg_send![obj, initWithMPSGraphPackageAtURL: nsurl, error: &mut error_ptr];
+            
+            // Get compilation descriptor pointer or null
+            let descriptor_ptr = if let Some(desc) = compilation_descriptor {
+                desc.0
+            } else {
+                std::ptr::null_mut()
+            };
+            
+            let executable: *mut AnyObject = msg_send![obj, initWithMPSGraphPackageAtURL: nsurl, 
+                                                     compilationDescriptor: descriptor_ptr];
             
             // Release NSURL as we don't need it anymore
             objc2::ffi::objc_release(nsurl as *mut _);
             
-            if !error_ptr.is_null() {
-                // There was an error, release the error pointer and return None
-                objc2::ffi::objc_release(error_ptr as *mut _);
+            if executable.is_null() {
                 return None;
             }
+            
+            Some(MPSGraphExecutable(executable))
+        }
+    }
+    
+    /// Create a new executable from a CoreML model package at the specified URL
+    /// 
+    /// This functionality is available in iOS 18/macOS 15 and newer.
+    ///
+    /// - Parameters:
+    ///   - url: The URL string where the CoreML model package is stored (file:// URL)
+    ///   - compilation_descriptor: Optional compilation descriptor for specialization
+    ///
+    /// - Returns: A new executable instance, or None if creation failed
+    pub fn from_coreml_package(url_string: &str, compilation_descriptor: Option<&MPSGraphCompilationDescriptor>) -> Option<Self> {
+        unsafe {
+            // Convert URL to NSURL
+            let nsurl_class = objc2::runtime::AnyClass::get(c"NSURL").unwrap();
+            let url_str = NSString::from_str(url_string);
+            let nsurl: *mut AnyObject = msg_send![nsurl_class, URLWithString: url_str.as_raw_object()];
+            
+            if nsurl.is_null() {
+                return None;
+            }
+            
+            // Get the MPSGraphExecutable class
+            let class_name = c"MPSGraphExecutable";
+            let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
+            
+            // Initialize from URL
+            let obj: *mut AnyObject = msg_send![cls, alloc];
+            
+            // Get compilation descriptor pointer or null
+            let descriptor_ptr = if let Some(desc) = compilation_descriptor {
+                desc.0
+            } else {
+                std::ptr::null_mut()
+            };
+            
+            let executable: *mut AnyObject = msg_send![obj, initWithCoreMLPackageAtURL: nsurl, 
+                                                     compilationDescriptor: descriptor_ptr];
+            
+            // Release NSURL as we don't need it anymore
+            objc2::ffi::objc_release(nsurl as *mut _);
             
             if executable.is_null() {
                 return None;

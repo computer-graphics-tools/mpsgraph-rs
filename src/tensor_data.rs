@@ -310,6 +310,9 @@ impl MPSGraphTensorData {
     }
     
     /// Synchronize this tensor data to CPU
+    /// 
+    /// This method ensures that any data on the GPU is synchronized to CPU-accessible memory.
+    /// Use this method when you need to access the tensor data from the CPU after GPU operations.
     pub fn synchronize(&self) {
         unsafe {
             let _: () = msg_send![self.0, synchronizeOnCPU];
@@ -317,9 +320,203 @@ impl MPSGraphTensorData {
     }
     
     /// Synchronize this tensor data to CPU with a specified region
+    /// 
+    /// This method synchronizes only a specific region of the tensor data, which can be
+    /// more efficient than synchronizing the entire tensor.
+    ///
+    /// - Parameters:
+    ///   - region: An NSArray of NSNumber pairs describing the region to synchronize.
+    ///             Each pair consists of an offset and a length for each dimension.
     pub fn synchronize_with_region(&self, region: *mut AnyObject) {
         unsafe {
             let _: () = msg_send![self.0, synchronizeOnCPUWithRegion: region];
+        }
+    }
+    
+    /// Synchronize this tensor data to CPU with a specified region created from slices
+    /// 
+    /// This method provides a more Rust-friendly way to specify synchronization regions
+    /// by using slices of offsets and lengths.
+    ///
+    /// - Parameters:
+    ///   - dimension_offsets: Offsets for each dimension (starting point)
+    ///   - dimension_lengths: Lengths for each dimension (how many elements to synchronize)
+    ///
+    /// - Returns: true if synchronization was successful, false otherwise
+    pub fn synchronize_slice(&self, dimension_offsets: &[usize], dimension_lengths: &[usize]) -> bool {
+        assert_eq!(
+            dimension_offsets.len(), 
+            dimension_lengths.len(), 
+            "dimension_offsets and dimension_lengths must have the same length"
+        );
+        
+        unsafe {
+            // Get the shape to verify dimensions
+            let shape = self.shape();
+            let shape_dims = shape.dimensions();
+            
+            if dimension_offsets.len() != shape_dims.len() {
+                return false;
+            }
+            
+            // Verify offsets and lengths don't exceed dimensions
+            for i in 0..dimension_offsets.len() {
+                if i < shape_dims.len() {
+                    let offset = dimension_offsets[i];
+                    let length = dimension_lengths[i];
+                    
+                    if offset + length > shape_dims[i] {
+                        return false;
+                    }
+                }
+            }
+            
+            // Create NSArray of region description
+            let ns_number_class = objc2::runtime::AnyClass::get(c"NSNumber").unwrap();
+            let mut numbers = Vec::with_capacity(dimension_offsets.len() * 2);
+            
+            // Add offset-length pairs as NSNumbers
+            for i in 0..dimension_offsets.len() {
+                // Add offset
+                let offset = dimension_offsets[i] as u64;
+                let offset_obj: *mut AnyObject = msg_send![ns_number_class, numberWithUnsignedLongLong: offset];
+                numbers.push(offset_obj);
+                
+                // Add length
+                let length = dimension_lengths[i] as u64;
+                let length_obj: *mut AnyObject = msg_send![ns_number_class, numberWithUnsignedLongLong: length];
+                numbers.push(length_obj);
+            }
+            
+            // Create NSArray from numbers
+            let ns_array = crate::core::create_ns_array_from_pointers(&numbers);
+            
+            // Synchronize with the region
+            let _: () = msg_send![self.0, synchronizeOnCPUWithRegion: ns_array];
+            
+            // Release the NSArray
+            objc2::ffi::objc_release(ns_array as *mut _);
+            
+            true
+        }
+    }
+    
+    /// Synchronize a rectangular region of the tensor data to CPU (for up to 3D tensors)
+    /// 
+    /// This is a convenience method for synchronizing a rectangular region of a 1D, 2D, or 3D tensor.
+    /// For higher-dimensional tensors, use synchronize_slice instead.
+    ///
+    /// - Parameters:
+    ///   - start_x: Starting offset in the first dimension
+    ///   - length_x: Length to synchronize in the first dimension
+    ///   - start_y: Optional starting offset in the second dimension
+    ///   - length_y: Optional length to synchronize in the second dimension
+    ///   - start_z: Optional starting offset in the third dimension
+    ///   - length_z: Optional length to synchronize in the third dimension
+    ///
+    /// - Returns: true if synchronization was successful, false otherwise
+    pub fn synchronize_region(
+        &self, 
+        start_x: usize, 
+        length_x: usize,
+        start_y: Option<usize>, 
+        length_y: Option<usize>,
+        start_z: Option<usize>, 
+        length_z: Option<usize>
+    ) -> bool {
+        let shape = self.shape();
+        let shape_dims = shape.dimensions();
+        
+        match shape_dims.len() {
+            0 => false,  // Scalar tensor, can't synchronize a region
+            1 => {
+                // 1D tensor
+                self.synchronize_slice(&[start_x], &[length_x])
+            }
+            2 => {
+                // 2D tensor
+                if let (Some(start_y), Some(length_y)) = (start_y, length_y) {
+                    self.synchronize_slice(&[start_x, start_y], &[length_x, length_y])
+                } else {
+                    false
+                }
+            }
+            3 => {
+                // 3D tensor
+                if let (Some(start_y), Some(length_y), Some(start_z), Some(length_z)) = 
+                    (start_y, length_y, start_z, length_z) {
+                    self.synchronize_slice(&[start_x, start_y, start_z], &[length_x, length_y, length_z])
+                } else {
+                    false
+                }
+            }
+            _ => {
+                // Higher dimensional tensor - can't use this convenience method
+                false
+            }
+        }
+    }
+    
+    /// Synchronize and access the tensor data as a slice of a specific type
+    ///
+    /// This method synchronizes the tensor data to CPU and then provides access
+    /// to the data as a slice of the specified type. The type must match the 
+    /// tensor's data type for correct results.
+    ///
+    /// - Returns: Option containing a slice reference to the data, or None if access fails
+    pub fn synchronized_data<T>(&self) -> Option<&[T]> {
+        unsafe {
+            // Synchronize the data to CPU first
+            self.synchronize();
+            
+            // Get the MPSNDArray
+            let ndarray = self.mpsndarray();
+            if ndarray.is_null() {
+                return None;
+            }
+            
+            // Get the MTLBuffer from the MPSNDArray
+            let buffer_ptr: *mut AnyObject = msg_send![ndarray, mtlBuffer];
+            if buffer_ptr.is_null() {
+                objc2::ffi::objc_release(ndarray as *mut _);
+                return None;
+            }
+            
+            // Get the contents pointer
+            let ptr: *mut std::ffi::c_void = msg_send![buffer_ptr, contents];
+            if ptr.is_null() {
+                objc2::ffi::objc_release(ndarray as *mut _);
+                return None;
+            }
+            
+            // Get the length of the buffer
+            let length: usize = msg_send![buffer_ptr, length];
+            
+            // Calculate number of elements
+            let element_size = std::mem::size_of::<T>();
+            let element_count = length / element_size;
+            
+            // Create a slice from the pointer
+            let slice = std::slice::from_raw_parts(ptr as *const T, element_count);
+            
+            // Release the MPSNDArray
+            objc2::ffi::objc_release(ndarray as *mut _);
+            
+            Some(slice)
+        }
+    }
+    
+    /// Force synchronization of tensor data to a specific device
+    /// 
+    /// This method forces the tensor data to be synchronized to a specific device.
+    /// This can be useful when working with multiple devices.
+    ///
+    /// - Parameters:
+    ///   - device: The MTLDevice to synchronize to
+    pub fn synchronize_to_device(&self, device: &metal::Device) {
+        unsafe {
+            let device_ptr = device.as_ptr() as *mut AnyObject;
+            let _: () = msg_send![self.0, synchronizeToDevice: device_ptr];
         }
     }
 }
