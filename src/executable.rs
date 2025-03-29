@@ -7,6 +7,7 @@ use metal::foreign_types::ForeignType;
 use crate::tensor::MPSGraphTensor;
 use crate::tensor_data::MPSGraphTensorData;
 use crate::core::{MPSGraphOptimization, MPSGraphOptimizationProfile, NSString, AsRawObject, MPSDataType};
+use crate::command_buffer::MPSCommandBuffer;
 
 /// A wrapper for MPSGraphExecutable objects
 pub struct MPSGraphExecutable(pub(crate) *mut AnyObject);
@@ -414,6 +415,99 @@ impl MPSGraphExecutable {
             
             // Release the results array
             objc2::ffi::objc_release(results as *mut _);
+            
+            result_vec
+        }
+    }
+    
+    /// Encode the executable to a Metal command buffer
+    ///
+    /// This is a compatibility method that creates an MPSCommandBuffer from the Metal command buffer
+    /// and then calls the MPSCommandBuffer version of the method.
+    /// 
+    /// - Parameters:
+    ///   - command_buffer: The Metal command buffer to encode to
+    ///   - inputs: Array of input tensor data
+    ///   - results: Array of output tensor data (may be nil)
+    ///   - execution_descriptor: Optional descriptor controlling execution
+    ///
+    /// - Returns: Array of output tensor data in the same order as the results parameter
+    pub fn encode_to_metal_command_buffer(
+        &self,
+        command_buffer: &metal::CommandBuffer,
+        inputs: &[MPSGraphTensorData],
+        results: Option<&[MPSGraphTensorData]>,
+        execution_descriptor: Option<&MPSGraphExecutableExecutionDescriptor>
+    ) -> Vec<MPSGraphTensorData> {
+        // Create an MPSCommandBuffer from the Metal command buffer
+        let mps_command_buffer = MPSCommandBuffer::from_command_buffer(command_buffer);
+        
+        // Call the MPSCommandBuffer version
+        self.encode_to_command_buffer(&mps_command_buffer, inputs, results, execution_descriptor)
+    }
+    
+    /// Encode the executable to an MPSCommandBuffer
+    ///
+    /// - Parameters:
+    ///   - command_buffer: The MPSCommandBuffer to encode to
+    ///   - inputs: Array of input tensor data
+    ///   - results: Array of output tensor data (may be nil)
+    ///   - execution_descriptor: Optional descriptor controlling execution
+    ///
+    /// - Returns: Array of output tensor data in the same order as the results parameter
+    pub fn encode_to_command_buffer(
+        &self,
+        command_buffer: &MPSCommandBuffer,
+        inputs: &[MPSGraphTensorData],
+        results: Option<&[MPSGraphTensorData]>,
+        execution_descriptor: Option<&MPSGraphExecutableExecutionDescriptor>
+    ) -> Vec<MPSGraphTensorData> {
+        unsafe {
+            // Create input values array
+            let input_values_raw: Vec<*mut AnyObject> = inputs.iter()
+                .map(|d| d.0)
+                .collect();
+            
+            let input_values_array = crate::core::create_ns_array_from_pointers(&input_values_raw);
+            
+            // Create results array if provided
+            let results_array = match results {
+                Some(results_vec) => {
+                    let results_raw: Vec<*mut AnyObject> = results_vec.iter()
+                        .map(|d| d.0)
+                        .collect();
+                    
+                    crate::core::create_ns_array_from_pointers(&results_raw)
+                },
+                None => std::ptr::null_mut()
+            };
+            
+            // Get execution descriptor pointer if provided
+            let descriptor_ptr = match execution_descriptor {
+                Some(desc) => desc.0,
+                None => std::ptr::null_mut()
+            };
+            
+            // Encode to command buffer
+            let result_array: *mut AnyObject = msg_send![self.0, 
+                encodeToCommandBuffer: command_buffer.0,
+                inputsArray: input_values_array,
+                resultsArray: results_array,
+                executionDescriptor: descriptor_ptr
+            ];
+            
+            // Convert NSArray of results to Vec<MPSGraphTensorData>
+            let count: usize = msg_send![result_array, count];
+            let mut result_vec = Vec::with_capacity(count);
+            
+            for i in 0..count {
+                let tensor_data: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
+                objc2::ffi::objc_retain(tensor_data as *mut _);
+                result_vec.push(MPSGraphTensorData(tensor_data));
+            }
+            
+            // Release the results array
+            objc2::ffi::objc_release(result_array as *mut _);
             
             result_vec
         }

@@ -13,6 +13,7 @@ use crate::tensor_data::MPSGraphTensorData;
 use crate::executable::{MPSGraphExecutable, MPSGraphCompilationDescriptor, MPSGraphExecutionDescriptor};
 use crate::device::MPSGraphDevice;
 use crate::operation::MPSGraphOperation;
+use crate::command_buffer::MPSCommandBuffer;
 
 #[link(name = "MetalPerformanceShadersGraph", kind = "framework")]
 extern "C" {
@@ -701,7 +702,7 @@ impl MPSGraph {
         }
     }
     
-    /// Encodes the graph to a command buffer for execution
+    /// Encodes the graph to a command buffer for execution (MTLCommandBuffer version)
     ///
     /// This call is asynchronous and will return immediately if a completionHandler is set
     /// in the execution descriptor.
@@ -713,15 +714,64 @@ impl MPSGraph {
     ///   - target_operations: Operations to be completed at the end of the run
     ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
     /// - Returns: A valid MPSGraphTensor : MPSGraphTensorData dictionary with results
-    pub fn encode_to_command_buffer(&self,
+    pub fn encode_to_metal_command_buffer(&self,
                                   command_buffer: &CommandBuffer,
+                                  feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                  target_tensors: &[MPSGraphTensor],
+                                  target_operations: Option<&[MPSGraphOperation]>,
+                                  execution_descriptor: Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
+        // Create MPSCommandBuffer from the Metal command buffer
+        let mps_command_buffer = MPSCommandBuffer::from_command_buffer(command_buffer);
+        
+        // Call the MPSCommandBuffer version
+        self.encode_to_command_buffer(&mps_command_buffer, feeds, target_tensors, target_operations, execution_descriptor)
+    }
+    
+    /// Encodes the graph to a command buffer with results dictionary (MTLCommandBuffer version)
+    ///
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - command_buffer: CommandBuffer to encode the graph execution into
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - results_dict: Dictionary of tensors to receive the results
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    pub fn encode_to_metal_command_buffer_with_results(&self,
+                                               command_buffer: &CommandBuffer,
+                                               feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                               target_operations: Option<&[MPSGraphOperation]>,
+                                               results_dict: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
+                                               execution_descriptor: Option<&MPSGraphExecutionDescriptor>) {
+        // Create MPSCommandBuffer from the Metal command buffer
+        let mps_command_buffer = MPSCommandBuffer::from_command_buffer(command_buffer);
+        
+        // Call the MPSCommandBuffer version
+        self.encode_to_command_buffer_with_results(&mps_command_buffer, feeds, target_operations, results_dict, execution_descriptor)
+    }
+    
+    /// Encodes the graph to a MPSCommandBuffer for execution
+    ///
+    /// This call is asynchronous and will return immediately if a completionHandler is set
+    /// in the execution descriptor.
+    ///
+    /// - Parameters:
+    ///   - command_buffer: MPSCommandBuffer to encode the graph execution into
+    ///   - feeds: Feeds dictionary for the placeholder tensors
+    ///   - target_tensors: Tensors for which the caller wishes MPSGraphTensorData to be returned
+    ///   - target_operations: Operations to be completed at the end of the run
+    ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
+    /// - Returns: A valid MPSGraphTensor : MPSGraphTensorData dictionary with results
+    pub fn encode_to_command_buffer(&self,
+                                  command_buffer: &MPSCommandBuffer,
                                   feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
                                   target_tensors: &[MPSGraphTensor],
                                   target_operations: Option<&[MPSGraphOperation]>,
                                   execution_descriptor: Option<&MPSGraphExecutionDescriptor>) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
         unsafe {
             // Get the command buffer pointer
-            let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
+            let buffer_ptr = command_buffer.0;
             
             // Create the feeds dictionary
             let mut feed_keys = Vec::with_capacity(feeds.len());
@@ -776,26 +826,26 @@ impl MPSGraph {
         }
     }
     
-    /// Encodes the graph to a command buffer with results dictionary
+    /// Encodes the graph to a MPSCommandBuffer with results dictionary
     ///
     /// This call is asynchronous and will return immediately if a completionHandler is set
     /// in the execution descriptor.
     ///
     /// - Parameters:
-    ///   - command_buffer: CommandBuffer to encode the graph execution into
+    ///   - command_buffer: MPSCommandBuffer to encode the graph execution into
     ///   - feeds: Feeds dictionary for the placeholder tensors
     ///   - target_operations: Operations to be completed at the end of the run
     ///   - results_dict: Dictionary of tensors to receive the results
     ///   - execution_descriptor: ExecutionDescriptor to be passed in and used
     pub fn encode_to_command_buffer_with_results(&self,
-                                               command_buffer: &CommandBuffer,
+                                               command_buffer: &MPSCommandBuffer,
                                                feeds: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
                                                target_operations: Option<&[MPSGraphOperation]>,
                                                results_dict: &HashMap<MPSGraphTensor, MPSGraphTensorData>,
                                                execution_descriptor: Option<&MPSGraphExecutionDescriptor>) {
         unsafe {
             // Get the command buffer pointer
-            let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
+            let buffer_ptr = command_buffer.0;
             
             // Create the feeds dictionary
             let mut feed_keys = Vec::with_capacity(feeds.len());

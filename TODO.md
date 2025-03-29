@@ -12,6 +12,7 @@ The mpsgraph-rs project has successfully implemented almost all features of the 
    - ✅ Event-based synchronization with MTLSharedEvent
    - ✅ CoreML Model Package Support for loading executables from CoreML models (iOS 18/macOS 15)
    - ✅ Advanced synchronization methods with region control options
+   - ✅ MPSCommandBuffer implementation for proper encoding to command buffers
 
 ## Remaining Enhancements
 
