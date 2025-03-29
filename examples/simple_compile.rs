@@ -1,24 +1,25 @@
 use mpsgraph::{
-    graph::MPSGraph,
-    core::MPSDataType,
-    shape::MPSShape,
-    tensor_data::MPSGraphTensorData,
-    executable::MPSGraphExecutionDescriptor
+    MPSGraph,
+    MPSDataType,
+    MPSShape,
+    MPSGraphTensorData,
+    MPSGraphExecutionDescriptor,
+    MPSCommandBuffer
 };
 use metal::{Device, MTLResourceOptions};
 use std::collections::HashMap;
 
-/// A simple example demonstrating how to use MPSGraph with pre-allocated Metal buffers
+/// A simple example demonstrating how to use MPSGraph with MPSCommandBuffer
 /// 
 /// This example shows:
 /// 1. Creation of Metal buffers for inputs and outputs
 /// 2. Wrapping buffers in MPSGraphTensorData
 /// 3. Building a computation graph with 3 operations
-/// 4. Pre-allocating all results tensors
-/// 5. Running the graph with synchronous execution
+/// 4. Creating an MPSCommandBuffer and encoding the graph
+/// 5. Committing and waiting for the command buffer
 /// 6. Reading results directly from the Metal buffers
 fn main() {
-    println!("MPSGraph with pre-allocated Metal buffers example\n");
+    println!("MPSGraph with MPSCommandBuffer example\n");
     
     //-- Setup --//
     
@@ -107,17 +108,43 @@ fn main() {
     let execution_descriptor = MPSGraphExecutionDescriptor::new();
     execution_descriptor.prefer_synchronous_execution();
     
-    //-- Execute Graph --//
-    println!("Executing graph with pre-allocated buffers...");
+    //-- Create MPSCommandBuffer --//
+    println!("Creating MPSCommandBuffer...");
     
-    // Run graph with command queue and results dictionary
-    graph.run_async_with_command_queue_results_dict(
-        &command_queue,
+    // Create an MPSCommandBuffer from the command queue
+    let mps_command_buffer = MPSCommandBuffer::from_command_queue(&command_queue);
+    
+    // Set a label for debugging
+    mps_command_buffer.set_label("MPSGraph Simple Compile");
+    
+    //-- Encode Graph to Command Buffer --//
+    println!("Encoding graph to MPSCommandBuffer...");
+    
+    // Encode the graph operations to the command buffer
+    graph.encode_to_command_buffer_with_results(
+        &mps_command_buffer,
         &feeds,
-        None,  // target operations
+        None, // No specific target operations - we'll use the results dictionary instead
         &results,
         Some(&execution_descriptor)
     );
+    
+    //-- Commit and Wait for Completion --//
+    println!("Committing command buffer and waiting for completion...");
+    
+    // Commit the command buffer
+    mps_command_buffer.commit();
+    
+    // Wait for execution to complete
+    mps_command_buffer.wait_until_completed();
+    
+    // Check command buffer status
+    println!("Command buffer status: {:?}", mps_command_buffer.status());
+    
+    // Check for errors
+    if let Some(error) = mps_command_buffer.error() {
+        println!("Error during execution: {}", error);
+    }
     
     //-- Read Results --//
     println!("\nReading results directly from Metal buffers:");
@@ -166,6 +193,12 @@ fn main() {
         if !c_correct { println!("- C expected: {:?}", expected_c); }
         if !d_correct { println!("- D expected: {:?}", expected_d); }
         if !e_correct { println!("- E expected: {:?}", expected_e); }
+    }
+    
+    //-- Performance Info --//
+    if mps_command_buffer.gpu_end_time() > 0.0 {
+        let gpu_time = mps_command_buffer.gpu_end_time() - mps_command_buffer.gpu_start_time();
+        println!("\nGPU execution time: {:.6} ms", gpu_time * 1000.0);
     }
     
     println!("\nExecution complete!");
