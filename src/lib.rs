@@ -13,6 +13,10 @@ pub mod shape;
 pub mod tensor;
 pub mod tensor_data;
 
+// Optional sugar API for ergonomic usage
+#[cfg(feature = "sugar_api")]
+pub mod sugar;
+
 // Operation-specific modules
 pub mod activation_ops;
 pub mod arithmetic_ops;
@@ -133,4 +137,8 @@ pub mod prelude {
     pub use crate::scatter_nd_ops::MPSGraphScatterMode;
     pub use crate::sparse_ops::{MPSGraphCreateSparseOpDescriptor, MPSGraphSparseStorageType};
     pub use crate::stencil_ops::{MPSGraphReductionMode, MPSGraphStencilOpDescriptor};
+    
+    // Include sugar API when the feature is enabled
+    #[cfg(feature = "sugar_api")]
+    pub use crate::sugar;
 }

@@ -22,6 +22,7 @@ rand = "0.9.0"
 [features]
 default = ["link"]
 link = []
+sugar_api = []
 
 [build-dependencies]
 cc = "1.2.17"
@@ -41,6 +42,11 @@ path = "examples/callback_test.rs"
 [[example]]
 name = "simple_compile"
 path = "examples/simple_compile.rs"
+
+[[example]]
+name = "sugar_api_example"
+path = "examples/sugar_api_example.rs"
+required-features = ["sugar_api"]
 
 [package.metadata.macos]
 frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]
