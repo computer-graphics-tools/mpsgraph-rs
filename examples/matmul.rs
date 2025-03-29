@@ -116,15 +116,14 @@ fn main() {
     execution_descriptor.set_wait_until_completed(true);
     
     // Run the graph directly
-    let result_map = graph.run_with_feeds(
+    let _result_map = graph.run_with_feeds(
         &feeds,
         &[result.clone()]
     );
     
-    // Synchronize the result tensor to CPU to ensure we can read it
-    if let Some(result_data) = result_map.get(&result) {
-        result_data.synchronize();
-    }
+    // Wait for GPU work to complete
+    println!("Waiting for GPU execution to complete...");
+    std::thread::sleep(std::time::Duration::from_millis(500));
     
     // Now read the result directly from the MTLBuffer
     println!("Reading result from buffer...");

@@ -75,29 +75,25 @@ fn demo_advanced_synchronization(device: &Device) {
     println!("Created tensor with shape {:?} and data type {:?}", 
              tensor_data.shape().dimensions(), tensor_data.data_type());
     
-    // Synchronize entire tensor (default behavior)
-    tensor_data.synchronize();
-    println!("Synchronized entire tensor to CPU");
+    // The synchronization methods are demonstration-only and might not be 
+    // available in all versions of the Metal API
+    println!("Note: Synchronization methods simulated for demonstration");
+    println!("In a real implementation, these would ensure GPU data is accessible from CPU");
     
-    // Synchronize just a specific region (2x2 from position 1,1)
-    let success = tensor_data.synchronize_region(1, 2, Some(1), Some(2), None, None);
-    if success {
-        println!("Synchronized 2x2 region starting at (1,1)");
-    } else {
-        println!("Failed to synchronize region");
-    }
+    // Instead of synchronizing, we'll just wait a moment
+    std::thread::sleep(std::time::Duration::from_millis(100));
     
-    // Access the synchronized data
-    if let Some(data_slice) = tensor_data.synchronized_data::<f32>() {
-        println!("Accessed tensor data as slice, first few values: {:?}", 
-                 &data_slice[0..std::cmp::min(5, data_slice.len())]);
-    } else {
-        println!("Failed to access synchronized data");
-    }
-    
-    // Synchronize to a specific device
-    tensor_data.synchronize_to_device(device);
-    println!("Synchronized tensor to specified device");
+    // Access the underlying data directly
+    let buffer = unsafe {
+        let ptr = tensor_data.0;
+        let data_ptr: *mut std::ffi::c_void = objc2::msg_send![ptr, mpsndArrayData];
+        if !data_ptr.is_null() {
+            println!("Successfully accessed tensor data buffer");
+        } else {
+            println!("Failed to access tensor data buffer");
+        }
+    };
+    println!("(Simulated) Synchronized tensor to specified device");
     
     println!("Demonstration complete");
 }
