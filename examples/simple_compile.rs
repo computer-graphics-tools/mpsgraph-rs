@@ -1,5 +1,5 @@
 use mpsgraph::{
-    graph::MPSGraph, 
+    graph::MPSGraph,
     core::MPSDataType,
     shape::MPSShape,
     tensor_data::MPSGraphTensorData,
@@ -8,166 +8,165 @@ use mpsgraph::{
 use metal::{Device, MTLResourceOptions};
 use std::collections::HashMap;
 
+/// A simple example demonstrating how to use MPSGraph with pre-allocated Metal buffers
+/// 
+/// This example shows:
+/// 1. Creation of Metal buffers for inputs and outputs
+/// 2. Wrapping buffers in MPSGraphTensorData
+/// 3. Building a computation graph with 3 operations
+/// 4. Pre-allocating all results tensors
+/// 5. Running the graph with synchronous execution
+/// 6. Reading results directly from the Metal buffers
 fn main() {
-    println!("Simple MPSGraph compilation and execution example");
+    println!("MPSGraph with pre-allocated Metal buffers example\n");
+    
+    //-- Setup --//
     
     // Get the default Metal device
     let device = Device::system_default().expect("No Metal device found");
     println!("Using device: {}", device.name());
     
-    // We'll create command queues later when needed
+    // Create a command queue for execution
+    let command_queue = device.new_command_queue();
     
-    // Create a new graph
+    // Create a graph to define our computation
     let graph = MPSGraph::new();
     
-    // Create input tensors (2x2 matrices)
+    //-- Define Computation Graph --//
+    println!("Building computation graph...");
+    
+    // 1. Define input tensors
     let shape = MPSShape::from_slice(&[2, 2]);
     let a = graph.placeholder(&shape, MPSDataType::Float32, Some("A"));
     let b = graph.placeholder(&shape, MPSDataType::Float32, Some("B"));
     
-    // Define a simple computation: C = A + B
+    // 2. Define computation operations
+    // Operation 1: C = A + B
     let c = graph.add(&a, &b, Some("C"));
     
-    // Create Metal buffers for input data
+    // Operation 2: D = C * C (element-wise multiply)
+    let d = graph.multiply(&c, &c, Some("D"));
+    
+    // Operation 3: E = C + D
+    let e = graph.add(&c, &d, Some("E"));
+    
+    //-- Create Buffers for Input and Output Data --//
+    println!("Creating Metal buffers for inputs and outputs...");
+    
+    // Define input data
     let a_input = [1.0f32, 2.0, 3.0, 4.0];
     let b_input = [5.0f32, 6.0, 7.0, 8.0];
     
+    // Calculate buffer size for a 2x2 matrix of f32
+    let buffer_size = (4 * std::mem::size_of::<f32>()) as u64;
+    
     // Create Metal buffers with StorageModeShared for CPU/GPU access
+    // Input buffers initialized with data
     let a_buffer = device.new_buffer_with_data(
         a_input.as_ptr() as *const _, 
-        std::mem::size_of_val(&a_input) as u64,
+        buffer_size,
         MTLResourceOptions::StorageModeShared
     );
     
     let b_buffer = device.new_buffer_with_data(
         b_input.as_ptr() as *const _, 
-        std::mem::size_of_val(&b_input) as u64,
+        buffer_size,
         MTLResourceOptions::StorageModeShared
     );
     
-    // Create MPSGraphTensorData from Metal buffers
+    // Output buffers (empty)
+    let c_buffer = device.new_buffer(buffer_size, MTLResourceOptions::StorageModeShared);
+    let d_buffer = device.new_buffer(buffer_size, MTLResourceOptions::StorageModeShared);
+    let e_buffer = device.new_buffer(buffer_size, MTLResourceOptions::StorageModeShared);
+    
+    //-- Create MPSGraphTensorData from Metal Buffers --//
+    println!("Creating MPSGraphTensorData from Metal buffers...");
+    
+    // Wrap Metal buffers in MPSGraphTensorData
     let a_data = MPSGraphTensorData::from_buffer(&a_buffer, &shape, MPSDataType::Float32);
     let b_data = MPSGraphTensorData::from_buffer(&b_buffer, &shape, MPSDataType::Float32);
+    let c_data = MPSGraphTensorData::from_buffer(&c_buffer, &shape, MPSDataType::Float32);
+    let d_data = MPSGraphTensorData::from_buffer(&d_buffer, &shape, MPSDataType::Float32);
+    let e_data = MPSGraphTensorData::from_buffer(&e_buffer, &shape, MPSDataType::Float32);
     
-    // Create a map for input data
+    //-- Set Up Feeds and Results --//
+    println!("Setting up feeds and results dictionaries...");
+    
+    // Create feed dictionary (inputs)
     let mut feeds = HashMap::new();
     feeds.insert(a.clone(), a_data);
     feeds.insert(b.clone(), b_data);
     
-    println!("Created graph with addition operation");
+    // Create results dictionary (outputs)
+    let mut results = HashMap::new();
+    results.insert(c.clone(), c_data);
+    results.insert(d.clone(), d_data);
+    results.insert(e.clone(), e_data);
     
-    // Execute directly (without explicit compilation)
-    println!("\nMethod 1: Running graph directly without explicit compilation");
-    
-    // Create a buffer for the result
-    let c_buffer_size = (4 * std::mem::size_of::<f32>()) as u64; // 2x2 matrix of f32
-    let c_buffer = device.new_buffer(c_buffer_size, MTLResourceOptions::StorageModeShared);
-    let c_tensor_data = MPSGraphTensorData::from_buffer(&c_buffer, &shape, MPSDataType::Float32);
-    
-    // Create a results dictionary with our pre-allocated buffer
-    let mut results_dict = HashMap::new();
-    results_dict.insert(c.clone(), c_tensor_data);
-    
-    // Use the same approach for Method 1, directly run with command queue and results dict
-    let command_queue = device.new_command_queue();
-    
-    // Run synchronously with command queue and results dictionary
-    graph.run_async_with_command_queue_results_dict(
-        &command_queue,
-        &feeds,
-        None,  // target operations
-        &results_dict,
-        None   // execution descriptor
-    );
-    
-    // Add a small delay to ensure execution completes
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    
-    // Read the results directly from the Metal buffer
-    println!("Reading result data from buffer:");
-    let result_ptr = c_buffer.contents() as *const f32;
-    let result_slice = unsafe { std::slice::from_raw_parts(result_ptr, 4) };
-    println!("Result: {:?}", result_slice);
-    
-    // Add a more complex operation to our graph
-    println!("\nMethod 2: Running graph with command queue and results dictionary");
-    
-    // Create another simple computation: D = C * C (element-wise multiply)
-    // Instead of using constant_scalar which might not be available in all API versions
-    let d = graph.multiply(&c, &c, Some("D"));
-    
-    // Create a buffer for the result
-    let d_buffer_size = (4 * std::mem::size_of::<f32>()) as u64; // 2x2 matrix of f32
-    let d_buffer = device.new_buffer(d_buffer_size, MTLResourceOptions::StorageModeShared);
-    let d_tensor_data = MPSGraphTensorData::from_buffer(&d_buffer, &shape, MPSDataType::Float32);
-    
-    // Create a results dictionary with our pre-allocated buffer
-    let mut results_dict = HashMap::new();
-    results_dict.insert(d.clone(), d_tensor_data);
-    
-    // Run with async command queue and results dictionary
-    // Note the specific parameter order for this method:
-    // command_queue, feeds, target_operations, results_dict, execution_descriptor
-    graph.run_async_with_command_queue_results_dict(
-        &command_queue,
-        &feeds,
-        None,  // target operations
-        &results_dict,
-        None   // execution descriptor
-    );
-    
-    // Add a small delay to ensure execution completes
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    
-    // Read the results directly from the Metal buffer
-    println!("Reading result data from buffer:");
-    let result_ptr = d_buffer.contents() as *const f32;
-    let result_slice = unsafe { std::slice::from_raw_parts(result_ptr, 4) };
-    println!("Result: {:?}", result_slice);
-    
-    // Run with execution descriptor for more control
-    println!("\nMethod 3: Running with execution descriptor and results dictionary");
-    
-    // Create execution descriptor with synchronous execution
+    //-- Create Execution Descriptor --//
     let execution_descriptor = MPSGraphExecutionDescriptor::new();
     execution_descriptor.prefer_synchronous_execution();
     
-    // Let's create one more operation to demonstrate the descriptor-based execution
-    let e = graph.add(&c, &d, Some("E"));  // E = C + D = (A+B) + (A+B)*(A+B)
+    //-- Execute Graph --//
+    println!("Executing graph with pre-allocated buffers...");
     
-    // Create a buffer for the result
-    let e_buffer_size = (4 * std::mem::size_of::<f32>()) as u64; // 2x2 matrix of f32
-    let e_buffer = device.new_buffer(e_buffer_size, MTLResourceOptions::StorageModeShared);
-    let e_tensor_data = MPSGraphTensorData::from_buffer(&e_buffer, &shape, MPSDataType::Float32);
-    
-    // Create a results dictionary with our pre-allocated buffer
-    let mut final_results = HashMap::new();
-    final_results.insert(e.clone(), e_tensor_data);
-    
-    // Use the same successful approach for Method 3
+    // Run graph with command queue and results dictionary
     graph.run_async_with_command_queue_results_dict(
         &command_queue,
         &feeds,
         None,  // target operations
-        &final_results,
-        Some(&execution_descriptor)  // Using the execution descriptor
+        &results,
+        Some(&execution_descriptor)
     );
     
-    // Read the results directly from the Metal buffer
-    println!("Reading final result data from buffer:");
-    let result_ptr = e_buffer.contents() as *const f32;
-    let result_slice = unsafe { std::slice::from_raw_parts(result_ptr, 4) };
-    println!("Result: {:?}", result_slice);
+    //-- Read Results --//
+    println!("\nReading results directly from Metal buffers:");
     
-    // Expected results for verification
-    println!("\nExpected results:");
-    println!("C = A + B: [6.0, 8.0, 10.0, 12.0]");
-    println!("D = C * C: [36.0, 64.0, 100.0, 144.0]");
-    println!("E = C + D: [42.0, 72.0, 110.0, 156.0]");
+    // Read C = A + B
+    let c_result = unsafe {
+        let ptr = c_buffer.contents() as *const f32;
+        std::slice::from_raw_parts(ptr, 4).to_vec()
+    };
+    println!("C = A + B:        {:?}", c_result);
     
-    println!("\nNOTE: This example demonstrates how to use run_async_with_command_queue_results_dict");
-    println!("to directly compute results into pre-allocated Metal buffers with MPSGraph.");
-    println!("The key is using the correct parameter order and providing pre-allocated buffers.");
+    // Read D = C * C
+    let d_result = unsafe {
+        let ptr = d_buffer.contents() as *const f32;
+        std::slice::from_raw_parts(ptr, 4).to_vec()
+    };
+    println!("D = C * C:        {:?}", d_result);
     
-    println!("Execution complete!");
+    // Read E = C + D
+    let e_result = unsafe {
+        let ptr = e_buffer.contents() as *const f32;
+        std::slice::from_raw_parts(ptr, 4).to_vec()
+    };
+    println!("E = C + D:        {:?}", e_result);
+    
+    //-- Verify Results --//
+    println!("\nVerifying results:");
+    
+    // Expected results
+    let expected_c = [6.0, 8.0, 10.0, 12.0];          // A + B
+    let expected_d = [36.0, 64.0, 100.0, 144.0];      // (A+B) * (A+B)
+    let expected_e = [42.0, 72.0, 110.0, 156.0];      // (A+B) + (A+B)*(A+B)
+    
+    // Check if results match expected values
+    let c_correct = c_result.iter().zip(expected_c.iter())
+        .all(|(a, b)| (a - b).abs() < 0.00001);
+    let d_correct = d_result.iter().zip(expected_d.iter())
+        .all(|(a, b)| (a - b).abs() < 0.00001);
+    let e_correct = e_result.iter().zip(expected_e.iter())
+        .all(|(a, b)| (a - b).abs() < 0.00001);
+    
+    if c_correct && d_correct && e_correct {
+        println!("✅ All results correct!");
+    } else {
+        println!("❌ Results don't match expected values.");
+        if !c_correct { println!("- C expected: {:?}", expected_c); }
+        if !d_correct { println!("- D expected: {:?}", expected_d); }
+        if !e_correct { println!("- E expected: {:?}", expected_e); }
+    }
+    
+    println!("\nExecution complete!");
 }
