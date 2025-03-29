@@ -39,10 +39,6 @@ name = "callback_test"
 path = "examples/callback_test.rs"
 
 [[example]]
-name = "coreml_example"
-path = "examples/coreml_example.rs"
-
-[[example]]
 name = "simple_compile"
 path = "examples/simple_compile.rs"
 
