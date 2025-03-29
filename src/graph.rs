@@ -11,11 +11,113 @@ use crate::tensor_data::MPSGraphTensorData;
 use metal::foreign_types::ForeignType;
 use metal::{CommandBuffer, CommandQueue, SharedEvent};
 use objc2::msg_send;
+use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 use objc2_foundation::NSData;
 use objc2_foundation::NSString;
 use std::collections::HashMap;
 use std::fmt;
+
+/// Trait for scalar types that can be used in MPSGraph operations
+/// This trait is used for both single scalar values and arrays of values
+pub trait MPSTensorDataScalar: Copy {
+    /// Convert a scalar value to f64 for use with Objective-C scalar methods
+    fn to_f64(&self) -> f64;
+    
+    /// Convert a slice of values to an NSData object that can be used with MPSGraph
+    fn to_nsdata(values: &[Self]) -> Retained<NSData>;
+}
+
+// Implement for common numeric types
+impl MPSTensorDataScalar for f32 {
+    fn to_f64(&self) -> f64 {
+        *self as f64
+    }
+    
+    fn to_nsdata(values: &[Self]) -> Retained<NSData> {
+        unsafe {
+            NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<f32>(),
+            ))
+        }
+    }
+}
+
+impl MPSTensorDataScalar for f64 {
+    fn to_f64(&self) -> f64 {
+        *self
+    }
+    
+    fn to_nsdata(values: &[Self]) -> Retained<NSData> {
+        unsafe {
+            NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<f64>(),
+            ))
+        }
+    }
+}
+
+impl MPSTensorDataScalar for i32 {
+    fn to_f64(&self) -> f64 {
+        *self as f64
+    }
+    
+    fn to_nsdata(values: &[Self]) -> Retained<NSData> {
+        unsafe {
+            NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<i32>(),
+            ))
+        }
+    }
+}
+
+impl MPSTensorDataScalar for i64 {
+    fn to_f64(&self) -> f64 {
+        *self as f64 // This may lose precision for large values
+    }
+    
+    fn to_nsdata(values: &[Self]) -> Retained<NSData> {
+        unsafe {
+            NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<i64>(),
+            ))
+        }
+    }
+}
+
+impl MPSTensorDataScalar for u32 {
+    fn to_f64(&self) -> f64 {
+        *self as f64
+    }
+    
+    fn to_nsdata(values: &[Self]) -> Retained<NSData> {
+        unsafe {
+            NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<u32>(),
+            ))
+        }
+    }
+}
+
+impl MPSTensorDataScalar for u64 {
+    fn to_f64(&self) -> f64 {
+        *self as f64 // This may lose precision for large values
+    }
+    
+    fn to_nsdata(values: &[Self]) -> Retained<NSData> {
+        unsafe {
+            NSData::with_bytes(std::slice::from_raw_parts(
+                values.as_ptr() as *const u8,
+                values.len() * std::mem::size_of::<u64>(),
+            ))
+        }
+    }
+}
 
 #[link(name = "MetalPerformanceShadersGraph", kind = "framework")]
 extern "C" {
@@ -90,30 +192,25 @@ impl MPSGraph {
         }
     }
 
+    
+    // This is a convenience method not in the original API
+    // Kept for compatibility with existing code
     /// Creates a constant tensor with given values and dimensions
-    pub fn constant_with_shape(
+    pub fn constant_with_shape<T: MPSTensorDataScalar>(
         &self,
-        values: &[f32],
+        values: &[T],
         shape_dims: &[usize],
-        name: Option<&str>,
+        data_type: MPSDataType,
     ) -> MPSGraphTensor {
         let shape = MPSShape::from_slice(shape_dims);
-        self.constant(values, &shape, name)
+        self.constant(values, &shape, data_type)
     }
 
     /// Creates a constant tensor with given values and shape
-    pub fn constant(&self, values: &[f32], shape: &MPSShape, name: Option<&str>) -> MPSGraphTensor {
+    pub fn constant<T: MPSTensorDataScalar>(&self, values: &[T], shape: &MPSShape, data_type: MPSDataType) -> MPSGraphTensor {
         unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut::<AnyObject>(),
-            };
-
-            // Create NSData with float values
-            let data = NSData::with_bytes(std::slice::from_raw_parts(
-                values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<f32>(),
-            ));
+            // Create NSData with buffer values
+            let data = T::to_nsdata(values);
 
             // Get raw NSData pointer for Objective-C
             let data_ptr: *mut AnyObject =
@@ -124,8 +221,7 @@ impl MPSGraph {
                 self.0,
                 constantWithData: data_ptr,
                 shape: shape.0,
-                dataType: MPSDataType::Float32 as u32,
-                name: name_obj
+                dataType: data_type as u32
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
@@ -133,24 +229,38 @@ impl MPSGraph {
         }
     }
 
-    /// Creates a constant with given scalar value
-    pub fn constant_scalar(
+    
+    /// Creates a constant with given scalar value (wraps constantWithScalar:dataType:)
+    pub fn constant_scalar<T: MPSTensorDataScalar>(
         &self,
-        value: f32,
+        value: T,
         data_type: MPSDataType,
-        name: Option<&str>,
     ) -> MPSGraphTensor {
         unsafe {
-            let name_obj = match name {
-                Some(s) => NSString::from_str(s).as_raw_object(),
-                None => std::ptr::null_mut::<AnyObject>(),
-            };
-
             let tensor: *mut AnyObject = msg_send![
                 self.0,
-                constantWithScalar: value as f64,
-                dataType: data_type as u32,
-                name: name_obj
+                constantWithScalar: value.to_f64(),
+                dataType: data_type as u32
+            ];
+
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            MPSGraphTensor(tensor)
+        }
+    }
+    
+    /// Creates a constant with given scalar value and shape (wraps constantWithScalar:shape:dataType:)
+    pub fn constant_scalar_with_shape<T: MPSTensorDataScalar>(
+        &self,
+        value: T,
+        shape: &MPSShape,
+        data_type: MPSDataType,
+    ) -> MPSGraphTensor {
+        unsafe {
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                constantWithScalar: value.to_f64(),
+                shape: shape.0,
+                dataType: data_type as u32
             ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;

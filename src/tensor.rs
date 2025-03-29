@@ -19,8 +19,8 @@ impl MPSGraphTensor {
     /// Returns the data type of this tensor
     pub fn data_type(&self) -> MPSDataType {
         unsafe {
-            let data_type_val: u64 = msg_send![self.0, dataType];
-            std::mem::transmute(data_type_val as u32)
+            let data_type_val: u32 = msg_send![self.0, dataType];
+            std::mem::transmute(data_type_val)
         }
     }
 

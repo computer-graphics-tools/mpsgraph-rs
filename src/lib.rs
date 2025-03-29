@@ -60,6 +60,7 @@ pub use core::{
     MPSDataType, MPSGraphExecutionStage, MPSGraphOptimization, MPSGraphOptimizationProfile,
     MPSGraphOptions,
 };
+pub use graph::MPSTensorDataScalar;
 pub use data_types::{MPSGraphShapedType, MPSGraphType};
 pub use depthwise_convolution_ops::{
     MPSGraphDepthwiseConvolution2DOpDescriptor, MPSGraphDepthwiseConvolution3DOpDescriptor,
@@ -101,6 +102,7 @@ pub mod prelude {
         MPSDataType, MPSGraphExecutionStage, MPSGraphOptimization, MPSGraphOptimizationProfile,
         MPSGraphOptions,
     };
+    pub use crate::graph::MPSTensorDataScalar;
     pub use crate::data_types::{MPSGraphShapedType, MPSGraphType};
     pub use crate::depthwise_convolution_ops::{
         MPSGraphDepthwiseConvolution2DOpDescriptor, MPSGraphDepthwiseConvolution3DOpDescriptor,
