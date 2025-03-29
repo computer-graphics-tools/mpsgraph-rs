@@ -1,5 +1,10 @@
-use mpsgraph::prelude::*;
-use mpsgraph::executable::MPSGraphExecutionDescriptor;
+use mpsgraph::{
+    graph::MPSGraph,
+    core::MPSDataType,
+    shape::MPSShape,
+    tensor_data::MPSGraphTensorData,
+    executable::MPSGraphExecutionDescriptor
+};
 use metal::{Device, MTLResourceOptions, Buffer};
 use std::collections::HashMap;
 
@@ -96,29 +101,30 @@ fn main() {
     );
     
     // Create command queue
-    let command_queue = device.new_command_queue();
+    let _command_queue = device.new_command_queue();
     
     // Prepare feeds and targets
     let mut feeds = HashMap::new();
-    feeds.insert(&a, &a_tensor.tensor_data);
-    feeds.insert(&b, &b_tensor.tensor_data);
+    feeds.insert(a.clone(), a_tensor.tensor_data.clone());
+    feeds.insert(b.clone(), b_tensor.tensor_data.clone());
     
     println!("Executing matrix multiplication...");
-    
-    let mut output_map = HashMap::new();
-    output_map.insert(&result, &result_tensor.tensor_data);
     
     // Execute graph with our inputs and output buffers
     // Create execution descriptor that waits until completed
     let execution_descriptor = MPSGraphExecutionDescriptor::new();
     execution_descriptor.set_wait_until_completed(true);
     
-    graph.run_with_command_queue_feeds_outputs(
-        &command_queue,
-        feeds,
-        output_map,
-        Some(&execution_descriptor)
+    // Run the graph directly
+    let result_map = graph.run_with_feeds(
+        &feeds,
+        &[result.clone()]
     );
+    
+    // Synchronize the result tensor to CPU to ensure we can read it
+    if let Some(result_data) = result_map.get(&result) {
+        result_data.synchronize();
+    }
     
     // Now read the result directly from the MTLBuffer
     println!("Reading result from buffer...");

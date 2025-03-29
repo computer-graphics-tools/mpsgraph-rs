@@ -1,14 +1,11 @@
-use mpsgraph_rs::{
+use mpsgraph::{
     core::MPSDataType,
     executable::MPSGraphExecutable,
     executable::MPSGraphCompilationDescriptor,
     tensor_data::MPSGraphTensorData,
-    tensor::MPSGraphTensor,
     shape::MPSShape,
 };
 use metal::{Device, CommandQueue};
-use std::collections::HashMap;
-use std::convert::AsRef;
 use std::path::Path;
 
 fn main() {
@@ -36,7 +33,7 @@ fn main() {
 }
 
 /// Run a CoreML model using MPSGraphExecutable
-fn run_coreml_model(model_path: &str, device: &Device, command_queue: &CommandQueue) {
+fn run_coreml_model(model_path: &str, _device: &Device, _command_queue: &CommandQueue) {
     println!("Loading CoreML model from: {}", model_path);
     
     // Create a file URL from the path
@@ -49,7 +46,7 @@ fn run_coreml_model(model_path: &str, device: &Device, command_queue: &CommandQu
     // Note: This will only work on iOS 18/macOS 15+
     let executable = MPSGraphExecutable::from_coreml_package(&file_url, Some(&compilation_descriptor));
     
-    if let Some(exec) = executable {
+    if let Some(_exec) = executable {
         println!("Successfully loaded CoreML model!");
         
         // Normally, you would:
@@ -72,7 +69,7 @@ fn demo_advanced_synchronization(device: &Device) {
     
     // Create a simple 2D tensor with values from 0 to 24
     let data: Vec<f32> = (0..25).map(|i| i as f32).collect();
-    let shape = MPSShape::from_slice(&[5, 5]);
+    let _shape = MPSShape::from_slice(&[5, 5]);
     let tensor_data = MPSGraphTensorData::new(&data, &[5, 5], MPSDataType::Float32);
     
     println!("Created tensor with shape {:?} and data type {:?}", 

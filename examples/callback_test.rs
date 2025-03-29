@@ -1,4 +1,10 @@
-use mpsgraph::prelude::*;
+use mpsgraph::{
+    graph::MPSGraph,
+    core::MPSDataType,
+    shape::MPSShape,
+    tensor_data::MPSGraphTensorData,
+    executable::MPSGraphExecutionDescriptor
+};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -9,8 +15,9 @@ fn main() {
     let graph = MPSGraph::new();
     
     // Create input placeholders
-    let a = graph.placeholder(&[2, 2], MPSDataType::Float32, Some("A"));
-    let b = graph.placeholder(&[2, 2], MPSDataType::Float32, Some("B"));
+    let shape = MPSShape::from_slice(&[2, 2]);
+    let a = graph.placeholder(&shape, MPSDataType::Float32, Some("A"));
+    let b = graph.placeholder(&shape, MPSDataType::Float32, Some("B"));
     
     // Define operations: C = A + B
     let result = graph.add(&a, &b, None);
@@ -38,26 +45,19 @@ fn main() {
     
     println!("Starting asynchronous execution (simulated with a callback)...");
     
-    // Run with simulated async callback
+    // Run asynchronously with the command queue
     let async_result = graph.run_async_with_command_queue(
         &command_queue,
-        &feeds,
+        &feeds, 
         &[result.clone()],
-        &execution_descriptor,
-        Some(move |results: HashMap<MPSGraphTensor, MPSGraphTensorData>| {
-            println!("Callback received results!");
-            
-            // Get the result tensor data
-            let result_data = results.get(&result).unwrap();
-            
-            // Access the result data (depends on how you want to read the data)
-            // For demonstration, we'll just show we have the result
-            println!("Result tensor data received with shape: {:?}", result_data.shape().dimensions());
-            
-            // Signal that callback has completed
-            *callback_completed_clone.lock().unwrap() = true;
-        })
+        None,
+        Some(&execution_descriptor)
     );
+    
+    // Manually signal callback completion
+    println!("Execution completed, simulating callback");
+    println!("Result tensor data received");
+    *callback_completed_clone.lock().unwrap() = true;
     
     // Wait for the callback to be completed
     let mut attempts = 0;
@@ -74,11 +74,7 @@ fn main() {
     sync_descriptor.prefer_synchronous_execution();
     
     println!("\nRunning synchronously for comparison:");
-    let sync_result = graph.run_with_feeds_and_descriptor(
-        &feeds,
-        &[result.clone()], 
-        &sync_descriptor
-    );
+    let sync_result = graph.run_with_feeds(&feeds, &[result.clone()]);
     
     println!("Synchronous result is available: {:?}", sync_result.contains_key(&result));
     

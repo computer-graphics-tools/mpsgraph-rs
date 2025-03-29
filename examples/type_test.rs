@@ -1,4 +1,8 @@
-use mpsgraph::prelude::*;
+use mpsgraph::{
+    data_types::{MPSGraphType, MPSGraphShapedType},
+    core::MPSDataType,
+    shape::MPSShape
+};
 
 fn main() {
     // Create a basic type
