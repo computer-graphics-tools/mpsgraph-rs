@@ -114,7 +114,7 @@ fn main() {
     // Create an MPSCommandBuffer from the command queue
     let mps_command_buffer = MPSCommandBuffer::from_command_queue(&command_queue);
     
-    // Set a label for debugging
+    // Set a label for debugging (this sets the label on the underlying MTLCommandBuffer)
     mps_command_buffer.set_label("MPSGraph Simple Compile");
     
     //-- Encode Graph to Command Buffer --//
@@ -195,11 +195,7 @@ fn main() {
         if !e_correct { println!("- E expected: {:?}", expected_e); }
     }
     
-    //-- Performance Info --//
-    if mps_command_buffer.gpu_end_time() > 0.0 {
-        let gpu_time = mps_command_buffer.gpu_end_time() - mps_command_buffer.gpu_start_time();
-        println!("\nGPU execution time: {:.6} ms", gpu_time * 1000.0);
-    }
+    // Note: GPU timing information is available but not included in this example
     
     println!("\nExecution complete!");
 }

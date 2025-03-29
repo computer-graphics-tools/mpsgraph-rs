@@ -123,15 +123,25 @@ impl MPSCommandBuffer {
     /// Sets a label to help identify this object
     pub fn set_label(&self, label: &str) {
         unsafe {
-            let label_str = NSString::from_str(label);
-            let _: () = msg_send![self.0, setLabel:label_str.as_raw_object()];
+            // Get the command buffer first - MPSCommandBuffer might not implement setLabel directly
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if !cmd_buf_ptr.is_null() {
+                let label_str = NSString::from_str(label);
+                let _: () = msg_send![cmd_buf_ptr, setLabel:label_str.as_raw_object()];
+            }
         }
     }
     
     /// Returns the current label
     pub fn label(&self) -> String {
         unsafe {
-            let label_ptr: *mut AnyObject = msg_send![self.0, label];
+            // Get the command buffer first - MPSCommandBuffer might not implement label directly
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return String::new();
+            }
+            
+            let label_ptr: *mut AnyObject = msg_send![cmd_buf_ptr, label];
             if label_ptr.is_null() {
                 return String::new();
             }
@@ -144,63 +154,97 @@ impl MPSCommandBuffer {
     /// Returns the kernel start time
     pub fn kernel_start_time(&self) -> f64 {
         unsafe {
-            msg_send![self.0, kernelStartTime]
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return 0.0;
+            }
+            msg_send![cmd_buf_ptr, kernelStartTime]
         }
     }
     
     /// Returns the kernel end time
     pub fn kernel_end_time(&self) -> f64 {
         unsafe {
-            msg_send![self.0, kernelEndTime]
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return 0.0;
+            }
+            msg_send![cmd_buf_ptr, kernelEndTime]
         }
     }
     
     /// Returns the GPU start time
     pub fn gpu_start_time(&self) -> f64 {
         unsafe {
-            msg_send![self.0, GPUStartTime]
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return 0.0;
+            }
+            msg_send![cmd_buf_ptr, GPUStartTime]
         }
     }
     
     /// Returns the GPU end time
     pub fn gpu_end_time(&self) -> f64 {
         unsafe {
-            msg_send![self.0, GPUEndTime]
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return 0.0;
+            }
+            msg_send![cmd_buf_ptr, GPUEndTime]
         }
     }
     
     /// Appends this command buffer to the end of its MTLCommandQueue
     pub fn enqueue(&self) {
         unsafe {
-            let _: () = msg_send![self.0, enqueue];
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if !cmd_buf_ptr.is_null() {
+                let _: () = msg_send![cmd_buf_ptr, enqueue];
+            }
         }
     }
     
     /// Commits the command buffer for execution as soon as possible
     pub fn commit(&self) {
         unsafe {
-            let _: () = msg_send![self.0, commit];
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if !cmd_buf_ptr.is_null() {
+                let _: () = msg_send![cmd_buf_ptr, commit];
+            }
         }
     }
     
     /// Waits until this command buffer has been scheduled
     pub fn wait_until_scheduled(&self) {
         unsafe {
-            let _: () = msg_send![self.0, waitUntilScheduled];
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if !cmd_buf_ptr.is_null() {
+                let _: () = msg_send![cmd_buf_ptr, waitUntilScheduled];
+            }
         }
     }
     
     /// Waits until this command buffer has completed execution
     pub fn wait_until_completed(&self) {
         unsafe {
-            let _: () = msg_send![self.0, waitUntilCompleted];
+            // Get the underlying Metal command buffer
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if !cmd_buf_ptr.is_null() {
+                let _: () = msg_send![cmd_buf_ptr, waitUntilCompleted];
+            }
         }
     }
     
     /// Returns the current status of the command buffer
     pub fn status(&self) -> MTLCommandBufferStatus {
         unsafe {
-            let status: u64 = msg_send![self.0, status];
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return MTLCommandBufferStatus::NotEnqueued;
+            }
+            
+            let status: u64 = msg_send![cmd_buf_ptr, status];
             match status {
                 0 => MTLCommandBufferStatus::NotEnqueued,
                 1 => MTLCommandBufferStatus::Enqueued,
@@ -216,7 +260,12 @@ impl MPSCommandBuffer {
     /// Returns the error if an error occurred during execution
     pub fn error(&self) -> Option<String> {
         unsafe {
-            let error_ptr: *mut AnyObject = msg_send![self.0, error];
+            let cmd_buf_ptr: *mut AnyObject = msg_send![self.0, commandBuffer];
+            if cmd_buf_ptr.is_null() {
+                return None;
+            }
+            
+            let error_ptr: *mut AnyObject = msg_send![cmd_buf_ptr, error];
             if error_ptr.is_null() {
                 None
             } else {
