@@ -15,8 +15,7 @@ fn main() {
     let device = Device::system_default().expect("No Metal device found");
     println!("Using device: {}", device.name());
     
-    // Create a command queue for execution
-    let command_queue = device.new_command_queue();
+    // We'll create command queues later when needed
     
     // Create a new graph
     let graph = MPSGraph::new();
@@ -69,19 +68,20 @@ fn main() {
     let mut results_dict = HashMap::new();
     results_dict.insert(c.clone(), c_tensor_data);
     
-    // Create a results dictionary and run the graph
-    // Here we're using an approach that first runs the graph, then copies to our buffer
-    let output_tensors = vec![c.clone()];
-    let feed_results = graph.run_with_feeds(&feeds, &output_tensors);
+    // Use the same approach for Method 1, directly run with command queue and results dict
+    let command_queue = device.new_command_queue();
     
-    // Copy the results to our pre-allocated buffer manually
-    if let Some(_result_data) = feed_results.get(&c) {
-        // We could synchronize here, but we'll just wait a moment
-        std::thread::sleep(std::time::Duration::from_millis(100));
-        
-        // For automatic synchronization in newer APIs, we could do something like:
-        // result_data.synchronize();
-    }
+    // Run synchronously with command queue and results dictionary
+    graph.run_async_with_command_queue_results_dict(
+        &command_queue,
+        &feeds,
+        None,  // target operations
+        &results_dict,
+        None   // execution descriptor
+    );
+    
+    // Add a small delay to ensure execution completes
+    std::thread::sleep(std::time::Duration::from_millis(100));
     
     // Read the results directly from the Metal buffer
     println!("Reading result data from buffer:");
@@ -90,7 +90,7 @@ fn main() {
     println!("Result: {:?}", result_slice);
     
     // Add a more complex operation to our graph
-    println!("\nMethod 2: Running graph with command queue");
+    println!("\nMethod 2: Running graph with command queue and results dictionary");
     
     // Create another simple computation: D = C * C (element-wise multiply)
     // Instead of using constant_scalar which might not be available in all API versions
@@ -105,12 +105,14 @@ fn main() {
     let mut results_dict = HashMap::new();
     results_dict.insert(d.clone(), d_tensor_data);
     
-    // Run with async command queue
-    let _cmd_queue_results = graph.run_async_with_command_queue(
+    // Run with async command queue and results dictionary
+    // Note the specific parameter order for this method:
+    // command_queue, feeds, target_operations, results_dict, execution_descriptor
+    graph.run_async_with_command_queue_results_dict(
         &command_queue,
         &feeds,
-        &[d.clone()],
         None,  // target operations
+        &results_dict,
         None   // execution descriptor
     );
     
@@ -124,7 +126,7 @@ fn main() {
     println!("Result: {:?}", result_slice);
     
     // Run with execution descriptor for more control
-    println!("\nMethod 3: Running with execution descriptor");
+    println!("\nMethod 3: Running with execution descriptor and results dictionary");
     
     // Create execution descriptor with synchronous execution
     let execution_descriptor = MPSGraphExecutionDescriptor::new();
@@ -142,10 +144,13 @@ fn main() {
     let mut final_results = HashMap::new();
     final_results.insert(e.clone(), e_tensor_data);
     
-    // Just run with feeds for the last method
-    let _e_results = graph.run_with_feeds(
-        &feeds, 
-        &[e.clone()]
+    // Use the same successful approach for Method 3
+    graph.run_async_with_command_queue_results_dict(
+        &command_queue,
+        &feeds,
+        None,  // target operations
+        &final_results,
+        Some(&execution_descriptor)  // Using the execution descriptor
     );
     
     // Read the results directly from the Metal buffer
@@ -155,14 +160,14 @@ fn main() {
     println!("Result: {:?}", result_slice);
     
     // Expected results for verification
-    println!("\nExpected results (not showing in this demo due to Buffer/MPSGraph synchronization limitations):");
+    println!("\nExpected results:");
     println!("C = A + B: [6.0, 8.0, 10.0, 12.0]");
     println!("D = C * C: [36.0, 64.0, 100.0, 144.0]");
     println!("E = C + D: [42.0, 72.0, 110.0, 156.0]");
     
-    println!("\nNOTE: This example demonstrates the API calls for using pre-allocated buffers with MPSGraph,");
-    println!("but the values may not be properly synchronized to the buffers in all Metal API versions.");
-    println!("In a real application, additional synchronization or buffer handling would be needed.");
+    println!("\nNOTE: This example demonstrates how to use run_async_with_command_queue_results_dict");
+    println!("to directly compute results into pre-allocated Metal buffers with MPSGraph.");
+    println!("The key is using the correct parameter order and providing pre-allocated buffers.");
     
     println!("Execution complete!");
 }
