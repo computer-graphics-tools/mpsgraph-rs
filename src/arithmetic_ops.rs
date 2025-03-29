@@ -54,8 +54,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, exponentBase2WithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                exponentBase2WithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -70,8 +73,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, exponentBase10WithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                exponentBase10WithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -86,8 +92,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, logarithmWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                logarithmWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -102,8 +111,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, logarithmBase2WithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                logarithmBase2WithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -118,8 +130,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, logarithmBase10WithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                logarithmBase10WithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -134,8 +149,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, squareWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                squareWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -150,8 +168,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, squareRootWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                squareRootWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -166,8 +187,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, reciprocalSquareRootWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                reciprocalSquareRootWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -182,8 +206,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, reciprocalWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                reciprocalWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -198,8 +225,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, absoluteWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                absoluteWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -214,8 +244,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, absoluteSquareWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                absoluteSquareWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -230,8 +263,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, negativeWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                negativeWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -247,8 +283,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, signWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                signWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -263,8 +302,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, signbitWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                signbitWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -279,8 +321,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, ceilWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                ceilWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -295,8 +340,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, floorWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                floorWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -311,8 +359,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, roundWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                roundWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -327,8 +378,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, rintWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                rintWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -343,8 +397,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, sinWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                sinWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -359,8 +416,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, cosWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                cosWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -375,8 +435,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, tanWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                tanWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -391,8 +454,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, sinhWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                sinhWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -407,8 +473,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, coshWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                coshWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -426,8 +495,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, tanhWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                tanhWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -442,8 +514,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, asinWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                asinWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -458,8 +533,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, acosWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                acosWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -492,8 +570,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, asinhWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                asinhWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -508,8 +589,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, acoshWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                acoshWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -524,8 +608,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, atanhWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                atanhWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -540,8 +627,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, erfWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                erfWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -556,8 +646,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, isInfiniteWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                isInfiniteWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -572,8 +665,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, isFiniteWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                isFiniteWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -588,8 +684,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, isNaNWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                isNaNWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -604,8 +703,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, truncateWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                truncateWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -620,8 +722,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, bitwiseNOTWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                bitwiseNOTWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -640,8 +745,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, bitwisePopulationCountWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                bitwisePopulationCountWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -656,8 +764,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, logicalNOTWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                logicalNOTWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -1386,8 +1497,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, realPartOfTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                realPartOfTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -1402,8 +1516,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, imaginaryPartOfTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                imaginaryPartOfTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
@@ -1440,8 +1557,11 @@ impl MPSGraph {
         };
 
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, conjugateWithTensor: x.0, 
-                                                  name: name_obj];
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                conjugateWithTensor: x.0,
+                name: name_obj
+            ];
 
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
