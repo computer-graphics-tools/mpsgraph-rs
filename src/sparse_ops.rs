@@ -1,10 +1,10 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
-use objc2_foundation::{NSArray, NSString};
+use crate::core::{AsRawObject, MPSDataType};
 use crate::graph::MPSGraph;
-use crate::tensor::MPSGraphTensor;
-use crate::core::{MPSDataType, AsRawObject};
 use crate::shape::MPSShape;
+use crate::tensor::MPSGraphTensor;
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
+use objc2_foundation::{NSArray, NSString};
 
 /// The sparse storage options for MPSGraph sparse operations.
 #[repr(u64)]
@@ -32,10 +32,7 @@ impl MPSGraphCreateSparseOpDescriptor {
     /// # Returns
     ///
     /// A new sparse tensor descriptor
-    pub fn new(
-        storage_type:  MPSGraphSparseStorageType,
-        data_type:  MPSDataType,
-    ) -> Self {
+    pub fn new(storage_type: MPSGraphSparseStorageType, data_type: MPSDataType) -> Self {
         unsafe {
             // Get the class, unwrap it, then use it in msg_send
             let class_name = c"MPSGraphCreateSparseOpDescriptor";
@@ -53,14 +50,14 @@ impl MPSGraphCreateSparseOpDescriptor {
             }
         }
     }
-    
+
     /// Sets the sparse storage type
     pub fn set_sparse_storage_type(&self, storage_type: MPSGraphSparseStorageType) {
         unsafe {
             let _: () = msg_send![self.0, setSparseStorageType: storage_type as u64];
         }
     }
-    
+
     /// Sets the data type
     pub fn set_data_type(&self, data_type: MPSDataType) {
         unsafe {
@@ -111,20 +108,22 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         // Create NSArray of input tensors using objc2_foundation
         let tensors_array = unsafe {
             // Convert to slice of references to AnyObject
-            let tensors_refs: Vec<&objc2::runtime::AnyObject> = tensors.iter()
+            let tensors_refs: Vec<&objc2::runtime::AnyObject> = tensors
+                .iter()
                 .map(|tensor| &*tensor.0.cast::<objc2::runtime::AnyObject>())
                 .collect();
-            
+
             // Create NSArray from references
             let array = NSArray::from_slice(&tensors_refs);
-            let ns_array: *mut AnyObject = array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
+            let ns_array: *mut AnyObject =
+                array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
             ns_array
         };
-        
+
         unsafe {
             let result: *mut AnyObject = msg_send![
                 self.0, sparseTensorWithType: data_type as u64,
@@ -132,12 +131,12 @@ impl MPSGraph {
                 shape: shape.0,
                 name: name_obj,
             ];
-            
+
             let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
-    
+
     /// Creates a sparse tensor with the specified descriptor.
     ///
     /// # Arguments
@@ -161,20 +160,22 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         // Create NSArray of input tensors using objc2_foundation
         let tensors_array = unsafe {
             // Convert to slice of references to AnyObject
-            let tensors_refs: Vec<&objc2::runtime::AnyObject> = tensors.iter()
+            let tensors_refs: Vec<&objc2::runtime::AnyObject> = tensors
+                .iter()
                 .map(|tensor| &*tensor.0.cast::<objc2::runtime::AnyObject>())
                 .collect();
-            
+
             // Create NSArray from references
             let array = NSArray::from_slice(&tensors_refs);
-            let ns_array: *mut AnyObject = array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
+            let ns_array: *mut AnyObject =
+                array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
             ns_array
         };
-        
+
         unsafe {
             let result: *mut AnyObject = msg_send![
                 self.0, sparseTensorWithDescriptor: descriptor.0,
@@ -182,12 +183,12 @@ impl MPSGraph {
                 shape: shape.0,
                 name: name_obj,
             ];
-            
+
             let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
-    
+
     /// Creates a sparse tensor with the specified indices and values (legacy method).
     ///
     /// # Arguments
@@ -218,20 +219,22 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         // Create NSArray of input tensors using objc2_foundation
         let input_tensors_array = unsafe {
             // Convert to slice of references to AnyObject
-            let indices_refs: Vec<&objc2::runtime::AnyObject> = indices.iter()
+            let indices_refs: Vec<&objc2::runtime::AnyObject> = indices
+                .iter()
                 .map(|tensor| &*tensor.0.cast::<objc2::runtime::AnyObject>())
                 .collect();
-            
+
             // Create NSArray from references
             let array = NSArray::from_slice(&indices_refs);
-            let ns_array: *mut AnyObject = array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
+            let ns_array: *mut AnyObject =
+                array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
             ns_array
         };
-        
+
         unsafe {
             let result: *mut AnyObject = msg_send![
                 self.0, sparseTensorWithIndicesTensors: input_tensors_array,
@@ -240,12 +243,12 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
-    
+
     /// Creates a SparseToDense operation that converts a sparse tensor to a dense tensor.
     ///
     /// # Arguments
@@ -269,19 +272,21 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         let input_tensors_array = unsafe {
             // Convert to slice of references to AnyObject
-            let indices_refs: Vec<&objc2::runtime::AnyObject> = indices.iter()
+            let indices_refs: Vec<&objc2::runtime::AnyObject> = indices
+                .iter()
                 .map(|tensor| &*tensor.0.cast::<objc2::runtime::AnyObject>())
                 .collect();
-            
+
             // Create NSArray from references
             let array = NSArray::from_slice(&indices_refs);
-            let ns_array: *mut AnyObject = array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
+            let ns_array: *mut AnyObject =
+                array.as_ref() as *const NSArray<objc2::runtime::AnyObject> as *mut AnyObject;
             ns_array
         };
-        
+
         unsafe {
             let result: *mut AnyObject = msg_send![
                 self.0, sparseToDenseWithIndicesTensors: input_tensors_array,
@@ -289,7 +294,7 @@ impl MPSGraph {
                 denseShapeTensor: dense_shape.0,
                 name: name_obj,
             ];
-            
+
             let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }

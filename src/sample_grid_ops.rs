@@ -2,12 +2,12 @@ use objc2::runtime::AnyObject;
 // In objc2, use false as NO and true as YES
 const NO: bool = false;
 const YES: bool = true;
-use objc2::msg_send;
-use crate::graph::MPSGraph;
-use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, AsRawObject};
 use crate::convolution_transpose_ops::TensorNamedDataLayout;
+use crate::core::{AsRawObject, NSString};
+use crate::graph::MPSGraph;
 use crate::resize_ops::{MPSGraphResizeMode, MPSGraphResizeNearestRoundingMode};
+use crate::tensor::MPSGraphTensor;
+use objc2::msg_send;
 
 /// Padding modes for MPSGraph operations
 #[repr(i64)]
@@ -32,11 +32,11 @@ pub enum MPSGraphPaddingMode {
 /// Sample Grid operations for MPSGraph
 impl MPSGraph {
     /// Samples a tensor using the coordinates provided.
-    /// 
-    /// Given an input tensor (N, H1, W1, C) or (N, C, H1, W1) and coordinates tensor (N, H2, W2, 2) 
-    /// this operation outputs a tensor of size (N, H2, W2, C) or (N, C, H2, W2) by sampling the 
+    ///
+    /// Given an input tensor (N, H1, W1, C) or (N, C, H1, W1) and coordinates tensor (N, H2, W2, 2)
+    /// this operation outputs a tensor of size (N, H2, W2, C) or (N, C, H2, W2) by sampling the
     /// input tensor at the coordinates provided by the coordinates tensor.
-    /// 
+    ///
     /// - Parameters:
     ///   - source: Tensor containing source data
     ///   - coordinates: a tensor (N, Hout, Wout, 2) that contains the coordinates of the samples in the source tensor
@@ -49,27 +49,29 @@ impl MPSGraph {
     ///   - constant_value: If paddingMode is Constant, then this constant is used for samples outside the input tensor
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
-    pub fn sample_grid(&self,
-                      source:  &MPSGraphTensor,
-                      coordinates:  &MPSGraphTensor,
-                      layout:  TensorNamedDataLayout,
-                      normalize_coordinates:  bool,
-                      relative_coordinates:  bool,
-                      align_corners:  bool,
-                      padding_mode:  MPSGraphPaddingMode,
-                      sampling_mode:  MPSGraphResizeMode,
-                      constant_value:  f64,
-                      name:  Option<&str>) -> MPSGraphTensor {
+    pub fn sample_grid(
+        &self,
+        source: &MPSGraphTensor,
+        coordinates: &MPSGraphTensor,
+        layout: TensorNamedDataLayout,
+        normalize_coordinates: bool,
+        relative_coordinates: bool,
+        align_corners: bool,
+        padding_mode: MPSGraphPaddingMode,
+        sampling_mode: MPSGraphResizeMode,
+        constant_value: f64,
+        name: Option<&str>,
+    ) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
                 Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
-            
+
             let normalize_coordinates_val = if normalize_coordinates { YES } else { NO };
             let relative_coordinates_val = if relative_coordinates { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
-            
+
             let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0,
                 coordinateTensor: coordinates.0,
                 layout: layout as u64,
@@ -81,14 +83,14 @@ impl MPSGraph {
                 constantValue: constant_value,
                 name: name_obj
             ];
-            
+
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }
     }
-    
+
     /// Samples a tensor using the coordinates provided, using nearest neighbor sampling with specified rounding mode.
-    /// 
+    ///
     /// - Parameters:
     ///   - source: Tensor containing source data
     ///   - coordinates: a tensor (N, Hout, Wout, 2) that contains the coordinates of the samples in the source tensor
@@ -101,27 +103,29 @@ impl MPSGraph {
     ///   - constant_value: If paddingMode is Constant, then this constant is used for samples outside the input tensor
     ///   - name: The name for the operation
     /// - Returns: A valid MPSGraphTensor object
-    pub fn sample_grid_nearest(&self,
-                              source:  &MPSGraphTensor,
-                              coordinates:  &MPSGraphTensor,
-                              layout:  TensorNamedDataLayout,
-                              normalize_coordinates:  bool,
-                              relative_coordinates:  bool,
-                              align_corners:  bool,
-                              padding_mode:  MPSGraphPaddingMode,
-                              nearest_rounding_mode:  MPSGraphResizeNearestRoundingMode,
-                              constant_value:  f64,
-                              name:  Option<&str>) -> MPSGraphTensor {
+    pub fn sample_grid_nearest(
+        &self,
+        source: &MPSGraphTensor,
+        coordinates: &MPSGraphTensor,
+        layout: TensorNamedDataLayout,
+        normalize_coordinates: bool,
+        relative_coordinates: bool,
+        align_corners: bool,
+        padding_mode: MPSGraphPaddingMode,
+        nearest_rounding_mode: MPSGraphResizeNearestRoundingMode,
+        constant_value: f64,
+        name: Option<&str>,
+    ) -> MPSGraphTensor {
         unsafe {
             let name_obj = match name {
                 Some(s) => NSString::from_str(s).as_raw_object(),
                 None => std::ptr::null_mut(),
             };
-            
+
             let normalize_coordinates_val = if normalize_coordinates { YES } else { NO };
             let relative_coordinates_val = if relative_coordinates { YES } else { NO };
             let align_corners_val = if align_corners { YES } else { NO };
-            
+
             let result: *mut AnyObject = msg_send![self.0, sampleGridWithSourceTensor: source.0,
                 coordinateTensor: coordinates.0,
                 layout: layout as u64,
@@ -133,7 +137,7 @@ impl MPSGraph {
                 constantValue: constant_value,
                 name: name_obj
             ];
-            
+
             let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
             MPSGraphTensor(result)
         }

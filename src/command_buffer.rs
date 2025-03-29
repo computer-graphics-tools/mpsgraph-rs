@@ -1,10 +1,10 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
-use std::fmt;
-use metal::{CommandBuffer, CommandQueue, Device, ComputeCommandEncoder, BlitCommandEncoder};
-use metal::foreign_types::ForeignType;
-use objc2_foundation::{NSError, NSString};
 use crate::core::AsRawObject;
+use metal::foreign_types::ForeignType;
+use metal::{BlitCommandEncoder, CommandBuffer, CommandQueue, ComputeCommandEncoder, Device};
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
+use objc2_foundation::{NSError, NSString};
+use std::fmt;
 
 /// Command buffer status
 #[repr(u64)]
@@ -37,34 +37,36 @@ impl MPSCommandBuffer {
         unsafe {
             let class_name = c"MPSCommandBuffer";
             let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
-            
+
             // Get the command buffer pointer
             let buffer_ptr = command_buffer.as_ptr() as *mut AnyObject;
-            
+
             // Create MPSCommandBuffer with the Metal command buffer
             let obj: *mut AnyObject = msg_send![cls, alloc];
-            let mps_command_buffer: *mut AnyObject = msg_send![obj, initWithCommandBuffer: buffer_ptr];
-            
+            let mps_command_buffer: *mut AnyObject =
+                msg_send![obj, initWithCommandBuffer: buffer_ptr];
+
             MPSCommandBuffer(mps_command_buffer)
         }
     }
-    
+
     /// Creates a new MPSCommandBuffer from a command queue
     pub fn from_command_queue(command_queue: &CommandQueue) -> Self {
         unsafe {
             let class_name = c"MPSCommandBuffer";
             let cls = objc2::runtime::AnyClass::get(class_name).unwrap();
-            
+
             // Get the command queue pointer
             let queue_ptr = command_queue.as_ptr() as *mut AnyObject;
-            
+
             // Create MPSCommandBuffer from the command queue
-            let mps_command_buffer: *mut AnyObject = msg_send![cls, commandBufferFromCommandQueue: queue_ptr];
-            
+            let mps_command_buffer: *mut AnyObject =
+                msg_send![cls, commandBufferFromCommandQueue: queue_ptr];
+
             MPSCommandBuffer(mps_command_buffer)
         }
     }
-    
+
     /// Returns the underlying Metal CommandBuffer
     pub fn command_buffer(&self) -> CommandBuffer {
         unsafe {
@@ -72,7 +74,7 @@ impl MPSCommandBuffer {
             CommandBuffer::from_ptr(cmd_buf_ptr as *mut metal::MTLCommandBuffer)
         }
     }
-    
+
     /// Returns the root Metal CommandBuffer
     pub fn root_command_buffer(&self) -> CommandBuffer {
         unsafe {
@@ -80,23 +82,23 @@ impl MPSCommandBuffer {
             CommandBuffer::from_ptr(cmd_buf_ptr as *mut metal::MTLCommandBuffer)
         }
     }
-    
+
     /// Commits the current command buffer and continues with a new one
     pub fn commit_and_continue(&self) {
         unsafe {
             let _: () = msg_send![self.0, commitAndContinue];
         }
     }
-    
+
     /// Prefetches heap for workload size
     pub fn prefetch_heap_for_workload_size(&self, size: usize) {
         unsafe {
             let _: () = msg_send![self.0, prefetchHeapForWorkloadSize: size];
         }
     }
-    
+
     // MTLCommandBuffer methods
-    
+
     /// Returns the device this command buffer was created against
     pub fn device(&self) -> Device {
         unsafe {
@@ -104,7 +106,7 @@ impl MPSCommandBuffer {
             Device::from_ptr(device_ptr as *mut metal::MTLDevice)
         }
     }
-    
+
     /// Returns the command queue this command buffer was created from
     pub fn command_queue(&self) -> CommandQueue {
         unsafe {
@@ -112,14 +114,12 @@ impl MPSCommandBuffer {
             CommandQueue::from_ptr(queue_ptr as *mut metal::MTLCommandQueue)
         }
     }
-    
+
     /// Returns whether this command buffer holds strong references
     pub fn retained_references(&self) -> bool {
-        unsafe {
-            msg_send![self.0, retainedReferences]
-        }
+        unsafe { msg_send![self.0, retainedReferences] }
     }
-    
+
     /// Sets a label to help identify this object
     pub fn set_label(&self, label: &str) {
         unsafe {
@@ -131,7 +131,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Returns the current label
     pub fn label(&self) -> String {
         unsafe {
@@ -140,17 +140,17 @@ impl MPSCommandBuffer {
             if cmd_buf_ptr.is_null() {
                 return String::new();
             }
-            
+
             let label_ptr: *mut AnyObject = msg_send![cmd_buf_ptr, label];
             if label_ptr.is_null() {
                 return String::new();
             }
-            
+
             let nsstring: &NSString = &*(label_ptr as *const NSString);
             nsstring.to_string()
         }
     }
-    
+
     /// Returns the kernel start time
     pub fn kernel_start_time(&self) -> f64 {
         unsafe {
@@ -161,7 +161,7 @@ impl MPSCommandBuffer {
             msg_send![cmd_buf_ptr, kernelStartTime]
         }
     }
-    
+
     /// Returns the kernel end time
     pub fn kernel_end_time(&self) -> f64 {
         unsafe {
@@ -172,7 +172,7 @@ impl MPSCommandBuffer {
             msg_send![cmd_buf_ptr, kernelEndTime]
         }
     }
-    
+
     /// Returns the GPU start time
     pub fn gpu_start_time(&self) -> f64 {
         unsafe {
@@ -183,7 +183,7 @@ impl MPSCommandBuffer {
             msg_send![cmd_buf_ptr, GPUStartTime]
         }
     }
-    
+
     /// Returns the GPU end time
     pub fn gpu_end_time(&self) -> f64 {
         unsafe {
@@ -194,7 +194,7 @@ impl MPSCommandBuffer {
             msg_send![cmd_buf_ptr, GPUEndTime]
         }
     }
-    
+
     /// Appends this command buffer to the end of its MTLCommandQueue
     pub fn enqueue(&self) {
         unsafe {
@@ -204,7 +204,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Commits the command buffer for execution as soon as possible
     pub fn commit(&self) {
         unsafe {
@@ -214,7 +214,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Waits until this command buffer has been scheduled
     pub fn wait_until_scheduled(&self) {
         unsafe {
@@ -224,7 +224,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Waits until this command buffer has completed execution
     pub fn wait_until_completed(&self) {
         unsafe {
@@ -235,7 +235,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Returns the current status of the command buffer
     pub fn status(&self) -> MTLCommandBufferStatus {
         unsafe {
@@ -243,7 +243,7 @@ impl MPSCommandBuffer {
             if cmd_buf_ptr.is_null() {
                 return MTLCommandBufferStatus::NotEnqueued;
             }
-            
+
             let status: u64 = msg_send![cmd_buf_ptr, status];
             match status {
                 0 => MTLCommandBufferStatus::NotEnqueued,
@@ -256,7 +256,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Returns the error if an error occurred during execution
     pub fn error(&self) -> Option<String> {
         unsafe {
@@ -264,7 +264,7 @@ impl MPSCommandBuffer {
             if cmd_buf_ptr.is_null() {
                 return None;
             }
-            
+
             let error_ptr: *mut AnyObject = msg_send![cmd_buf_ptr, error];
             if error_ptr.is_null() {
                 None
@@ -275,7 +275,7 @@ impl MPSCommandBuffer {
             }
         }
     }
-    
+
     /// Creates a compute command encoder to encode into this command buffer
     pub fn new_compute_command_encoder(&self) -> Option<ComputeCommandEncoder> {
         unsafe {
@@ -283,11 +283,13 @@ impl MPSCommandBuffer {
             if encoder_ptr.is_null() {
                 None
             } else {
-                Some(ComputeCommandEncoder::from_ptr(encoder_ptr as *mut metal::MTLComputeCommandEncoder))
+                Some(ComputeCommandEncoder::from_ptr(
+                    encoder_ptr as *mut metal::MTLComputeCommandEncoder,
+                ))
             }
         }
     }
-    
+
     /// Creates a blit command encoder to encode into this command buffer
     pub fn new_blit_command_encoder(&self) -> Option<BlitCommandEncoder> {
         unsafe {
@@ -295,11 +297,13 @@ impl MPSCommandBuffer {
             if encoder_ptr.is_null() {
                 None
             } else {
-                Some(BlitCommandEncoder::from_ptr(encoder_ptr as *mut metal::MTLBlitCommandEncoder))
+                Some(BlitCommandEncoder::from_ptr(
+                    encoder_ptr as *mut metal::MTLBlitCommandEncoder,
+                ))
             }
         }
     }
-    
+
     /// Pushes a debug group onto the command buffer
     pub fn push_debug_group(&self, name: &str) {
         unsafe {
@@ -307,7 +311,7 @@ impl MPSCommandBuffer {
             let _: () = msg_send![self.0, pushDebugGroup:name_str.as_raw_object()];
         }
     }
-    
+
     /// Pops the current debug group from the command buffer
     pub fn pop_debug_group(&self) {
         unsafe {

@@ -1,10 +1,10 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
+use crate::convolution_transpose_ops::{PaddingStyle, TensorNamedDataLayout};
+use crate::core::{AsRawObject, NSString};
 use crate::graph::MPSGraph;
-use crate::tensor::MPSGraphTensor;
-use crate::core::{NSString, AsRawObject};
 use crate::shape::MPSShape;
-use crate::convolution_transpose_ops::{TensorNamedDataLayout, PaddingStyle};
+use crate::tensor::MPSGraphTensor;
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
 
 /// Descriptor for 2D depthwise convolution operations
 pub struct MPSGraphDepthwiseConvolution2DOpDescriptor(pub(crate) *mut AnyObject);
@@ -23,15 +23,18 @@ impl MPSGraphDepthwiseConvolution2DOpDescriptor {
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptor];
                 let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
-                MPSGraphDepthwiseConvolution2DOpDescriptor(descriptor) 
+                MPSGraphDepthwiseConvolution2DOpDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphDepthwiseConvolution2DOpDescriptor not found")
             }
         }
     }
-    
+
     /// Creates a new depthwise convolution 2D operation descriptor with specified data and weights layouts
-    pub fn new_with_layouts(data_layout: TensorNamedDataLayout, weights_layout: TensorNamedDataLayout) -> Self {
+    pub fn new_with_layouts(
+        data_layout: TensorNamedDataLayout,
+        weights_layout: TensorNamedDataLayout,
+    ) -> Self {
         unsafe {
             let class_name = c"MPSGraphDepthwiseConvolution2DOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
@@ -46,84 +49,84 @@ impl MPSGraphDepthwiseConvolution2DOpDescriptor {
             }
         }
     }
-    
+
     /// Sets the stride in X dimension
     pub fn set_stride_in_x(&self, stride: usize) {
         unsafe {
             let _: () = msg_send![self.0, setStrideInX: stride,];
         }
     }
-    
+
     /// Sets the stride in Y dimension
     pub fn set_stride_in_y(&self, stride: usize) {
         unsafe {
             let _: () = msg_send![self.0, setStrideInY: stride,];
         }
     }
-    
+
     /// Sets the dilation rate in X dimension
     pub fn set_dilation_rate_in_x(&self, rate: usize) {
         unsafe {
             let _: () = msg_send![self.0, setDilationRateInX: rate,];
         }
     }
-    
+
     /// Sets the dilation rate in Y dimension
     pub fn set_dilation_rate_in_y(&self, rate: usize) {
         unsafe {
             let _: () = msg_send![self.0, setDilationRateInY: rate,];
         }
     }
-    
+
     /// Sets the padding on the left
     pub fn set_padding_left(&self, padding: usize) {
         unsafe {
             let _: () = msg_send![self.0, setPaddingLeft: padding,];
         }
     }
-    
+
     /// Sets the padding on the right
     pub fn set_padding_right(&self, padding: usize) {
         unsafe {
             let _: () = msg_send![self.0, setPaddingRight: padding,];
         }
     }
-    
+
     /// Sets the padding on the top
     pub fn set_padding_top(&self, padding: usize) {
         unsafe {
             let _: () = msg_send![self.0, setPaddingTop: padding,];
         }
     }
-    
+
     /// Sets the padding on the bottom
     pub fn set_padding_bottom(&self, padding: usize) {
         unsafe {
             let _: () = msg_send![self.0, setPaddingBottom: padding,];
         }
     }
-    
+
     /// Sets the padding style
     pub fn set_padding_style(&self, style: PaddingStyle) {
         unsafe {
             let _: () = msg_send![self.0, setPaddingStyle: style as u64];
         }
     }
-    
+
     /// Sets the data layout
     pub fn set_data_layout(&self, layout: TensorNamedDataLayout) {
         unsafe {
             let _: () = msg_send![self.0, setDataLayout: layout as u64];
         }
     }
-    
+
     /// Sets the weights layout
     pub fn set_weights_layout(&self, layout: TensorNamedDataLayout) {
         unsafe {
             let _: () = msg_send![self.0, setWeightsLayout: layout as u64];
         }
     }
-    
+
     /// Sets the explicit padding values
     pub fn set_explicit_padding(&self, left: usize, right: usize, top: usize, bottom: usize) {
         unsafe {
@@ -163,7 +166,8 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
         unsafe {
             let class_name = c"MPSGraphDepthwiseConvolution3DOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-                let descriptor: *mut AnyObject = msg_send![cls, descriptorWithPaddingStyle: padding_style as u64];
+                let descriptor: *mut AnyObject =
+                    msg_send![cls, descriptorWithPaddingStyle: padding_style as u64];
                 let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphDepthwiseConvolution3DOpDescriptor(descriptor)
             } else {
@@ -171,20 +175,20 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
             }
         }
     }
-    
+
     /// Creates a new depthwise convolution 3D operation descriptor with given values
     pub fn new_with_values(
-        strides:  &[usize],
-        dilation_rates:  &[usize],
-        padding_values:  &[usize],
-        padding_style:  PaddingStyle
+        strides: &[usize],
+        dilation_rates: &[usize],
+        padding_values: &[usize],
+        padding_style: PaddingStyle,
     ) -> Self {
         unsafe {
             // Convert Rust arrays to NSArrays
             let strides_array = create_number_array(strides);
             let dilation_rates_array = create_number_array(dilation_rates);
             let padding_values_array = create_number_array(padding_values);
-            
+
             let class_name = c"MPSGraphDepthwiseConvolution3DOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![
@@ -193,12 +197,12 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
                     paddingValues: padding_values_array,
                     paddingStyle: padding_style as u64
                 ];
-                
+
                 // Release the NSArrays since they're retained by the descriptor
                 objc2::ffi::objc_release(strides_array as *mut _);
                 objc2::ffi::objc_release(dilation_rates_array as *mut _);
                 objc2::ffi::objc_release(padding_values_array as *mut _);
-                
+
                 let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
                 MPSGraphDepthwiseConvolution3DOpDescriptor(descriptor)
             } else {
@@ -206,12 +210,12 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
                 objc2::ffi::objc_release(strides_array as *mut _);
                 objc2::ffi::objc_release(dilation_rates_array as *mut _);
                 objc2::ffi::objc_release(padding_values_array as *mut _);
-                
+
                 panic!("Class MPSGraphDepthwiseConvolution3DOpDescriptor not found")
             }
         }
     }
-    
+
     /// Sets the strides for spatial dimensions (3 values)
     pub fn set_strides(&self, strides: &[usize]) {
         unsafe {
@@ -220,7 +224,7 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
             objc2::ffi::objc_release(strides_array as *mut _);
         }
     }
-    
+
     /// Sets the dilation rates for spatial dimensions (3 values)
     pub fn set_dilation_rates(&self, dilation_rates: &[usize]) {
         unsafe {
@@ -229,7 +233,7 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
             objc2::ffi::objc_release(dilation_rates_array as *mut _);
         }
     }
-    
+
     /// Sets the padding values for spatial dimensions (6 values)
     pub fn set_padding_values(&self, padding_values: &[usize]) {
         unsafe {
@@ -238,14 +242,14 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
             objc2::ffi::objc_release(padding_values_array as *mut _);
         }
     }
-    
+
     /// Sets the padding style
     pub fn set_padding_style(&self, style: PaddingStyle) {
         unsafe {
             let _: () = msg_send![self.0, setPaddingStyle: style as u64];
         }
     }
-    
+
     /// Sets the channel dimension index
     pub fn set_channel_dimension_index(&self, index: isize) {
         unsafe {
@@ -276,26 +280,27 @@ fn create_number_array(values: &[usize]) -> *mut AnyObject {
     unsafe {
         let class_name = c"NSNumber";
         if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
-            let numbers: Vec<*mut AnyObject> = values.iter()
-            .map(|&val| {
-                let obj: *mut AnyObject = msg_send![cls, alloc];
-                let obj: *mut AnyObject = msg_send![obj, initWithUnsignedInteger: val,];
-                obj
-            })
-            .collect();
-            
+            let numbers: Vec<*mut AnyObject> = values
+                .iter()
+                .map(|&val| {
+                    let obj: *mut AnyObject = msg_send![cls, alloc];
+                    let obj: *mut AnyObject = msg_send![obj, initWithUnsignedInteger: val,];
+                    obj
+                })
+                .collect();
+
             let array_class_name = c"NSArray";
             if let Some(array_cls) = objc2::runtime::AnyClass::get(array_class_name) {
                 let array: *mut AnyObject = msg_send![array_cls, alloc];
                 let array: *mut AnyObject = msg_send![array, initWithObjects: numbers.as_ptr(),
                     count: numbers.len(),
                 ];
-                
+
                 // Release NSNumber objects
                 for num in numbers {
                     objc2::ffi::objc_release(num as *mut _);
                 }
-                
+
                 array
             } else {
                 panic!("Class NSArray not found")
@@ -322,16 +327,16 @@ impl MPSGraph {
     /// A new MPSGraphTensor containing the result
     pub fn depthwise_convolution_2d(
         &self,
-        source:  &MPSGraphTensor,
-        weights:  &MPSGraphTensor,
-        descriptor:  &MPSGraphDepthwiseConvolution2DOpDescriptor,
-        name:  Option<&str>,
+        source: &MPSGraphTensor,
+        weights: &MPSGraphTensor,
+        descriptor: &MPSGraphDepthwiseConvolution2DOpDescriptor,
+        name: Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0, depthwiseConvolution2DWithSourceTensor: source.0,
@@ -339,12 +344,12 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 2D depthwise convolution gradient for data operation.
     ///
     /// # Arguments
@@ -360,17 +365,17 @@ impl MPSGraph {
     /// A new MPSGraphTensor containing the gradient with respect to data
     pub fn depthwise_convolution_2d_data_gradient(
         &self,
-        incoming_gradient:  &MPSGraphTensor,
-        weights:  &MPSGraphTensor,
-        output_shape:  &MPSShape,
-        descriptor:  &MPSGraphDepthwiseConvolution2DOpDescriptor,
-        name:  Option<&str>,
+        incoming_gradient: &MPSGraphTensor,
+        weights: &MPSGraphTensor,
+        output_shape: &MPSShape,
+        descriptor: &MPSGraphDepthwiseConvolution2DOpDescriptor,
+        name: Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0, depthwiseConvolution2DDataGradientWithIncomingGradientTensor: incoming_gradient.0,
@@ -379,12 +384,12 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 2D depthwise convolution gradient for weights operation.
     ///
     /// # Arguments
@@ -400,17 +405,17 @@ impl MPSGraph {
     /// A new MPSGraphTensor containing the gradient with respect to weights
     pub fn depthwise_convolution_2d_weights_gradient(
         &self,
-        incoming_gradient:  &MPSGraphTensor,
-        source:  &MPSGraphTensor,
-        output_shape:  &MPSShape,
-        descriptor:  &MPSGraphDepthwiseConvolution2DOpDescriptor,
-        name:  Option<&str>,
+        incoming_gradient: &MPSGraphTensor,
+        source: &MPSGraphTensor,
+        output_shape: &MPSShape,
+        descriptor: &MPSGraphDepthwiseConvolution2DOpDescriptor,
+        name: Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0, depthwiseConvolution2DWeightsGradientWithIncomingGradientTensor: incoming_gradient.0,
@@ -419,12 +424,12 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 3D depthwise convolution operation.
     ///
     /// # Arguments
@@ -439,16 +444,16 @@ impl MPSGraph {
     /// A new MPSGraphTensor containing the result
     pub fn depthwise_convolution_3d(
         &self,
-        source:  &MPSGraphTensor,
-        weights:  &MPSGraphTensor,
-        descriptor:  &MPSGraphDepthwiseConvolution3DOpDescriptor,
-        name:  Option<&str>,
+        source: &MPSGraphTensor,
+        weights: &MPSGraphTensor,
+        descriptor: &MPSGraphDepthwiseConvolution3DOpDescriptor,
+        name: Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0, depthwiseConvolution3DWithSourceTensor: source.0,
@@ -456,12 +461,12 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 3D depthwise convolution gradient for data operation.
     ///
     /// # Arguments
@@ -477,17 +482,17 @@ impl MPSGraph {
     /// A new MPSGraphTensor containing the gradient with respect to data
     pub fn depthwise_convolution_3d_data_gradient(
         &self,
-        incoming_gradient:  &MPSGraphTensor,
-        weights:  &MPSGraphTensor,
-        output_shape:  &MPSShape,
-        descriptor:  &MPSGraphDepthwiseConvolution3DOpDescriptor,
-        name:  Option<&str>,
+        incoming_gradient: &MPSGraphTensor,
+        weights: &MPSGraphTensor,
+        output_shape: &MPSShape,
+        descriptor: &MPSGraphDepthwiseConvolution3DOpDescriptor,
+        name: Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0, depthwiseConvolution3DDataGradientWithIncomingGradientTensor: incoming_gradient.0,
@@ -496,12 +501,12 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 3D depthwise convolution gradient for weights operation.
     ///
     /// # Arguments
@@ -517,17 +522,17 @@ impl MPSGraph {
     /// A new MPSGraphTensor containing the gradient with respect to weights
     pub fn depthwise_convolution_3d_weights_gradient(
         &self,
-        incoming_gradient:  &MPSGraphTensor,
-        source:  &MPSGraphTensor,
-        output_shape:  &MPSShape,
-        descriptor:  &MPSGraphDepthwiseConvolution3DOpDescriptor,
-        name:  Option<&str>,
+        incoming_gradient: &MPSGraphTensor,
+        source: &MPSGraphTensor,
+        output_shape: &MPSShape,
+        descriptor: &MPSGraphDepthwiseConvolution3DOpDescriptor,
+        name: Option<&str>,
     ) -> MPSGraphTensor {
         let name_obj = match name {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0, depthwiseConvolution3DWeightsGradientWithIncomingGradientTensor: incoming_gradient.0,
@@ -536,7 +541,7 @@ impl MPSGraph {
                 descriptor: descriptor.0,
                 name: name_obj,
             ];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }

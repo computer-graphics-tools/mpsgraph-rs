@@ -1,9 +1,9 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
+use crate::core::AsRawObject;
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
 use objc2_foundation::NSString;
-use crate::core::AsRawObject;
 use std::ptr;
 
 /// Matrix inverse operations for MPSGraph
@@ -26,9 +26,9 @@ impl MPSGraph {
                 Some(s) => NSString::from_str(s).as_raw_object(),
                 None => ptr::null_mut(),
             };
-            
+
             let tensor: *mut AnyObject = msg_send![self.0, inverseOfTensor: x.0, name: name_obj];
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }

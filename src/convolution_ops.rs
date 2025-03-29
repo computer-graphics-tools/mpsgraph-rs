@@ -1,5 +1,5 @@
-use objc2::runtime::AnyObject;
 use objc2::msg_send;
+use objc2::runtime::AnyObject;
 use std::ptr;
 
 /// Convolution padding mode
@@ -94,7 +94,9 @@ impl MPSGraphConvolution2DOpDescriptor {
         unsafe {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphConvolution2DOpDescriptor").unwrap();
             let desc: *mut AnyObject = msg_send![cls, descriptor];
-            MPSGraphConvolution2DOpDescriptor(objc2::ffi::objc_retain(desc as *mut _) as *mut AnyObject)
+            MPSGraphConvolution2DOpDescriptor(
+                objc2::ffi::objc_retain(desc as *mut _) as *mut AnyObject
+            )
         }
     }
 }
@@ -105,7 +107,9 @@ impl MPSGraphConvolution3DOpDescriptor {
         unsafe {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphConvolution3DOpDescriptor").unwrap();
             let desc: *mut AnyObject = msg_send![cls, descriptor];
-            MPSGraphConvolution3DOpDescriptor(objc2::ffi::objc_retain(desc as *mut _) as *mut AnyObject)
+            MPSGraphConvolution3DOpDescriptor(
+                objc2::ffi::objc_retain(desc as *mut _) as *mut AnyObject
+            )
         }
     }
 }

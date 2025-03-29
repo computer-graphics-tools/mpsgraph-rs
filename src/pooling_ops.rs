@@ -1,8 +1,8 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
+use crate::core::{create_ns_array_from_i64_slice, AsRawObject, MPSDataType};
 use crate::graph::MPSGraph;
 use crate::tensor::MPSGraphTensor;
-use crate::core::{AsRawObject, MPSDataType, create_ns_array_from_i64_slice};
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
 use objc2_foundation::NSString;
 use std::ptr;
 
@@ -129,7 +129,7 @@ impl MPSGraphPooling2DOpDescriptor {
     ) -> Self {
         unsafe {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphPooling2DOpDescriptor").unwrap();
-            let descriptor: *mut AnyObject = msg_send![cls, 
+            let descriptor: *mut AnyObject = msg_send![cls,
                 descriptorWithKernelWidth: kernel_width as u64,
                 kernelHeight: kernel_height as u64,
                 strideInX: stride_in_x as u64,
@@ -143,12 +143,12 @@ impl MPSGraphPooling2DOpDescriptor {
                 paddingStyle: padding_style as u64,
                 dataLayout: data_layout as u64
             ];
-            
+
             let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
             MPSGraphPooling2DOpDescriptor(descriptor)
         }
     }
-    
+
     /// Creates a simplified 2D pooling descriptor
     pub fn new_simple(
         kernel_width: usize,
@@ -160,7 +160,7 @@ impl MPSGraphPooling2DOpDescriptor {
     ) -> Self {
         unsafe {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphPooling2DOpDescriptor").unwrap();
-            let descriptor: *mut AnyObject = msg_send![cls, 
+            let descriptor: *mut AnyObject = msg_send![cls,
                 descriptorWithKernelWidth: kernel_width as u64,
                 kernelHeight: kernel_height as u64,
                 strideInX: stride_in_x as u64,
@@ -168,12 +168,12 @@ impl MPSGraphPooling2DOpDescriptor {
                 paddingStyle: padding_style as u64,
                 dataLayout: data_layout as u64
             ];
-            
+
             let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
             MPSGraphPooling2DOpDescriptor(descriptor)
         }
     }
-    
+
     /// Sets explicit padding values and changes padding style to explicit
     pub fn set_explicit_padding(
         &self,
@@ -191,28 +191,28 @@ impl MPSGraphPooling2DOpDescriptor {
             ];
         }
     }
-    
+
     /// Sets the return indices mode for max pooling operations
     pub fn set_return_indices_mode(&self, mode: MPSGraphPoolingReturnIndicesMode) {
         unsafe {
             let _: () = msg_send![self.0, setReturnIndicesMode: mode as u64];
         }
     }
-    
+
     /// Sets the data type for returned indices
     pub fn set_return_indices_data_type(&self, data_type: MPSDataType) {
         unsafe {
             let _: () = msg_send![self.0, setReturnIndicesDataType: data_type as u32];
         }
     }
-    
+
     /// Sets ceil mode for computing output size
     pub fn set_ceil_mode(&self, ceil_mode: bool) {
         unsafe {
             let _: () = msg_send![self.0, setCeilMode: ceil_mode];
         }
     }
-    
+
     /// Sets whether to include zero padding in average computation
     pub fn set_include_zero_pad_to_average(&self, include: bool) {
         unsafe {
@@ -236,96 +236,98 @@ impl MPSGraphPooling4DOpDescriptor {
             let strides_array = Self::create_number_array(strides);
             let dilation_rates_array = Self::create_number_array(dilation_rates);
             let padding_values_array = Self::create_number_array(padding_values);
-            
+
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphPooling4DOpDescriptor").unwrap();
-            let descriptor: *mut AnyObject = msg_send![cls, 
+            let descriptor: *mut AnyObject = msg_send![cls,
                 descriptorWithKernelSizes: kernel_sizes_array,
                 strides: strides_array,
                 dilationRates: dilation_rates_array,
                 paddingValues: padding_values_array,
                 paddingStyle: padding_style as u64
             ];
-            
+
             // Release NSArrays
             objc2::ffi::objc_release(kernel_sizes_array as *mut _);
             objc2::ffi::objc_release(strides_array as *mut _);
             objc2::ffi::objc_release(dilation_rates_array as *mut _);
             objc2::ffi::objc_release(padding_values_array as *mut _);
-            
+
             let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
             MPSGraphPooling4DOpDescriptor(descriptor)
         }
     }
-    
+
     /// Creates a simplified 4D pooling descriptor
-    pub fn new_simple(
-        kernel_sizes: &[usize],
-        padding_style: MPSGraphPaddingStyle,
-    ) -> Self {
+    pub fn new_simple(kernel_sizes: &[usize], padding_style: MPSGraphPaddingStyle) -> Self {
         unsafe {
             // Create NSArray for kernel sizes
             let kernel_sizes_array = Self::create_number_array(kernel_sizes);
-            
+
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphPooling4DOpDescriptor").unwrap();
-            let descriptor: *mut AnyObject = msg_send![cls, 
+            let descriptor: *mut AnyObject = msg_send![cls,
                 descriptorWithKernelSizes: kernel_sizes_array,
                 paddingStyle: padding_style as u64
             ];
-            
+
             // Release NSArray
             objc2::ffi::objc_release(kernel_sizes_array as *mut _);
-            
+
             let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
             MPSGraphPooling4DOpDescriptor(descriptor)
         }
     }
-    
+
     /// Sets the return indices mode for max pooling operations
     pub fn set_return_indices_mode(&self, mode: MPSGraphPoolingReturnIndicesMode) {
         unsafe {
             let _: () = msg_send![self.0, setReturnIndicesMode: mode as u64];
         }
     }
-    
+
     /// Sets the data type for returned indices
     pub fn set_return_indices_data_type(&self, data_type: MPSDataType) {
         unsafe {
             let _: () = msg_send![self.0, setReturnIndicesDataType: data_type as u32];
         }
     }
-    
+
     /// Sets ceil mode for computing output size
     pub fn set_ceil_mode(&self, ceil_mode: bool) {
         unsafe {
             let _: () = msg_send![self.0, setCeilMode: ceil_mode];
         }
     }
-    
+
     /// Sets whether to include zero padding in average computation
     pub fn set_include_zero_pad_to_average(&self, include: bool) {
         unsafe {
             let _: () = msg_send![self.0, setIncludeZeroPadToAverage: include];
         }
     }
-    
+
     /// Helper function to create NSArray of NSNumbers from a slice of usize values
     fn create_number_array(values: &[usize]) -> *mut AnyObject {
         unsafe {
             // Create NSNumber objects for each value using objc2-foundation's NSNumber
-            let numbers: Vec<objc2::rc::Retained<objc2_foundation::NSNumber>> = values.iter()
+            let numbers: Vec<objc2::rc::Retained<objc2_foundation::NSNumber>> = values
+                .iter()
                 .map(|&value| objc2_foundation::NSNumber::new_u64(value as u64))
                 .collect();
-            
+
             // Convert to slice of references
-            let number_refs: Vec<&objc2_foundation::NSNumber> = numbers.iter().map(|n| n.as_ref()).collect();
-            
+            let number_refs: Vec<&objc2_foundation::NSNumber> =
+                numbers.iter().map(|n| n.as_ref()).collect();
+
             // Create NSArray from the NSNumber objects
             let array = objc2_foundation::NSArray::from_slice(&number_refs);
-            
+
             // Get pointer to the array and retain it manually
-            let ptr: *mut AnyObject = std::mem::transmute::<&objc2_foundation::NSArray<objc2_foundation::NSNumber>, *mut AnyObject>(array.as_ref());
+            let ptr: *mut AnyObject = std::mem::transmute::<
+                &objc2_foundation::NSArray<objc2_foundation::NSNumber>,
+                *mut AnyObject,
+            >(array.as_ref());
             objc2::ffi::objc_retain(ptr as *mut _);
-            
+
             ptr
         }
     }
@@ -344,17 +346,20 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, maxPooling2DWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling2DWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 2D max pooling operation that returns indices
     pub fn max_pooling_2d_return_indices(
         &self,
@@ -366,34 +371,41 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let result: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling2DReturnIndicesWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let result: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling2DReturnIndicesWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             // Get the two result tensors
             let result_array = result as *mut objc2_foundation::NSArray<AnyObject>;
             let result_count: usize = msg_send![result_array, count];
-            
+
             if result_count != 2 {
                 panic!("maxPooling2DReturnIndices should return exactly 2 tensors");
             }
-            
+
             let pooling_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 0];
             let indices_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 1];
-            
-            let pooling_tensor = objc2::ffi::objc_retain(pooling_tensor as *mut _) as *mut AnyObject;
-            let indices_tensor = objc2::ffi::objc_retain(indices_tensor as *mut _) as *mut AnyObject;
-            
+
+            let pooling_tensor =
+                objc2::ffi::objc_retain(pooling_tensor as *mut _) as *mut AnyObject;
+            let indices_tensor =
+                objc2::ffi::objc_retain(indices_tensor as *mut _) as *mut AnyObject;
+
             // Release the array
             objc2::ffi::objc_release(result as *mut _);
-            
-            (MPSGraphTensor(pooling_tensor), MPSGraphTensor(indices_tensor))
+
+            (
+                MPSGraphTensor(pooling_tensor),
+                MPSGraphTensor(indices_tensor),
+            )
         }
     }
-    
+
     /// Creates a max pooling gradient operation
     pub fn max_pooling_2d_gradient(
         &self,
@@ -406,19 +418,21 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling2DGradientWithGradientTensor: gradient.0,
-                                                 sourceTensor: source.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling2DGradientWithGradientTensor: gradient.0,
+                sourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a max pooling gradient operation using indices
     pub fn max_pooling_2d_gradient_with_indices(
         &self,
@@ -432,25 +446,27 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             // Create MPSShape from the output_shape array
             let shape_array = create_ns_array_from_i64_slice(output_shape);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling2DGradientWithGradientTensor: gradient.0,
-                                                 indicesTensor: indices.0,
-                                                 outputShape: shape_array,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling2DGradientWithGradientTensor: gradient.0,
+                indicesTensor: indices.0,
+                outputShape: shape_array,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             objc2::ffi::objc_release(shape_array as *mut _);
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a max pooling gradient operation using indices tensor
     pub fn max_pooling_2d_gradient_with_indices_tensor(
         &self,
@@ -464,20 +480,22 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling2DGradientWithGradientTensor: gradient.0,
-                                                 indicesTensor: indices.0,
-                                                 outputShapeTensor: output_shape_tensor.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling2DGradientWithGradientTensor: gradient.0,
+                indicesTensor: indices.0,
+                outputShapeTensor: output_shape_tensor.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 2D average pooling operation
     pub fn avg_pooling_2d(
         &self,
@@ -489,17 +507,20 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, avgPooling2DWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                avgPooling2DWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates an average pooling gradient operation
     pub fn avg_pooling_2d_gradient(
         &self,
@@ -512,19 +533,21 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 avgPooling2DGradientWithGradientTensor: gradient.0,
-                                                 sourceTensor: source.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                avgPooling2DGradientWithGradientTensor: gradient.0,
+                sourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 2D L2 norm pooling operation
     pub fn l2_norm_pooling_2d(
         &self,
@@ -536,17 +559,20 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, L2NormPooling2DWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                L2NormPooling2DWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates an L2 norm pooling gradient operation
     pub fn l2_norm_pooling_2d_gradient(
         &self,
@@ -559,19 +585,21 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 L2NormPooling2DGradientWithGradientTensor: gradient.0,
-                                                 sourceTensor: source.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                L2NormPooling2DGradientWithGradientTensor: gradient.0,
+                sourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 4D max pooling operation
     pub fn max_pooling_4d(
         &self,
@@ -583,17 +611,20 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, maxPooling4DWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling4DWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 4D max pooling operation that returns indices
     pub fn max_pooling_4d_return_indices(
         &self,
@@ -605,34 +636,41 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let result: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling4DReturnIndicesWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let result: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling4DReturnIndicesWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             // Get the two result tensors
             let result_array = result as *mut objc2_foundation::NSArray<AnyObject>;
             let result_count: usize = msg_send![result_array, count];
-            
+
             if result_count != 2 {
                 panic!("maxPooling4DReturnIndices should return exactly 2 tensors");
             }
-            
+
             let pooling_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 0];
             let indices_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 1];
-            
-            let pooling_tensor = objc2::ffi::objc_retain(pooling_tensor as *mut _) as *mut AnyObject;
-            let indices_tensor = objc2::ffi::objc_retain(indices_tensor as *mut _) as *mut AnyObject;
-            
+
+            let pooling_tensor =
+                objc2::ffi::objc_retain(pooling_tensor as *mut _) as *mut AnyObject;
+            let indices_tensor =
+                objc2::ffi::objc_retain(indices_tensor as *mut _) as *mut AnyObject;
+
             // Release the array
             objc2::ffi::objc_release(result as *mut _);
-            
-            (MPSGraphTensor(pooling_tensor), MPSGraphTensor(indices_tensor))
+
+            (
+                MPSGraphTensor(pooling_tensor),
+                MPSGraphTensor(indices_tensor),
+            )
         }
     }
-    
+
     /// Creates a max pooling gradient operation
     pub fn max_pooling_4d_gradient(
         &self,
@@ -645,19 +683,21 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling4DGradientWithGradientTensor: gradient.0,
-                                                 sourceTensor: source.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling4DGradientWithGradientTensor: gradient.0,
+                sourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a max pooling gradient operation using indices
     pub fn max_pooling_4d_gradient_with_indices(
         &self,
@@ -671,25 +711,27 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
             // Create MPSShape from the output_shape array
             let shape_array = create_ns_array_from_i64_slice(output_shape);
-            
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling4DGradientWithGradientTensor: gradient.0,
-                                                 indicesTensor: indices.0,
-                                                 outputShape: shape_array,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling4DGradientWithGradientTensor: gradient.0,
+                indicesTensor: indices.0,
+                outputShape: shape_array,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             objc2::ffi::objc_release(shape_array as *mut _);
-            
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a max pooling gradient operation using indices tensor
     pub fn max_pooling_4d_gradient_with_indices_tensor(
         &self,
@@ -703,20 +745,22 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 maxPooling4DGradientWithGradientTensor: gradient.0,
-                                                 indicesTensor: indices.0,
-                                                 outputShapeTensor: output_shape_tensor.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                maxPooling4DGradientWithGradientTensor: gradient.0,
+                indicesTensor: indices.0,
+                outputShapeTensor: output_shape_tensor.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 4D average pooling operation
     pub fn avg_pooling_4d(
         &self,
@@ -728,17 +772,20 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, avgPooling4DWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                avgPooling4DWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates an average pooling gradient operation
     pub fn avg_pooling_4d_gradient(
         &self,
@@ -751,19 +798,21 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 avgPooling4DGradientWithGradientTensor: gradient.0,
-                                                 sourceTensor: source.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                avgPooling4DGradientWithGradientTensor: gradient.0,
+                sourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a 4D L2 norm pooling operation
     pub fn l2_norm_pooling_4d(
         &self,
@@ -775,17 +824,20 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, L2NormPooling4DWithSourceTensor: source.0, 
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                L2NormPooling4DWithSourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates an L2 norm pooling gradient operation
     pub fn l2_norm_pooling_4d_gradient(
         &self,
@@ -798,14 +850,16 @@ impl MPSGraph {
             Some(s) => NSString::from_str(s).as_raw_object(),
             None => std::ptr::null_mut(),
         };
-        
+
         unsafe {
-            let tensor: *mut AnyObject = msg_send![self.0, 
-                                                 L2NormPooling4DGradientWithGradientTensor: gradient.0,
-                                                 sourceTensor: source.0,
-                                                 descriptor: descriptor.0,
-                                                 name: name_obj];
-            
+            let tensor: *mut AnyObject = msg_send![
+                self.0,
+                L2NormPooling4DGradientWithGradientTensor: gradient.0,
+                sourceTensor: source.0,
+                descriptor: descriptor.0,
+                name: name_obj
+            ];
+
             let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
             MPSGraphTensor(tensor)
         }

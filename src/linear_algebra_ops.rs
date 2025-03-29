@@ -1,8 +1,8 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
-use crate::tensor::MPSGraphTensor;
+use crate::core::{AsRawObject, NSString};
 use crate::graph::MPSGraph;
-use crate::core::{NSString, AsRawObject};
+use crate::tensor::MPSGraphTensor;
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
 
 /// Linear algebra operations for MPSGraph
 impl MPSGraph {
@@ -79,7 +79,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a vector inner product operation.
     ///
     /// # Arguments
@@ -113,7 +113,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a vector outer product operation.
     ///
     /// # Arguments
@@ -147,7 +147,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a batch matrix multiplication operation.
     ///
     /// # Arguments
@@ -181,7 +181,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a batch matrix multiplication operation with transposed operands.
     ///
     /// # Arguments
@@ -210,7 +210,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 batchMatrixMultiplicationWithPrimaryTensor: primary.0,
                 transposePrimary: primary_transpose,
                 secondaryTensor: secondary.0,
@@ -222,7 +222,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a tensor with a band part extracted from the input tensor.
     ///
     /// This operation extracts a band of rows and columns from the input 2D tensor,
@@ -253,7 +253,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 bandPartWithTensor: input.0,
                 numLower: num_lower.0,
                 numUpper: num_upper.0,
@@ -264,7 +264,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a tensor with a band part extracted from the input tensor using scalar values.
     ///
     /// This operation extracts a band of rows and columns from the input 2D tensor,
@@ -295,7 +295,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 bandPartWithTensor: input.0,
                 numLowerScalar: num_lower,
                 numUpperScalar: num_upper,
@@ -306,7 +306,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Calculates the Hamming distance between two tensors.
     ///
     /// The Hamming distance between two tensors is the number of positions at which the corresponding elements
@@ -334,7 +334,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 hammingDistanceWithPrimaryTensor: primary.0,
                 secondaryTensor: secondary.0,
                 name: name_obj,
@@ -344,7 +344,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Performs scaled dot-product attention on the input tensors.
     ///
     /// Scaled dot-product attention is a key operation in transformer architectures. This operation
@@ -379,7 +379,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 scaledDotProductAttentionWithQueryTensor: query.0,
                 keyTensor: key.0,
                 valueTensor: value.0,
@@ -391,7 +391,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Performs scaled dot-product attention with a scalar scaling factor.
     ///
     /// This is a variant of scaled dot-product attention where the scaling factor is a scalar value
@@ -423,7 +423,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 scaledDotProductAttentionWithQueryTensor: query.0,
                 keyTensor: key.0,
                 valueTensor: value.0,
@@ -435,7 +435,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Performs masked scaled dot-product attention.
     ///
     /// This is a variant of scaled dot-product attention where certain attention weights
@@ -469,7 +469,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 scaledDotProductAttentionWithQueryTensor: query.0,
                 keyTensor: key.0,
                 valueTensor: value.0,
@@ -482,7 +482,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Performs masked scaled dot-product attention with a scalar scaling factor.
     ///
     /// This is a variant of masked scaled dot-product attention where the scaling factor is a scalar value
@@ -516,7 +516,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, 
+                self.0,
                 scaledDotProductAttentionWithQueryTensor: query.0,
                 keyTensor: key.0,
                 valueTensor: value.0,

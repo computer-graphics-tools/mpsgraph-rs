@@ -1,7 +1,7 @@
-use objc2::runtime::AnyObject;
-use objc2::msg_send;
-use metal::DeviceRef;
 use metal::foreign_types::ForeignTypeRef;
+use metal::DeviceRef;
+use objc2::msg_send;
+use objc2::runtime::AnyObject;
 use std::fmt;
 use std::ptr;
 
@@ -20,12 +20,13 @@ impl MPSGraphDevice {
         let device = metal::Device::system_default().expect("No Metal device found");
         Self::with_device(&device)
     }
-    
+
     /// Creates a new MPSGraphDevice from a Metal device
     pub fn with_device(device: &DeviceRef) -> Self {
         unsafe {
             let class_name = c"MPSGraphDevice";
-            let cls = objc2::runtime::AnyClass::get(class_name).unwrap_or_else(|| panic!("MPSGraphDevice class not found"));
+            let cls = objc2::runtime::AnyClass::get(class_name)
+                .unwrap_or_else(|| panic!("MPSGraphDevice class not found"));
             // Convert the Metal device to a void pointer to avoid RefEncode issues
             let metal_device_ptr = device.as_ptr() as *mut std::ffi::c_void;
             let obj: *mut AnyObject = msg_send![cls, deviceWithMTLDevice: metal_device_ptr,];

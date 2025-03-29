@@ -1,9 +1,9 @@
-use objc2::runtime::AnyObject;
+use crate::graph::MPSGraph;
+use crate::tensor::MPSGraphTensor;
 use objc2::msg_send;
+use objc2::runtime::AnyObject;
 use std::fmt;
 use std::ptr;
-use crate::tensor::MPSGraphTensor;
-use crate::graph::MPSGraph;
 
 /// A wrapper for MPSGraphOperation objects
 pub struct MPSGraphOperation(pub(crate) *mut AnyObject);
@@ -15,34 +15,34 @@ impl MPSGraphOperation {
             let input_tensors: *mut AnyObject = msg_send![self.0, inputTensors];
             let count: usize = msg_send![input_tensors, count];
             let mut result = Vec::with_capacity(count);
-            
+
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![input_tensors, objectAtIndex: i,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
-            
+
             result
         }
     }
-    
+
     /// Returns the output tensors of this operation
     pub fn output_tensors(&self) -> Vec<MPSGraphTensor> {
         unsafe {
             let output_tensors: *mut AnyObject = msg_send![self.0, outputTensors];
             let count: usize = msg_send![output_tensors, count];
             let mut result = Vec::with_capacity(count);
-            
+
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![output_tensors, objectAtIndex: i,];
                 let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 result.push(MPSGraphTensor(tensor));
             }
-            
+
             result
         }
     }
-    
+
     /// Returns the graph this operation belongs to
     pub fn graph(&self) -> MPSGraph {
         unsafe {
@@ -51,7 +51,7 @@ impl MPSGraphOperation {
             MPSGraph(graph)
         }
     }
-    
+
     /// Returns the name of this operation
     pub fn name(&self) -> String {
         unsafe {
@@ -60,20 +60,20 @@ impl MPSGraphOperation {
             std::ffi::CStr::from_ptr(utf8).to_string_lossy().to_string()
         }
     }
-    
+
     /// Returns the control dependencies of this operation
     pub fn control_dependencies(&self) -> Vec<MPSGraphOperation> {
         unsafe {
             let dependencies: *mut AnyObject = msg_send![self.0, controlDependencies];
             let count: usize = msg_send![dependencies, count];
             let mut result = Vec::with_capacity(count);
-            
+
             for i in 0..count {
                 let op: *mut AnyObject = msg_send![dependencies, objectAtIndex: i,];
                 let op = objc2::ffi::objc_retain(op as *mut _) as *mut AnyObject;
                 result.push(MPSGraphOperation(op));
             }
-            
+
             result
         }
     }

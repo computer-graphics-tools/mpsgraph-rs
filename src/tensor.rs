@@ -1,12 +1,12 @@
-use objc2::runtime::AnyObject;
+use crate::core::MPSDataType;
+use crate::operation::MPSGraphOperation;
+use crate::shape::MPSShape;
 use objc2::msg_send;
+use objc2::runtime::AnyObject;
+use std::convert::AsRef;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::convert::AsRef;
 use std::ptr;
-use crate::core::MPSDataType;
-use crate::shape::MPSShape;
-use crate::operation::MPSGraphOperation;
 
 /// A wrapper for MPSGraphTensor objects
 pub struct MPSGraphTensor(pub(crate) *mut AnyObject);
@@ -23,7 +23,7 @@ impl MPSGraphTensor {
             std::mem::transmute(data_type_val as u32)
         }
     }
-    
+
     /// Returns the shape of this tensor
     pub fn shape(&self) -> MPSShape {
         unsafe {
@@ -36,7 +36,7 @@ impl MPSGraphTensor {
             MPSShape(shape)
         }
     }
-    
+
     /// Returns the operation that produced this tensor
     pub fn operation(&self) -> MPSGraphOperation {
         unsafe {
@@ -45,32 +45,32 @@ impl MPSGraphTensor {
             MPSGraphOperation(operation)
         }
     }
-    
+
     /// Returns the dimensions of the tensor
     pub fn dimensions(&self) -> Vec<usize> {
         self.shape().dimensions().to_vec()
     }
-    
+
     /// Returns the rank (number of dimensions) of this tensor
     pub fn rank(&self) -> usize {
         self.shape().rank()
     }
-    
+
     /// Returns the total number of elements in this tensor
     pub fn element_count(&self) -> usize {
         self.shape().element_count()
     }
-    
+
     /// Returns the name of this tensor
     pub fn name(&self) -> String {
         unsafe {
             let name: *mut AnyObject = msg_send![self.0, name];
-            
+
             // Handle case where name is nil
             if name.is_null() {
                 return String::from("<unnamed>");
             }
-            
+
             let utf8: *const i8 = msg_send![name, UTF8String];
             std::ffi::CStr::from_ptr(utf8).to_string_lossy().to_string()
         }
