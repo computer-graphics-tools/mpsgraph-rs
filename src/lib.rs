@@ -141,4 +141,10 @@ pub mod prelude {
     // Include sugar API when the feature is enabled
     #[cfg(feature = "sugar_api")]
     pub use crate::sugar;
+    
+    // Re-export functional API when the feature is enabled
+    #[cfg(feature = "sugar_api")]
+    pub use crate::sugar::{
+        abs, clip, exp, gelu, log, pow, relu, sigmoid, silu, sqrt, square, tanh
+    };
 }
