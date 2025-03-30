@@ -9,6 +9,8 @@ repository = "https://github.com/eugenebokhan/mpsgraph-rs"
 readme = "README.md"
 keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
 categories = ["api-bindings", "graphics", "science"]
+[lib]
+doctest = false
 
 [dependencies]
 mpsgraph = { path = "../mpsgraph-rs" }

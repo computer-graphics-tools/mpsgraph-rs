@@ -1,6 +1,11 @@
 #[macro_use]
 extern crate objc2;
 
+/// Rust bindings for Apple's Metal Performance Shaders Graph (MPSGraph) API.
+/// 
+/// This library provides Rust bindings for the MPSGraph API, which is part of Apple's
+/// Metal Performance Shaders framework.
+
 // Core modules
 pub mod command_buffer;
 pub mod core;
@@ -12,7 +17,6 @@ pub mod operation;
 pub mod shape;
 pub mod tensor;
 pub mod tensor_data;
-
 
 // Operation-specific modules
 pub mod activation_ops;
@@ -134,5 +138,4 @@ pub mod prelude {
     pub use crate::scatter_nd_ops::MPSGraphScatterMode;
     pub use crate::sparse_ops::{MPSGraphCreateSparseOpDescriptor, MPSGraphSparseStorageType};
     pub use crate::stencil_ops::{MPSGraphReductionMode, MPSGraphStencilOpDescriptor};
-
 }
