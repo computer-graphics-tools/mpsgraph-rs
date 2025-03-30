@@ -1,0 +1,23 @@
+[package]
+name = "mpsgraph-tools"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Eugene Bokhan <eugenebokhan@icloud.com>"]
+description = "High-level tools and utilities for working with MPSGraph in Rust"
+repository = "https://github.com/eugenebokhan/mpsgraph-rs"
+readme = "README.md"
+keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
+categories = ["api-bindings", "graphics", "science"]
+
+[dependencies]
+mpsgraph = { path = "../mpsgraph-rs" }
+objc2 = "0.6.0"
+objc2-foundation = "0.3.0"
+
+[features]
+default = []
+
+[[example]]
+name = "tensor_ops"
+path = "examples/tensor_ops.rs"

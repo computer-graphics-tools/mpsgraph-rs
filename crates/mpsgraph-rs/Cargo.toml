@@ -1,0 +1,47 @@
+[package]
+name = "mpsgraph"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Eugene Bokhan <eugenebokhan@icloud.com>"]
+description = "Rust bindings for Apple's Metal Performance Shaders Graph (MPSGraph) API"
+repository = "https://github.com/eugenebokhan/mpsgraph-rs"
+readme = "README.md"
+keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
+categories = ["api-bindings", "graphics", "science"]
+
+[dependencies]
+objc2 = "0.6.0"
+objc2-foundation = "0.3.0"
+block = "0.1.6"
+foreign-types = "0.5"
+bitflags = "2.9.0"
+metal = "0.32.0"
+rand = "0.9.0"
+
+[features]
+default = ["link"]
+link = []
+
+[build-dependencies]
+cc = "1.2.17"
+
+[[example]]
+name = "matmul"
+path = "examples/matmul.rs"
+
+[[example]]
+name = "type_test"
+path = "examples/type_test.rs"
+
+[[example]]
+name = "callback_test"
+path = "examples/callback_test.rs"
+
+[[example]]
+name = "simple_compile"
+path = "examples/simple_compile.rs"
+
+
+[package.metadata.macos]
+frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]

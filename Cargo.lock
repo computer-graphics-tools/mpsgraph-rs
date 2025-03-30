@@ -161,6 +161,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpsgraph-tools"
+version = "0.1.0"
+dependencies = [
+ "mpsgraph",
+ "objc2",
+ "objc2-foundation",
+]
+
+[[package]]
 name = "objc"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"

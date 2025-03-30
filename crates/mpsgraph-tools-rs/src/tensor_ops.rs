@@ -1,52 +1,59 @@
-//! Sugar API for more ergonomic MPSGraph usage
+//! Tensor Operations API for MPSGraph
 //!
-//! This module provides operator overloading and convenient extension methods
-//! for MPSGraph tensors, making the API more user-friendly. Similar to Swift extensions
-//! in the mirai/llm-mpsgraph project.
+//! This module provides ergonomic tensor operations with operator overloading
+//! and functional-style programming for MPSGraph tensors.
 //!
 //! # Features
 //!
 //! - **Reference-Based Operator Overloading**: Use standard operators (`+`, `-`, `*`, `/`, `-x`) with references
 //!   for tensor operations (e.g., `&a + &b`)
-//! - **Method Chaining**: Apply operations using method syntax (e.g., `tensor.sqrt().abs()`)
+//! - **Functional API**: Apply operations using functional style (e.g., `abs(&sqrt(&(&a + &b), None), None)`)
 //! - **Utility Methods**: Convenience functions for common operations
 //! - **Tensor Creation**: Helper methods for creating tensors filled with zeros, ones, etc.
-//!
-//! # Examples
-//!
-//! ```rust
-//! use mpsgraph::prelude::*;
-//!
-//! // Create a graph and tensors
-//! let graph = MPSGraph::new();
-//! let a = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
-//! let b = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
-//!
-//! // Use operator overloading for arithmetic (always with references)
-//! let sum = &a + &b;
-//! let diff = &a - &b;
-//! let product = &a * &b;
-//! let ratio = &a / &b;
-//!
-//! // Apply unary operations with method chaining
-//! let result = (&a + &b).sqrt().abs();
-//!
-//! // Create tensors with utility methods
-//! let zeros = graph.zeros(&[2, 3], MPSDataType::Float32);
-//! let ones = graph.ones(&[2, 3], MPSDataType::Float32);
-//! ```
-//!
-//! # Important Note
-//!
-//! All operators require references to tensors (e.g., `&a + &b`) and do not consume the original tensors.
-//! This allows you to reuse tensors in multiple operations.
-//!
-//! Feature flag: `sugar_api`
 
-use crate::{MPSDataType, MPSGraph, MPSGraphTensor, MPSShape, MPSTensorDataScalar};
+use mpsgraph::{MPSDataType, MPSGraph, MPSGraphTensor, MPSShape, MPSTensorDataScalar};
 use std::ops;
 
-/// Addition operator for MPSGraphTensor references
+/// A wrapper around MPSGraphTensor to enable operations with standard operators
+#[derive(Debug)]
+pub struct Tensor(pub MPSGraphTensor);
+
+impl Tensor {
+    /// Create a new Tensor wrapper around an MPSGraphTensor
+    pub fn new(tensor: MPSGraphTensor) -> Self {
+        Tensor(tensor)
+    }
+
+    /// Unwrap the Tensor to get the underlying MPSGraphTensor
+    pub fn unwrap(self) -> MPSGraphTensor {
+        self.0
+    }
+
+    /// Get a reference to the underlying MPSGraphTensor
+    pub fn inner(&self) -> &MPSGraphTensor {
+        &self.0
+    }
+}
+
+impl From<MPSGraphTensor> for Tensor {
+    fn from(tensor: MPSGraphTensor) -> Self {
+        Tensor(tensor)
+    }
+}
+
+impl From<Tensor> for MPSGraphTensor {
+    fn from(tensor: Tensor) -> Self {
+        tensor.0
+    }
+}
+
+impl AsRef<MPSGraphTensor> for Tensor {
+    fn as_ref(&self) -> &MPSGraphTensor {
+        &self.0
+    }
+}
+
+/// Addition operator for Tensor references
 ///
 /// Enables using the `+` operator with tensor references.
 /// Equivalent to calling `graph.add(lhs, rhs, None)`.
@@ -58,18 +65,17 @@ use std::ops;
 /// let sum = &tensor1 + &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Add<&'b MPSGraphTensor> for &'a MPSGraphTensor {
-    type Output = MPSGraphTensor;
+impl<'a, 'b> ops::Add<&'b Tensor> for &'a Tensor {
+    type Output = Tensor;
 
-    fn add(self, rhs: &'b MPSGraphTensor) -> Self::Output {
-        // Get the graph from the operation and add the tensors
-        let op = self.operation();
+    fn add(self, rhs: &'b Tensor) -> Self::Output {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.add(self, rhs, None)
+        Tensor(graph.add(&self.0, &rhs.0, None))
     }
 }
 
-/// Subtraction operator for MPSGraphTensor references
+/// Subtraction operator for Tensor references
 ///
 /// Enables using the `-` operator with tensor references.
 /// Equivalent to calling `graph.subtract(lhs, rhs, None)`.
@@ -81,17 +87,17 @@ impl<'a, 'b> ops::Add<&'b MPSGraphTensor> for &'a MPSGraphTensor {
 /// let difference = &tensor1 - &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Sub<&'b MPSGraphTensor> for &'a MPSGraphTensor {
-    type Output = MPSGraphTensor;
+impl<'a, 'b> ops::Sub<&'b Tensor> for &'a Tensor {
+    type Output = Tensor;
 
-    fn sub(self, rhs: &'b MPSGraphTensor) -> Self::Output {
-        let op = self.operation();
+    fn sub(self, rhs: &'b Tensor) -> Self::Output {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.subtract(self, rhs, None)
+        Tensor(graph.subtract(&self.0, &rhs.0, None))
     }
 }
 
-/// Multiplication operator for MPSGraphTensor references
+/// Multiplication operator for Tensor references
 ///
 /// Enables using the `*` operator with tensor references.
 /// Equivalent to calling `graph.multiply(lhs, rhs, None)`.
@@ -103,17 +109,17 @@ impl<'a, 'b> ops::Sub<&'b MPSGraphTensor> for &'a MPSGraphTensor {
 /// let product = &tensor1 * &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Mul<&'b MPSGraphTensor> for &'a MPSGraphTensor {
-    type Output = MPSGraphTensor;
+impl<'a, 'b> ops::Mul<&'b Tensor> for &'a Tensor {
+    type Output = Tensor;
 
-    fn mul(self, rhs: &'b MPSGraphTensor) -> Self::Output {
-        let op = self.operation();
+    fn mul(self, rhs: &'b Tensor) -> Self::Output {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.multiply(self, rhs, None)
+        Tensor(graph.multiply(&self.0, &rhs.0, None))
     }
 }
 
-/// Division operator for MPSGraphTensor references
+/// Division operator for Tensor references
 ///
 /// Enables using the `/` operator with tensor references.
 /// Equivalent to calling `graph.divide(lhs, rhs, None)`.
@@ -125,13 +131,13 @@ impl<'a, 'b> ops::Mul<&'b MPSGraphTensor> for &'a MPSGraphTensor {
 /// let quotient = &tensor1 / &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Div<&'b MPSGraphTensor> for &'a MPSGraphTensor {
-    type Output = MPSGraphTensor;
+impl<'a, 'b> ops::Div<&'b Tensor> for &'a Tensor {
+    type Output = Tensor;
 
-    fn div(self, rhs: &'b MPSGraphTensor) -> Self::Output {
-        let op = self.operation();
+    fn div(self, rhs: &'b Tensor) -> Self::Output {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.divide(self, rhs, None)
+        Tensor(graph.divide(&self.0, &rhs.0, None))
     }
 }
 
@@ -147,18 +153,17 @@ impl<'a, 'b> ops::Div<&'b MPSGraphTensor> for &'a MPSGraphTensor {
 /// let negated = -&tensor;
 /// // tensor can still be used in subsequent operations
 /// ```
-impl ops::Neg for &MPSGraphTensor {
-    type Output = MPSGraphTensor;
+impl ops::Neg for &Tensor {
+    type Output = Tensor;
 
     fn neg(self) -> Self::Output {
-        let op = self.operation();
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.negative(self, None)
+        Tensor(graph.negative(&self.0, None))
     }
 }
 
-/// Utility methods for MPSGraphTensor
-impl MPSGraphTensor {
+impl Tensor {
     /// Creates a constant tensor with specified scalar value and matching data type
     ///
     /// This is a utility method to create a constant tensor with the same data type
@@ -179,13 +184,13 @@ impl MPSGraphTensor {
     /// let half = tensor.const_scalar(0.5);
     /// let scaled = &tensor * &half;
     /// ```
-    pub fn const_scalar<T: MPSTensorDataScalar>(&self, value: T) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn const_scalar<T: MPSTensorDataScalar>(&self, value: T) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        let data_type = self.data_type();
+        let data_type = self.0.data_type();
 
         // Create constant with matching data type and convert as needed
-        graph.constant_scalar(value, data_type)
+        Tensor(graph.constant_scalar(value, data_type))
     }
 
     /// Applies square operation to the tensor elements
@@ -205,10 +210,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let squared = tensor.square(None);
     /// ```
-    pub fn square(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn square(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.square(&self, name)
+        Tensor(graph.square(&self.0, name))
     }
 
     /// Applies square root operation to the tensor elements
@@ -228,10 +233,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let root = tensor.sqrt(None);
     /// ```
-    pub fn sqrt(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn sqrt(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.sqrt(&self, name)
+        Tensor(graph.sqrt(&self.0, name))
     }
 
     /// Applies absolute value operation to the tensor elements
@@ -251,10 +256,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let absolute = tensor.abs(None);
     /// ```
-    pub fn abs(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn abs(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.abs(&self, name)
+        Tensor(graph.abs(&self.0, name))
     }
 
     /// Applies exponential function to the tensor elements
@@ -274,10 +279,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let exp_tensor = tensor.exp(None);
     /// ```
-    pub fn exp(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn exp(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.exp(&self, name)
+        Tensor(graph.exp(&self.0, name))
     }
 
     /// Applies natural logarithm to the tensor elements
@@ -297,10 +302,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let log_tensor = tensor.log(None);
     /// ```
-    pub fn log(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn log(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.log(&self, name)
+        Tensor(graph.log(&self.0, name))
     }
 
     /// Applies sigmoid activation function to the tensor elements
@@ -320,10 +325,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let sigmoid_tensor = tensor.sigmoid(None);
     /// ```
-    pub fn sigmoid(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn sigmoid(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.sigmoid(&self, name)
+        Tensor(graph.sigmoid(&self.0, name))
     }
 
     /// Applies tanh activation function to the tensor elements
@@ -343,10 +348,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let tanh_tensor = tensor.tanh(None);
     /// ```
-    pub fn tanh(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn tanh(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.tanh(&self, name)
+        Tensor(graph.tanh(&self.0, name))
     }
 
     /// Applies ReLU activation function to the tensor elements
@@ -366,10 +371,10 @@ impl MPSGraphTensor {
     /// ```rust
     /// let relu_tensor = tensor.relu(None);
     /// ```
-    pub fn relu(&self, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn relu(&self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.relu(&self, name)
+        Tensor(graph.relu(&self.0, name))
     }
 
     /// Applies SiLU activation function (x * sigmoid(x))
@@ -390,12 +395,12 @@ impl MPSGraphTensor {
     /// ```rust
     /// let activated = tensor.silu(Some("activation"));
     /// ```
-    pub fn silu(&self, name_prefix: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn silu(&self, name_prefix: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
         let sigmoid_name = name_prefix.map(|p| format!("{}_sigmoid", p));
-        let sigmoid = graph.sigmoid(&self, sigmoid_name.as_deref());
-        graph.multiply(&self, &sigmoid, name_prefix)
+        let sigmoid = graph.sigmoid(&self.0, sigmoid_name.as_deref());
+        Tensor(graph.multiply(&self.0, &sigmoid, name_prefix))
     }
 
     /// Applies GELU activation function
@@ -417,8 +422,8 @@ impl MPSGraphTensor {
     /// ```rust
     /// let activated = tensor.gelu(Some("activation"));
     /// ```
-    pub fn gelu(&self, name_prefix: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn gelu(&self, name_prefix: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
 
         // Constants for the GELU approximation
@@ -426,7 +431,7 @@ impl MPSGraphTensor {
         let coeff = 0.044715;
 
         // Create constant tensors
-        let data_type = self.data_type();
+        let data_type = self.0.data_type();
         let const_0_5 = graph.constant_scalar(0.5, data_type);
         let const_1 = graph.constant_scalar(1.0, data_type);
         let const_sqrt_2_pi = graph.constant_scalar(sqrt_2_over_pi, data_type);
@@ -434,11 +439,10 @@ impl MPSGraphTensor {
 
         // Compute x^3
         let square_name = name_prefix.map(|p| format!("{}_square", p));
-        // Using the updated square method which now takes &self
-        let x_squared = self.square(square_name.as_deref());
+        let x_squared = graph.square(&self.0, square_name.as_deref());
 
         let cube_name = name_prefix.map(|p| format!("{}_cube", p));
-        let x_cubed = graph.multiply(&self, &x_squared, cube_name.as_deref());
+        let x_cubed = graph.multiply(&self.0, &x_squared, cube_name.as_deref());
 
         // Compute coeff * x^3
         let scaled_cube_name = name_prefix.map(|p| format!("{}_scaled_cube", p));
@@ -446,7 +450,7 @@ impl MPSGraphTensor {
 
         // Compute x + coeff * x^3
         let inner_name = name_prefix.map(|p| format!("{}_inner", p));
-        let inner = graph.add(&self, &scaled_x_cubed, inner_name.as_deref());
+        let inner = graph.add(&self.0, &scaled_x_cubed, inner_name.as_deref());
 
         // Compute sqrt(2/π) * (x + coeff * x^3)
         let scaled_inner_name = name_prefix.map(|p| format!("{}_scaled_inner", p));
@@ -465,7 +469,7 @@ impl MPSGraphTensor {
         let half_term = graph.multiply(&const_0_5, &one_plus_tanh, half_term_name.as_deref());
 
         // Compute x * 0.5 * (1 + tanh(...))
-        graph.multiply(&self, &half_term, name_prefix)
+        Tensor(graph.multiply(&self.0, &half_term, name_prefix))
     }
 
     /// Element-wise power operation
@@ -485,12 +489,13 @@ impl MPSGraphTensor {
     ///
     /// ```rust
     /// let exponent = graph.constant_scalar(2.0, MPSDataType::Float32);
-    /// let squared = tensor.pow(&exponent, None);
+    /// let exponent_tensor = Tensor::new(exponent);
+    /// let squared = tensor.pow(&exponent_tensor, None);
     /// ```
-    pub fn pow(&self, exponent: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-        let op = self.operation();
+    pub fn pow(&self, exponent: &Self, name: Option<&str>) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
-        graph.power(&self, exponent, name)
+        Tensor(graph.power(&self.0, &exponent.0, name))
     }
 
     /// Clip tensor values to a specified range
@@ -508,327 +513,90 @@ impl MPSGraphTensor {
     /// # Examples
     ///
     /// ```rust
-    /// let min_val = graph.constant_scalar(0.0, MPSDataType::Float32);
-    /// let max_val = graph.constant_scalar(1.0, MPSDataType::Float32);
+    /// let min_val = Tensor::new(graph.constant_scalar(0.0, MPSDataType::Float32));
+    /// let max_val = Tensor::new(graph.constant_scalar(1.0, MPSDataType::Float32));
     /// let clipped = tensor.clip(&min_val, &max_val, None);
     /// ```
     pub fn clip(
         &self,
-        min_val: &MPSGraphTensor,
-        max_val: &MPSGraphTensor,
+        min_val: &Self,
+        max_val: &Self,
         name: Option<&str>,
-    ) -> MPSGraphTensor {
-        let op = self.operation();
+    ) -> Self {
+        let op = self.0.operation();
         let graph = op.graph();
 
         // First clip to minimum (max of tensor and min_val)
         let name_min = name.map(|n| format!("{}_min", n));
-        let clipped_min = graph.maximum(self, min_val, name_min.as_deref());
+        let clipped_min = graph.maximum(&self.0, &min_val.0, name_min.as_deref());
 
         // Then clip to maximum (min of clipped_min and max_val)
         let name_max = name.map(|n| format!("{}_max", n));
-        graph.minimum(&clipped_min, max_val, name_max.as_deref())
+        Tensor(graph.minimum(&clipped_min, &max_val.0, name_max.as_deref()))
     }
 }
 
-/// Functional API for MPSGraphTensor operations
-///
-/// These functions provide a functional programming style interface to tensor operations.
-/// They can be used as an alternative to the method-based API.
-///
-/// # Examples
-///
-/// ```rust
-/// // Method-based API
-/// let squared_method = tensor.square(None);
-///
-/// // Functional API
-/// let squared_func = square(&tensor, None);
-/// ```
-
-/// Applies square operation to the tensor elements
-///
-/// Computes the square of each element in the tensor: f(x) = x²
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with each element squared
-///
-/// # Examples
-///
-/// ```rust
-/// let squared = square(&tensor, None);
-/// ```
-pub fn square(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.square(name)
+/// Extensions for MPSGraph to create Tensor
+pub trait GraphExt {
+    /// Create a placeholder tensor and wrap it with Tensor
+    fn placeholder_tensor(
+        &self,
+        shape: &MPSShape,
+        data_type: MPSDataType,
+        name: Option<&str>,
+    ) -> Tensor;
+    
+    /// Create a tensor filled with zeros
+    fn zeros(&self, shape: &[u64], data_type: MPSDataType) -> Tensor;
+    
+    /// Create a tensor filled with ones
+    fn ones(&self, shape: &[u64], data_type: MPSDataType) -> Tensor;
+    
+    /// Create a tensor filled with a specific value
+    fn full<T: MPSTensorDataScalar>(
+        &self,
+        value: T,
+        shape: &[u64],
+        data_type: MPSDataType,
+    ) -> Tensor;
+    
+    /// Create a tensor with random uniform values
+    fn create_random_uniform<T: MPSTensorDataScalar>(
+        &self,
+        lower_bound: T,
+        upper_bound: T,
+        shape: &[u64],
+        data_type: MPSDataType,
+    ) -> Tensor;
+    
+    /// Create a tensor with random normal values
+    fn create_random_normal<T: MPSTensorDataScalar>(
+        &self,
+        mean: T,
+        std_dev: T,
+        shape: &[u64],
+        data_type: MPSDataType,
+    ) -> Tensor;
+    
+    /// Create a tensor with sequential values
+    fn arange<T: MPSTensorDataScalar>(
+        &self,
+        start: T,
+        count: u64,
+        data_type: MPSDataType,
+    ) -> Tensor;
 }
 
-/// Applies square root operation to the tensor elements
-///
-/// Computes the square root of each element in the tensor: f(x) = √x
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the square root of each element
-///
-/// # Examples
-///
-/// ```rust
-/// let root = sqrt(&tensor, None);
-/// ```
-pub fn sqrt(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.sqrt(name)
-}
-
-/// Applies absolute value operation to the tensor elements
-///
-/// Computes the absolute value of each element in the tensor: f(x) = |x|
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the absolute value of each element
-///
-/// # Examples
-///
-/// ```rust
-/// let absolute = abs(&tensor, None);
-/// let abs_diff = abs(&(&a - &b), None);
-/// ```
-pub fn abs(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.abs(name)
-}
-
-/// Applies exponential function to the tensor elements
-///
-/// Computes e^x for each element in the tensor
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the exponential of each element
-///
-/// # Examples
-///
-/// ```rust
-/// let exp_tensor = exp(&tensor, None);
-/// ```
-pub fn exp(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.exp(name)
-}
-
-/// Applies natural logarithm to the tensor elements
-///
-/// Computes ln(x) for each element in the tensor
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the natural logarithm of each element
-///
-/// # Examples
-///
-/// ```rust
-/// let log_tensor = log(&tensor, None);
-/// ```
-pub fn log(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.log(name)
-}
-
-/// Applies sigmoid activation function to the tensor elements
-///
-/// Computes σ(x) = 1/(1+e^(-x)) for each element in the tensor
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the sigmoid of each element
-///
-/// # Examples
-///
-/// ```rust
-/// let sigmoid_tensor = sigmoid(&tensor, None);
-/// ```
-pub fn sigmoid(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.sigmoid(name)
-}
-
-/// Applies tanh activation function to the tensor elements
-///
-/// Computes tanh(x) for each element in the tensor
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the tanh of each element
-///
-/// # Examples
-///
-/// ```rust
-/// let tanh_tensor = tanh(&tensor, None);
-/// ```
-pub fn tanh(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.tanh(name)
-}
-
-/// Applies ReLU activation function to the tensor elements
-///
-/// Computes max(0, x) for each element in the tensor
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with the ReLU activation applied
-///
-/// # Examples
-///
-/// ```rust
-/// let relu_tensor = relu(&tensor, None);
-/// ```
-pub fn relu(tensor: &MPSGraphTensor, name: Option<&str>) -> MPSGraphTensor {
-    tensor.relu(name)
-}
-
-/// Applies SiLU activation function (x * sigmoid(x))
-///
-/// SiLU (Sigmoid Linear Unit) is also known as the Swish activation function.
-/// It computes x * sigmoid(x) for each element in the tensor.
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name_prefix` - Optional prefix for the operation names
-///
-/// # Returns
-///
-/// A new tensor with the SiLU activation applied
-///
-/// # Examples
-///
-/// ```rust
-/// let activated = silu(&tensor, Some("activation"));
-/// ```
-pub fn silu(tensor: &MPSGraphTensor, name_prefix: Option<&str>) -> MPSGraphTensor {
-    tensor.silu(name_prefix)
-}
-
-/// Applies GELU activation function
-///
-/// GELU (Gaussian Error Linear Unit) is defined as x * Φ(x) where Φ is the cumulative
-/// distribution function of the standard normal distribution.
-/// This implementation uses the approximation: x * 0.5 * (1 + tanh(sqrt(2/π) * (x + 0.044715 * x^3)))
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `name_prefix` - Optional prefix for the operation names
-///
-/// # Returns
-///
-/// A new tensor with the GELU activation applied
-///
-/// # Examples
-///
-/// ```rust
-/// let activated = gelu(&tensor, Some("activation"));
-/// ```
-pub fn gelu(tensor: &MPSGraphTensor, name_prefix: Option<&str>) -> MPSGraphTensor {
-    tensor.gelu(name_prefix)
-}
-
-/// Element-wise power operation
-///
-/// Raises each element in the tensor to the specified power
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `exponent` - The exponent tensor
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with each element raised to the specified power
-///
-/// # Examples
-///
-/// ```rust
-/// let exponent = graph.constant_scalar(2.0, MPSDataType::Float32);
-/// let squared = pow(&tensor, &exponent, None);
-/// ```
-pub fn pow(
-    tensor: &MPSGraphTensor,
-    exponent: &MPSGraphTensor,
-    name: Option<&str>,
-) -> MPSGraphTensor {
-    tensor.pow(exponent, name)
-}
-
-/// Clip tensor values to a specified range
-///
-/// # Parameters
-///
-/// * `tensor` - The input tensor
-/// * `min_val` - The minimum value tensor (elements smaller than this are clipped)
-/// * `max_val` - The maximum value tensor (elements larger than this are clipped)
-/// * `name` - Optional name for the operation
-///
-/// # Returns
-///
-/// A new tensor with values clipped to the specified range
-///
-/// # Examples
-///
-/// ```rust
-/// let min_val = graph.constant_scalar(0.0, MPSDataType::Float32);
-/// let max_val = graph.constant_scalar(1.0, MPSDataType::Float32);
-/// let clipped = clip(&tensor, &min_val, &max_val, None);
-/// ```
-pub fn clip(
-    tensor: &MPSGraphTensor,
-    min_val: &MPSGraphTensor,
-    max_val: &MPSGraphTensor,
-    name: Option<&str>,
-) -> MPSGraphTensor {
-    tensor.clip(min_val, max_val, name)
-}
-
-// Implement utility methods for the MPSGraph type
-impl MPSGraph {
+impl GraphExt for MPSGraph {
+    fn placeholder_tensor(
+        &self,
+        shape: &MPSShape,
+        data_type: MPSDataType,
+        name: Option<&str>,
+    ) -> Tensor {
+        Tensor(self.placeholder(shape, data_type, name))
+    }
+    
     /// Create a tensor filled with zeros of the specified shape and data type
     ///
     /// # Parameters
@@ -845,7 +613,7 @@ impl MPSGraph {
     /// ```rust
     /// let zeros = graph.zeros(&[2, 3], MPSDataType::Float32);
     /// ```
-    pub fn zeros(&self, shape: &[u64], data_type: MPSDataType) -> MPSGraphTensor {
+    fn zeros(&self, shape: &[u64], data_type: MPSDataType) -> Tensor {
         // Convert shape from u64 to usize for MPSShape
         let usize_shape: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
 
@@ -853,7 +621,7 @@ impl MPSGraph {
         let shape_obj = MPSShape::from_slice(&usize_shape);
 
         // Create a scalar constant with zero and specified shape
-        self.constant_scalar_with_shape(0.0f32, &shape_obj, data_type)
+        Tensor(self.constant_scalar_with_shape(0.0f32, &shape_obj, data_type))
     }
 
     /// Create a tensor filled with ones of the specified shape and data type
@@ -872,7 +640,7 @@ impl MPSGraph {
     /// ```rust
     /// let ones = graph.ones(&[2, 3], MPSDataType::Float32);
     /// ```
-    pub fn ones(&self, shape: &[u64], data_type: MPSDataType) -> MPSGraphTensor {
+    fn ones(&self, shape: &[u64], data_type: MPSDataType) -> Tensor {
         // Convert shape from u64 to usize for MPSShape
         let usize_shape: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
 
@@ -880,7 +648,7 @@ impl MPSGraph {
         let shape_obj = MPSShape::from_slice(&usize_shape);
 
         // Create a filled tensor using constant_scalar_with_shape which is more direct
-        self.constant_scalar_with_shape(1.0, &shape_obj, data_type)
+        Tensor(self.constant_scalar_with_shape(1.0, &shape_obj, data_type))
     }
 
     /// Create a tensor with all elements set to a specific value
@@ -900,12 +668,12 @@ impl MPSGraph {
     /// ```rust
     /// let twos = graph.full(2.0, &[2, 3], MPSDataType::Float32);
     /// ```
-    pub fn full<T: MPSTensorDataScalar>(
+    fn full<T: MPSTensorDataScalar>(
         &self,
         value: T,
         shape: &[u64],
         data_type: MPSDataType,
-    ) -> MPSGraphTensor {
+    ) -> Tensor {
         // Convert shape from u64 to usize for MPSShape
         let usize_shape: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
 
@@ -913,7 +681,7 @@ impl MPSGraph {
         let shape_obj = MPSShape::from_slice(&usize_shape);
 
         // Create a filled tensor
-        self.constant_scalar_with_shape(value, &shape_obj, data_type)
+        Tensor(self.constant_scalar_with_shape(value, &shape_obj, data_type))
     }
 
     /// Create a tensor filled with random uniform values
@@ -938,13 +706,13 @@ impl MPSGraph {
     /// // Creates a 2x3 tensor with random values in the range [0.0, 1.0]
     /// let random = graph.create_random_uniform(0.0, 1.0, &[2, 3], MPSDataType::Float32);
     /// ```
-    pub fn create_random_uniform<T: MPSTensorDataScalar>(
+    fn create_random_uniform<T: MPSTensorDataScalar>(
         &self,
         lower_bound: T,
         upper_bound: T,
         shape: &[u64],
         data_type: MPSDataType,
-    ) -> MPSGraphTensor {
+    ) -> Tensor {
         // Convert shape from u64 to usize for MPSShape
         let usize_shape: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
 
@@ -963,7 +731,7 @@ impl MPSGraph {
         let range = self.constant_scalar(upper_f32 - lower_f32, data_type);
         let scaled = self.multiply(&random_uniform, &range, None);
         let offset = self.constant_scalar(lower_f32, data_type);
-        self.add(&scaled, &offset, None)
+        Tensor(self.add(&scaled, &offset, None))
     }
 
     /// Create a tensor filled with random normal values
@@ -988,13 +756,13 @@ impl MPSGraph {
     /// // Creates a 2x3 tensor with random values from N(0.0, 1.0)
     /// let random = graph.create_random_normal(0.0, 1.0, &[2, 3], MPSDataType::Float32);
     /// ```
-    pub fn create_random_normal<T: MPSTensorDataScalar>(
+    fn create_random_normal<T: MPSTensorDataScalar>(
         &self,
         mean: T,
         std_dev: T,
         shape: &[u64],
         data_type: MPSDataType,
-    ) -> MPSGraphTensor {
+    ) -> Tensor {
         // Convert shape from u64 to usize for MPSShape
         let usize_shape: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
 
@@ -1019,7 +787,7 @@ impl MPSGraph {
 
         // Simple approximation - not true normal distribution but serves as example
         let scaled = self.multiply(&uniform1, &std_dev_tensor, None);
-        self.add(&scaled, &mean_tensor, None)
+        Tensor(self.add(&scaled, &mean_tensor, None))
     }
 
     /// Create a tensor with a sequence of values starting from `start` with a step size of 1
@@ -1040,20 +808,317 @@ impl MPSGraph {
     /// // Creates a tensor with values [5, 6, 7, 8, 9]
     /// let arange = graph.arange(5, 5, MPSDataType::Int32);
     /// ```
-    pub fn arange<T: MPSTensorDataScalar>(
+    fn arange<T: MPSTensorDataScalar>(
         &self,
         start: T,
         count: u64,
         data_type: MPSDataType,
-    ) -> MPSGraphTensor {
+    ) -> Tensor {
         // For simple case, create the values directly
         let start_val = start.to_f64();
         let values: Vec<f64> = (0..count).map(|i| start_val + i as f64).collect();
 
         // Create constant tensor with the sequence
         let shape = vec![values.len()];
-        self.constant_with_shape(&values, &shape, data_type)
+        Tensor(self.constant_with_shape(&values, &shape, data_type))
     }
+}
+
+/// Functional API for tensor operations
+///
+/// These functions provide a functional programming style interface to tensor operations.
+/// They enable a consistent style for creating tensor computation graphs.
+///
+/// # Examples
+///
+/// ```rust
+/// // Method-based API (object-oriented style)
+/// let squared_method = tensor.square(None);
+///
+/// // Functional API (functional programming style)
+/// let squared_func = square(&tensor, None);
+/// ```
+
+/// Applies square operation to the tensor elements
+///
+/// Computes the square of each element in the tensor: f(x) = x²
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with each element squared
+///
+/// # Examples
+///
+/// ```rust
+/// let squared = square(&tensor, None);
+/// ```
+pub fn square(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.square(name)
+}
+
+/// Applies square root operation to the tensor elements
+///
+/// Computes the square root of each element in the tensor: f(x) = √x
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the square root of each element
+///
+/// # Examples
+///
+/// ```rust
+/// let root = sqrt(&tensor, None);
+/// ```
+pub fn sqrt(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.sqrt(name)
+}
+
+/// Applies absolute value operation to the tensor elements
+///
+/// Computes the absolute value of each element in the tensor: f(x) = |x|
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the absolute value of each element
+///
+/// # Examples
+///
+/// ```rust
+/// let absolute = abs(&tensor, None);
+/// let abs_diff = abs(&(&a - &b), None);
+/// ```
+pub fn abs(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.abs(name)
+}
+
+/// Applies exponential function to the tensor elements
+///
+/// Computes e^x for each element in the tensor
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the exponential of each element
+///
+/// # Examples
+///
+/// ```rust
+/// let exp_tensor = exp(&tensor, None);
+/// ```
+pub fn exp(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.exp(name)
+}
+
+/// Applies natural logarithm to the tensor elements
+///
+/// Computes ln(x) for each element in the tensor
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the natural logarithm of each element
+///
+/// # Examples
+///
+/// ```rust
+/// let log_tensor = log(&tensor, None);
+/// ```
+pub fn log(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.log(name)
+}
+
+/// Applies sigmoid activation function to the tensor elements
+///
+/// Computes σ(x) = 1/(1+e^(-x)) for each element in the tensor
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the sigmoid of each element
+///
+/// # Examples
+///
+/// ```rust
+/// let sigmoid_tensor = sigmoid(&tensor, None);
+/// ```
+pub fn sigmoid(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.sigmoid(name)
+}
+
+/// Applies tanh activation function to the tensor elements
+///
+/// Computes tanh(x) for each element in the tensor
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the tanh of each element
+///
+/// # Examples
+///
+/// ```rust
+/// let tanh_tensor = tanh(&tensor, None);
+/// ```
+pub fn tanh(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.tanh(name)
+}
+
+/// Applies ReLU activation function to the tensor elements
+///
+/// Computes max(0, x) for each element in the tensor
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with the ReLU activation applied
+///
+/// # Examples
+///
+/// ```rust
+/// let relu_tensor = relu(&tensor, None);
+/// ```
+pub fn relu(tensor: &Tensor, name: Option<&str>) -> Tensor {
+    tensor.relu(name)
+}
+
+/// Applies SiLU activation function (x * sigmoid(x))
+///
+/// SiLU (Sigmoid Linear Unit) is also known as the Swish activation function.
+/// It computes x * sigmoid(x) for each element in the tensor.
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name_prefix` - Optional prefix for the operation names
+///
+/// # Returns
+///
+/// A new tensor with the SiLU activation applied
+///
+/// # Examples
+///
+/// ```rust
+/// let activated = silu(&tensor, Some("activation"));
+/// ```
+pub fn silu(tensor: &Tensor, name_prefix: Option<&str>) -> Tensor {
+    tensor.silu(name_prefix)
+}
+
+/// Applies GELU activation function
+///
+/// GELU (Gaussian Error Linear Unit) is defined as x * Φ(x) where Φ is the cumulative
+/// distribution function of the standard normal distribution.
+/// This implementation uses the approximation: x * 0.5 * (1 + tanh(sqrt(2/π) * (x + 0.044715 * x^3)))
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `name_prefix` - Optional prefix for the operation names
+///
+/// # Returns
+///
+/// A new tensor with the GELU activation applied
+///
+/// # Examples
+///
+/// ```rust
+/// let activated = gelu(&tensor, Some("activation"));
+/// ```
+pub fn gelu(tensor: &Tensor, name_prefix: Option<&str>) -> Tensor {
+    tensor.gelu(name_prefix)
+}
+
+/// Element-wise power operation
+///
+/// Raises each element in the tensor to the specified power
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `exponent` - The exponent tensor
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with each element raised to the specified power
+///
+/// # Examples
+///
+/// ```rust
+/// let exponent = graph.constant_scalar(2.0, MPSDataType::Float32);
+/// let exponent_tensor = Tensor::new(exponent);
+/// let squared = pow(&tensor, &exponent_tensor, None);
+/// ```
+pub fn pow(
+    tensor: &Tensor,
+    exponent: &Tensor,
+    name: Option<&str>,
+) -> Tensor {
+    tensor.pow(exponent, name)
+}
+
+/// Clip tensor values to a specified range
+///
+/// # Parameters
+///
+/// * `tensor` - The input tensor
+/// * `min_val` - The minimum value tensor (elements smaller than this are clipped)
+/// * `max_val` - The maximum value tensor (elements larger than this are clipped)
+/// * `name` - Optional name for the operation
+///
+/// # Returns
+///
+/// A new tensor with values clipped to the specified range
+///
+/// # Examples
+///
+/// ```rust
+/// let min_val = Tensor::new(graph.constant_scalar(0.0, MPSDataType::Float32));
+/// let max_val = Tensor::new(graph.constant_scalar(1.0, MPSDataType::Float32));
+/// let clipped = clip(&tensor, &min_val, &max_val, None);
+/// ```
+pub fn clip(
+    tensor: &Tensor,
+    min_val: &Tensor,
+    max_val: &Tensor,
+    name: Option<&str>,
+) -> Tensor {
+    tensor.clip(min_val, max_val, name)
 }
 
 #[cfg(test)]
@@ -1066,12 +1131,12 @@ mod tests {
         let shape_dims = vec![2usize, 3usize];
         let shape = MPSShape::from_slice(&shape_dims);
 
-        let a = graph.placeholder(&shape, MPSDataType::Float32, None);
-        let b = graph.placeholder(&shape, MPSDataType::Float32, None);
+        let a = Tensor::new(graph.placeholder(&shape, MPSDataType::Float32, None));
+        let b = Tensor::new(graph.placeholder(&shape, MPSDataType::Float32, None));
 
         let sum = &a + &b;
 
-        assert_eq!(sum.data_type(), MPSDataType::Float32);
+        assert_eq!(sum.0.data_type(), MPSDataType::Float32);
         // Additional test logic would verify the actual computation with MPSGraphExecutable
     }
 }
