@@ -10,7 +10,6 @@ readme = "README.md"
 keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
 categories = ["api-bindings", "graphics", "science"]
 [lib]
-doctest = false
 
 [dependencies]
 objc2 = "0.6.0"

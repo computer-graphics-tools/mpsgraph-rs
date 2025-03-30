@@ -24,7 +24,7 @@ impl MPSGraph {
     /// Creates a softmax cross-entropy loss operation and returns the result tensor.
     ///
     /// The softmax cross-entropy operation computes:
-    /// ```
+    /// ```text
     /// loss = reduction(-labels * ln(softmax(source))), where
     /// softmax(source) = exp(source) / sum(exp(source))
     /// ```
@@ -44,8 +44,8 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
-    /// # use mpsgraph_rs::loss_ops::MPSGraphLossReductionType;
+    /// # use mpsgraph::prelude::*;
+    /// # use mpsgraph::loss_ops::MPSGraphLossReductionType;
     /// # let graph = MPSGraph::new();
     /// # let logits = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
     /// # let labels = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
@@ -102,8 +102,8 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
-    /// # use mpsgraph_rs::loss_ops::MPSGraphLossReductionType;
+    /// # use mpsgraph::prelude::*;
+    /// # use mpsgraph::loss_ops::MPSGraphLossReductionType;
     /// # let graph = MPSGraph::new();
     /// # let logits = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
     /// # let labels = graph.placeholder(&[2, 3], MPSDataType::Float32, None);

@@ -23,9 +23,10 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
+    /// # use mpsgraph::prelude::*;
     /// # let graph = MPSGraph::new();
-    /// # let x = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
+    /// # let shape = MPSShape::from_slice(&[2, 3]);
+    /// # let x = graph.placeholder(&shape, MPSDataType::Float32, None);
     /// # let y = graph.square(&x, None);
     /// // Calculate gradient dy/dx
     /// let grads = graph.gradient_for_primary_tensor(&y, &[x.clone()], None);

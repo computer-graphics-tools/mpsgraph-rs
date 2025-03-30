@@ -72,10 +72,10 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
+    /// # use mpsgraph::prelude::*;
     /// # let graph = MPSGraph::new();
-    /// # let weights = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let gradients = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
+    /// # let weights = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
+    /// # let gradients = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
     /// # let learning_rate = graph.constant_scalar(0.01, MPSDataType::Float32, None);
     ///
     /// // Update weights using SGD

@@ -11,7 +11,7 @@ impl MPSGraph {
     /// The indices are returned as a two-dimensional tensor of size `[number_of_nonzeros, input_rank]`.
     /// Each row in the result contains indices of a nonzero elements in input.
     /// For example:
-    /// ```
+    /// ```text
     /// tensor = [[ 1,  0, 3],
     ///           [ 0, 10, 0]]
     /// indices = [[ 0, 0],

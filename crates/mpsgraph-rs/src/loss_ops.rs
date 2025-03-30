@@ -24,9 +24,9 @@ impl MPSGraph {
     /// Creates a softmax cross-entropy loss operation and returns the result tensor.
     ///
     /// The softmax cross-entropy operation computes:
-    /// ```
-    /// loss = reduction(-labels * ln(softmax(source))), where
-    /// softmax(source) = exp(source) / sum(exp(source))
+    /// ```text
+    /// where softmax(source) = exp(source) / sum(exp(source))
+    /// loss = reduction(-labels * ln(softmax(source)))
     /// ```
     ///
     /// # Parameters
@@ -44,11 +44,12 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
-    /// # use mpsgraph_rs::loss_ops::MPSGraphLossReductionType;
+    /// # use mpsgraph::prelude::*;
+    /// # use mpsgraph::loss_ops::MPSGraphLossReductionType;
     /// # let graph = MPSGraph::new();
-    /// # let logits = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
-    /// # let labels = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
+    /// # let shape = MPSShape::from_slice(&[2, 3]);
+    /// # let logits = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let labels = graph.placeholder(&shape, MPSDataType::Float32, None);
     /// // Calculate softmax cross entropy loss
     /// let loss = graph.softmax_cross_entropy(
     ///     &logits,
@@ -102,14 +103,15 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
-    /// # use mpsgraph_rs::loss_ops::MPSGraphLossReductionType;
+    /// # use mpsgraph::prelude::*;
+    /// # use mpsgraph::loss_ops::MPSGraphLossReductionType;
     /// # let graph = MPSGraph::new();
-    /// # let logits = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
-    /// # let labels = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
+    /// # let shape = MPSShape::from_slice(&[2, 3]);
+    /// # let logits = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let labels = graph.placeholder(&shape, MPSDataType::Float32, None);
     /// # let loss = graph.softmax_cross_entropy(&logits, &labels, 1, MPSGraphLossReductionType::Mean, None);
     /// // Create gradient of 1.0 for the loss (scalar)
-    /// let grad_const = graph.constant_scalar(1.0, MPSDataType::Float32, None);
+    /// let grad_const = graph.constant_scalar(1.0, MPSDataType::Float32);
     ///
     /// // Calculate gradient of loss with respect to logits
     /// let logits_grad = graph.softmax_cross_entropy_gradient(

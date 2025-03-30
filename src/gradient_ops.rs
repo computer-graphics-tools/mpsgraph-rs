@@ -23,7 +23,7 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
+    /// # use mpsgraph::prelude::*;
     /// # let graph = MPSGraph::new();
     /// # let x = graph.placeholder(&[2, 3], MPSDataType::Float32, None);
     /// # let y = graph.square(&x, None);

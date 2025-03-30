@@ -619,7 +619,7 @@ impl MPSGraph {
     /// Creates a single-gate RNN operation without mask support.
     ///
     /// This operation returns tensors `h` and optionally `z` that are defined recursively as follows:
-    /// ```
+    /// ```text
     /// for t = 0 to T-1
     ///   z[t] = x[t] W^T + (h[t-1]) R^T + b
     ///   h[t] = activation( z[t] ), where

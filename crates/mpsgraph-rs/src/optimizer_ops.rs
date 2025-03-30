@@ -72,11 +72,12 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
+    /// # use mpsgraph::prelude::*;
     /// # let graph = MPSGraph::new();
-    /// # let weights = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let gradients = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let learning_rate = graph.constant_scalar(0.01, MPSDataType::Float32, None);
+    /// # let shape = MPSShape::from_slice(&[2, 3]);
+    /// # let weights = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let gradients = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let learning_rate = graph.constant_scalar(0.01, MPSDataType::Float32);
     ///
     /// // Update weights using SGD
     /// let updated_weights = graph.stochastic_gradient_descent(
@@ -116,7 +117,7 @@ impl MPSGraph {
     /// The Adam optimizer combines ideas from momentum and RMSProp, maintaining per-parameter
     /// momentum and velocity (squared gradients) to adaptively adjust learning rates.
     ///
-    /// ```
+    /// ```text
     /// m[t] = beta1 * m[t-1] + (1 - beta1) * g
     /// v[t] = beta2 * v[t-1] + (1 - beta2) * (g ^ 2)
     /// maxVel[t] = max(maxVel[t-1], v[t])
@@ -149,18 +150,21 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
+    /// # use mpsgraph::prelude::*;
     /// # let graph = MPSGraph::new();
-    /// # let weights = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let gradients = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let learning_rate = graph.constant_scalar(0.001, MPSDataType::Float32, None);
-    /// # let beta1 = graph.constant_scalar(0.9, MPSDataType::Float32, None);
-    /// # let beta2 = graph.constant_scalar(0.999, MPSDataType::Float32, None);
-    /// # let epsilon = graph.constant_scalar(1e-8, MPSDataType::Float32, None);
-    /// # let beta1_power = graph.constant_scalar(0.9, MPSDataType::Float32, None);
-    /// # let beta2_power = graph.constant_scalar(0.999, MPSDataType::Float32, None);
-    /// # let momentum = graph.zeros_like(&weights, None);
-    /// # let velocity = graph.zeros_like(&weights, None);
+    /// # let shape = MPSShape::from_slice(&[2, 3]);
+    /// # let weights = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let gradients = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let learning_rate = graph.constant_scalar(0.001, MPSDataType::Float32);
+    /// # let beta1 = graph.constant_scalar(0.9, MPSDataType::Float32);
+    /// # let beta2 = graph.constant_scalar(0.999, MPSDataType::Float32);
+    /// # let epsilon = graph.constant_scalar(1e-8, MPSDataType::Float32);
+    /// # let beta1_power = graph.constant_scalar(0.9, MPSDataType::Float32);
+    /// # let beta2_power = graph.constant_scalar(0.999, MPSDataType::Float32);
+    /// # let dims = shape.dimensions();
+    /// # let zeros = vec![0.0f32; dims.iter().product()];
+    /// # let momentum = graph.constant_with_shape(&zeros, &dims, MPSDataType::Float32);
+    /// # let velocity = graph.constant_with_shape(&zeros, &dims, MPSDataType::Float32);
     ///
     /// // Update weights using Adam
     /// let results = graph.adam(
@@ -243,7 +247,7 @@ impl MPSGraph {
     /// This is a variant of Adam where the learning rate adaptation is already applied
     /// to the learning rate tensor.
     ///
-    /// ```
+    /// ```text
     /// m[t] = beta1 * m[t-1] + (1 - beta1) * g
     /// v[t] = beta2 * v[t-1] + (1 - beta2) * (g ^ 2)
     /// maxVel[t] = max(maxVel[t-1], v[t])
@@ -374,11 +378,12 @@ impl MPSGraph {
     /// # Example
     ///
     /// ```no_run
-    /// # use mpsgraph_rs::prelude::*;
+    /// # use mpsgraph::prelude::*;
     /// # let graph = MPSGraph::new();
-    /// # let weights = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let gradients = graph.placeholder_with_shape(&[2, 3], MPSDataType::Float32, None);
-    /// # let learning_rate = graph.constant_scalar(0.01, MPSDataType::Float32, None);
+    /// # let shape = MPSShape::from_slice(&[2, 3]);
+    /// # let weights = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let gradients = graph.placeholder(&shape, MPSDataType::Float32, None);
+    /// # let learning_rate = graph.constant_scalar(0.01, MPSDataType::Float32);
     ///
     /// // Create a variable operation for the weights
     /// let weights_var = graph.variable_op_for_tensor(&weights, Some("weights_var"));
