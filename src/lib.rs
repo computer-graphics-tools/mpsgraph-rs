@@ -64,7 +64,6 @@ pub use core::{
     MPSDataType, MPSGraphExecutionStage, MPSGraphOptimization, MPSGraphOptimizationProfile,
     MPSGraphOptions,
 };
-pub use graph::MPSTensorDataScalar;
 pub use data_types::{MPSGraphShapedType, MPSGraphType};
 pub use depthwise_convolution_ops::{
     MPSGraphDepthwiseConvolution2DOpDescriptor, MPSGraphDepthwiseConvolution3DOpDescriptor,
@@ -74,6 +73,7 @@ pub use executable::{
     MPSGraphCompilationDescriptor, MPSGraphExecutable, MPSGraphExecutionDescriptor,
 };
 pub use graph::MPSGraph;
+pub use graph::MPSTensorDataScalar;
 pub use loss_ops::MPSGraphLossReductionType;
 pub use operation::MPSGraphOperation;
 pub use random_ops::{
@@ -106,7 +106,6 @@ pub mod prelude {
         MPSDataType, MPSGraphExecutionStage, MPSGraphOptimization, MPSGraphOptimizationProfile,
         MPSGraphOptions,
     };
-    pub use crate::graph::MPSTensorDataScalar;
     pub use crate::data_types::{MPSGraphShapedType, MPSGraphType};
     pub use crate::depthwise_convolution_ops::{
         MPSGraphDepthwiseConvolution2DOpDescriptor, MPSGraphDepthwiseConvolution3DOpDescriptor,
@@ -116,6 +115,7 @@ pub mod prelude {
         MPSGraphCompilationDescriptor, MPSGraphExecutable, MPSGraphExecutionDescriptor,
     };
     pub use crate::graph::MPSGraph;
+    pub use crate::graph::MPSTensorDataScalar;
     pub use crate::loss_ops::MPSGraphLossReductionType;
     pub use crate::operation::MPSGraphOperation;
     pub use crate::random_ops::{
@@ -137,14 +137,14 @@ pub mod prelude {
     pub use crate::scatter_nd_ops::MPSGraphScatterMode;
     pub use crate::sparse_ops::{MPSGraphCreateSparseOpDescriptor, MPSGraphSparseStorageType};
     pub use crate::stencil_ops::{MPSGraphReductionMode, MPSGraphStencilOpDescriptor};
-    
+
     // Include sugar API when the feature is enabled
     #[cfg(feature = "sugar_api")]
     pub use crate::sugar;
-    
+
     // Re-export functional API when the feature is enabled
     #[cfg(feature = "sugar_api")]
     pub use crate::sugar::{
-        abs, clip, exp, gelu, log, pow, relu, sigmoid, silu, sqrt, square, tanh
+        abs, clip, exp, gelu, log, pow, relu, sigmoid, silu, sqrt, square, tanh,
     };
 }

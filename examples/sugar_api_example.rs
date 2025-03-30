@@ -29,40 +29,40 @@ fn main() {
     let _product = &a * &b;
     let _division = &a / &b;
     let _negated = -&a;
-    
-    // 2. Functional operations 
+
+    // 2. Functional operations
     let _squared = square(&a, None);
     let _sqrt_a = sqrt(&a, None);
     let _abs_diff = abs(&(&a - &b), None);
 
     // 3. Function composition
     let _complex_expr = abs(&sqrt(&(&a + &b), None), None);
-    
+
     // 4. Activation functions
     let _silu_a = silu(&a, None);
     let _gelu_a = gelu(&a, None);
-    
+
     // 5. Tensor creation
     let _zeros = graph.zeros(&[2, 3], MPSDataType::Float32);
     let _ones = graph.ones(&[2, 3], MPSDataType::Float32);
     let _random = graph.create_random_uniform(0.0, 1.0, &[2, 2], MPSDataType::Float32);
-    
+
     // 6. Constants and operations with constants
     let half = graph.constant_scalar(0.5, MPSDataType::Float32);
     let _scaled = &a * &half;
-    
+
     // 7. Additional operations
     let _exp_a = exp(&a, None);
     let _log_a = log(&a, None);
-    
+
     // 8. Operations with multiple inputs
     let min_val = graph.constant_scalar(0.0, MPSDataType::Float32);
     let max_val = graph.constant_scalar(1.0, MPSDataType::Float32);
     let _clipped_a = clip(&a, &min_val, &max_val, None);
-    
+
     // 9. Creating sequence data
     let _sequence = graph.arange(5.0, 5, MPSDataType::Float32);
-    
+
     println!("\nSuccessfully created operations using functional style API:");
     println!("- Basic arithmetic: &a + &b, &a - &b, &a * &b, &a / &b, -&a");
     println!("- Simple operations: square(&a), sqrt(&a), abs(&tensor)");

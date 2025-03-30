@@ -23,7 +23,7 @@ use std::fmt;
 pub trait MPSTensorDataScalar: Copy {
     /// Convert a scalar value to f64 for use with Objective-C scalar methods
     fn to_f64(&self) -> f64;
-    
+
     /// Convert a slice of values to an NSData object that can be used with MPSGraph
     fn to_nsdata(values: &[Self]) -> Retained<NSData>;
 }
@@ -33,7 +33,7 @@ impl MPSTensorDataScalar for f32 {
     fn to_f64(&self) -> f64 {
         *self as f64
     }
-    
+
     fn to_nsdata(values: &[Self]) -> Retained<NSData> {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
@@ -48,7 +48,7 @@ impl MPSTensorDataScalar for f64 {
     fn to_f64(&self) -> f64 {
         *self
     }
-    
+
     fn to_nsdata(values: &[Self]) -> Retained<NSData> {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
@@ -63,7 +63,7 @@ impl MPSTensorDataScalar for i32 {
     fn to_f64(&self) -> f64 {
         *self as f64
     }
-    
+
     fn to_nsdata(values: &[Self]) -> Retained<NSData> {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
@@ -78,7 +78,7 @@ impl MPSTensorDataScalar for i64 {
     fn to_f64(&self) -> f64 {
         *self as f64 // This may lose precision for large values
     }
-    
+
     fn to_nsdata(values: &[Self]) -> Retained<NSData> {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
@@ -93,7 +93,7 @@ impl MPSTensorDataScalar for u32 {
     fn to_f64(&self) -> f64 {
         *self as f64
     }
-    
+
     fn to_nsdata(values: &[Self]) -> Retained<NSData> {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
@@ -108,7 +108,7 @@ impl MPSTensorDataScalar for u64 {
     fn to_f64(&self) -> f64 {
         *self as f64 // This may lose precision for large values
     }
-    
+
     fn to_nsdata(values: &[Self]) -> Retained<NSData> {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
@@ -192,7 +192,6 @@ impl MPSGraph {
         }
     }
 
-    
     // This is a convenience method not in the original API
     // Kept for compatibility with existing code
     /// Creates a constant tensor with given values and dimensions
@@ -207,7 +206,12 @@ impl MPSGraph {
     }
 
     /// Creates a constant tensor with given values and shape
-    pub fn constant<T: MPSTensorDataScalar>(&self, values: &[T], shape: &MPSShape, data_type: MPSDataType) -> MPSGraphTensor {
+    pub fn constant<T: MPSTensorDataScalar>(
+        &self,
+        values: &[T],
+        shape: &MPSShape,
+        data_type: MPSDataType,
+    ) -> MPSGraphTensor {
         unsafe {
             // Create NSData with buffer values
             let data = T::to_nsdata(values);
@@ -229,7 +233,6 @@ impl MPSGraph {
         }
     }
 
-    
     /// Creates a constant with given scalar value (wraps constantWithScalar:dataType:)
     pub fn constant_scalar<T: MPSTensorDataScalar>(
         &self,
@@ -247,7 +250,7 @@ impl MPSGraph {
             MPSGraphTensor(tensor)
         }
     }
-    
+
     /// Creates a constant with given scalar value and shape (wraps constantWithScalar:shape:dataType:)
     pub fn constant_scalar_with_shape<T: MPSTensorDataScalar>(
         &self,
