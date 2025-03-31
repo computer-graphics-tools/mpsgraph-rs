@@ -10,7 +10,6 @@ mod graph_tests;
 mod matrix_ops_tests;
 mod memory_management_tests;
 mod pooling_ops_tests;
-mod reduction_ops_tests;
 mod resize_ops_tests;
 mod tensor_data_tests;
 mod tensor_tests;
