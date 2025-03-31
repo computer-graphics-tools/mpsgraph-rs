@@ -43,10 +43,8 @@ doctest = true
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-# For local development
-mpsgraph = { path = "../mpsgraph-rs" }
-# For publication (uncomment when publishing)
-# mpsgraph = { git = "https://github.com/computer-graphics-tools/mpsgraph-rs", package = "mpsgraph" }
+# Mixed approach: Uses local path during development, but ensures compatibility with published version
+mpsgraph = { path = "../mpsgraph-rs", version = "0.1.0" }
 objc2 = "0.6.0"
 objc2-foundation = "0.3.0"
 
