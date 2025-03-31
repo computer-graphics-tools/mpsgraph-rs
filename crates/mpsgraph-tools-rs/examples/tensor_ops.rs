@@ -18,7 +18,7 @@ fn main() {
     // Create graph and input tensors
     let graph = MPSGraph::new();
     let shape = MPSShape::from_slice(&[2usize, 3usize]);
-    
+
     // Use the GraphExt trait to create tensors directly
     let a = graph.placeholder_tensor(&shape, MPSDataType::Float32, Some("a"));
     let b = graph.placeholder_tensor(&shape, MPSDataType::Float32, Some("b"));

@@ -13,19 +13,52 @@ keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
 categories = ["api-bindings", "graphics", "science"]
 rust-version = "1.85"
 
+# Apple platform specific
+links = "MetalPerformanceShadersGraph"
+
+[package.metadata]
+# Default target is Apple Silicon macOS
+default-target = "aarch64-apple-darwin"
+
+# Specify which targets are supported
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "aarch64-apple-ios",
+    "x86_64-apple-ios",
+    "aarch64-apple-ios-sim",
+    "aarch64-apple-tvos",
+    "x86_64-apple-tvos",
+    "aarch64-apple-watchos",
+    "x86_64-apple-watchos",
+    "aarch64-apple-ios-macabi",
+    "x86_64-apple-ios-macabi",
+    "aarch64-apple-visionos",
+]
+
 [lib]
-doctest = false
+# Enable doctests
+doctest = true
+# Make the library available as both rlib and static lib
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-mpsgraph = { version = "0.1.0", path = "../mpsgraph-rs" }
+# For local development
+mpsgraph = { path = "../mpsgraph-rs" }
+# For publication (uncomment when publishing)
+# mpsgraph = { git = "https://github.com/computer-graphics-tools/mpsgraph-rs", package = "mpsgraph" }
 objc2 = "0.6.0"
 objc2-foundation = "0.3.0"
 
+[target.'cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos", target_os = "watchos", target_os = "visionos"))'.dependencies]
+# MacOS/iOS specific dependencies would go here if needed
+
 [dev-dependencies]
-rand = "0.8"
+rand = "0.8.0"
 
 [features]
 default = []
+local-dev = []
 
 [[example]]
 name = "tensor_ops"

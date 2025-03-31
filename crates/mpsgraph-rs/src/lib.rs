@@ -2,7 +2,7 @@
 extern crate objc2;
 
 /// Rust bindings for Apple's Metal Performance Shaders Graph (MPSGraph) API.
-/// 
+///
 /// This library provides Rust bindings for the MPSGraph API, which is part of Apple's
 /// Metal Performance Shaders framework.
 

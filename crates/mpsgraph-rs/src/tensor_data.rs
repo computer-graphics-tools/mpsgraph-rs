@@ -562,16 +562,22 @@ impl Drop for MPSGraphTensorData {
     fn drop(&mut self) {
         if !self.0.is_null() {
             // For debugging: Print info but don't release
-            println!("MPSGraphTensorData dropping with ptr: {:p} - SKIPPING RELEASE", self.0);
-            
+            println!(
+                "MPSGraphTensorData dropping with ptr: {:p} - SKIPPING RELEASE",
+                self.0
+            );
+
             // Set the pointer to null to prevent further access
             let ptr = self.0;
             self.0 = std::ptr::null_mut();
-            
+
             // MEMORY LEAK: We're deliberately not releasing the object to avoid the crash
             // objc2::ffi::objc_release(ptr as *mut _);
-            
-            println!("MPSGraphTensorData NOT released: {:p} (skipped to avoid crash)", ptr);
+
+            println!(
+                "MPSGraphTensorData NOT released: {:p} (skipped to avoid crash)",
+                ptr
+            );
         }
     }
 }
@@ -581,13 +587,16 @@ impl Clone for MPSGraphTensorData {
         if !self.0.is_null() {
             // For debugging, just print info and don't retain
             println!("MPSGraphTensorData cloning ptr: {:p}", self.0);
-            
+
             // Don't retain, just copy the pointer
             // let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
             let obj = self.0;
-            
-            println!("MPSGraphTensorData cloned with ptr: {:p} (no retain for debug)", obj);
-            
+
+            println!(
+                "MPSGraphTensorData cloned with ptr: {:p} (no retain for debug)",
+                obj
+            );
+
             MPSGraphTensorData(obj)
         } else {
             println!("MPSGraphTensorData cloning NULL pointer");

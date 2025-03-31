@@ -4,6 +4,7 @@ A high-level Rust API for working with Apple's Metal Performance Shaders Graph (
 
 ## Features
 
+- **Complete Re-export**: All functionality from the vanilla mpsgraph crate is re-exported
 - **Tensor Operations API**: Ergonomic, functional-style tensor operations with operator overloading
 - **Utility Functions**: Convenience methods for common tensor operations
 - **Tensor Creation Helpers**: Easy creation of tensors with different initialization patterns
@@ -11,7 +12,13 @@ A high-level Rust API for working with Apple's Metal Performance Shaders Graph (
 
 ## Requirements
 
-- macOS, iOS, or other Apple platform that supports Metal
+- Apple platforms only:
+  - macOS (both Apple Silicon and Intel)
+  - iOS
+  - tvOS
+  - watchOS
+  - visionOS
+- Metal-supporting GPU
 - Rust 1.85 or newer
 
 ## Installation
@@ -19,9 +26,15 @@ A high-level Rust API for working with Apple's Metal Performance Shaders Graph (
 Add the following to your `Cargo.toml`:
 
 ```toml
+# After the crates are published:
 [dependencies]
 mpsgraph = "0.1.0"
 mpsgraph-tools = "0.1.0"
+
+# For development from git:
+[dependencies]
+mpsgraph = { git = "https://github.com/computer-graphics-tools/mpsgraph-rs", package = "mpsgraph" }
+mpsgraph-tools = { git = "https://github.com/computer-graphics-tools/mpsgraph-rs", package = "mpsgraph-tools" }
 ```
 
 ## Example

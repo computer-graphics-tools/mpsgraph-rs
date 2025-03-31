@@ -12,15 +12,16 @@ impl MPSGraph {
         unsafe {
             // For debugging - always ignore the name parameter and use null
             // This avoids the NSString issues that might be causing crashes
-            
+
             // Call the ReLU operation with null name
-            let tensor: *mut AnyObject = msg_send![self.0, reLUWithTensor: x.0, name: std::ptr::null_mut::<AnyObject>()];
-            
+            let tensor: *mut AnyObject =
+                msg_send![self.0, reLUWithTensor: x.0, name: std::ptr::null_mut::<AnyObject>()];
+
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
                 // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 println!("ReLU result NOT retained (skipped for debugging)");
-                
+
                 // Return the wrapped tensor without retaining
                 MPSGraphTensor(tensor)
             } else {
@@ -58,15 +59,16 @@ impl MPSGraph {
         unsafe {
             // For debugging - always ignore the name parameter and use null
             // This avoids the NSString issues that might be causing crashes
-            
+
             // Call the Sigmoid operation with null name
-            let tensor: *mut AnyObject = msg_send![self.0, sigmoidWithTensor: x.0, name: std::ptr::null_mut::<AnyObject>()];
-            
+            let tensor: *mut AnyObject =
+                msg_send![self.0, sigmoidWithTensor: x.0, name: std::ptr::null_mut::<AnyObject>()];
+
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
                 // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 println!("Sigmoid result NOT retained (skipped for debugging)");
-                
+
                 // Return the wrapped tensor without retaining
                 MPSGraphTensor(tensor)
             } else {
@@ -104,15 +106,16 @@ impl MPSGraph {
         unsafe {
             // For debugging - always ignore the name parameter and use null
             // This avoids the NSString issues that might be causing crashes
-            
+
             // Call the Tanh operation with null name
-            let tensor: *mut AnyObject = msg_send![self.0, tanhWithTensor: x.0, name: std::ptr::null_mut::<AnyObject>()];
-            
+            let tensor: *mut AnyObject =
+                msg_send![self.0, tanhWithTensor: x.0, name: std::ptr::null_mut::<AnyObject>()];
+
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
                 // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 println!("Tanh result NOT retained (skipped for debugging)");
-                
+
                 // Return the wrapped tensor without retaining
                 MPSGraphTensor(tensor)
             } else {
@@ -127,18 +130,18 @@ impl MPSGraph {
         unsafe {
             // For debugging - always ignore the name parameter and use null
             // This avoids the NSString issues that might be causing crashes
-            
+
             // Call the SoftMax operation with null name
-            let tensor: *mut AnyObject = msg_send![self.0, softMaxWithTensor: x.0, 
+            let tensor: *mut AnyObject = msg_send![self.0, softMaxWithTensor: x.0,
                 axis: axis,
                 name: std::ptr::null_mut::<AnyObject>()
             ];
-            
+
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
                 // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 println!("Softmax result NOT retained (skipped for debugging)");
-                
+
                 // Return the wrapped tensor without retaining
                 MPSGraphTensor(tensor)
             } else {
@@ -174,22 +177,27 @@ impl MPSGraph {
     }
 
     /// Creates a Leaky ReLU operation
-    pub fn leaky_relu(&self, x: &MPSGraphTensor, alpha: f32, _name: Option<&str>) -> MPSGraphTensor {
+    pub fn leaky_relu(
+        &self,
+        x: &MPSGraphTensor,
+        alpha: f32,
+        _name: Option<&str>,
+    ) -> MPSGraphTensor {
         unsafe {
             // For debugging - always ignore the name parameter and use null
             // This avoids the NSString issues that might be causing crashes
-            
+
             // Call the Leaky ReLU operation with null name
             let tensor: *mut AnyObject = msg_send![self.0, leakyReLUWithTensor: x.0,
                 alpha: alpha as f64,
                 name: std::ptr::null_mut::<AnyObject>()
             ];
-            
+
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
                 // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
                 println!("Leaky ReLU result NOT retained (skipped for debugging)");
-                
+
                 // Return the wrapped tensor without retaining
                 MPSGraphTensor(tensor)
             } else {
