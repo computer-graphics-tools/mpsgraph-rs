@@ -1064,7 +1064,7 @@ impl GraphExt for MPSGraph {
 /// // Functional API (functional programming style)
 /// let squared_func = square(&tensor, None);
 /// ```
-
+///
 /// Applies square operation to the tensor elements
 ///
 /// Computes the square of each element in the tensor: f(x) = x²

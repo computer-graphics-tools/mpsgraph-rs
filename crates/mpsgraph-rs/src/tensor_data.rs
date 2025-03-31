@@ -47,7 +47,7 @@ impl MPSGraphTensorData {
             ));
             // Get the raw pointer to NSData
             let ns_data_ptr: *mut AnyObject =
-                std::mem::transmute::<&NSData, *mut AnyObject>(ns_data.as_ref());
+                ns_data.as_ref() as *const objc2_foundation::NSData as *mut AnyObject;
 
             // Create MPSGraphDevice from MTLDevice
             let mps_device_class_name = c"MPSGraphDevice";

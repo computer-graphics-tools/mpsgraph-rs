@@ -14,6 +14,12 @@ pub struct MPSGraphType(pub(crate) *mut AnyObject);
 unsafe impl Send for MPSGraphType {}
 unsafe impl Sync for MPSGraphType {}
 
+impl Default for MPSGraphType {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MPSGraphType {
     /// Create a new MPSGraphType
     pub fn new() -> Self {
@@ -226,7 +232,7 @@ impl MPSShapeDescriptor {
 
     /// Get the total number of elements in this shape
     pub fn element_count(&self) -> u64 {
-        self.dimensions.iter().fold(1, |acc, &dim| acc * dim)
+        self.dimensions.iter().product::<u64>()
     }
 
     /// Get the total size in bytes for this shape

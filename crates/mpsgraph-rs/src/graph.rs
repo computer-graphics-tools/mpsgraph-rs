@@ -1,3 +1,5 @@
+#![allow(clippy::let_and_return)]
+
 use crate::command_buffer::MPSCommandBuffer;
 use crate::core::{AsRawObject, MPSDataType, MPSGraphOptions};
 use crate::device::MPSGraphDevice;
@@ -38,7 +40,7 @@ impl MPSTensorDataScalar for f32 {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
                 values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<f32>(),
+                std::mem::size_of_val(values),
             ))
         }
     }
@@ -53,7 +55,7 @@ impl MPSTensorDataScalar for f64 {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
                 values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<f64>(),
+                std::mem::size_of_val(values),
             ))
         }
     }
@@ -68,7 +70,7 @@ impl MPSTensorDataScalar for i32 {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
                 values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<i32>(),
+                std::mem::size_of_val(values),
             ))
         }
     }
@@ -83,7 +85,7 @@ impl MPSTensorDataScalar for i64 {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
                 values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<i64>(),
+                std::mem::size_of_val(values),
             ))
         }
     }
@@ -98,7 +100,7 @@ impl MPSTensorDataScalar for u32 {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
                 values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<u32>(),
+                std::mem::size_of_val(values),
             ))
         }
     }
@@ -113,7 +115,7 @@ impl MPSTensorDataScalar for u64 {
         unsafe {
             NSData::with_bytes(std::slice::from_raw_parts(
                 values.as_ptr() as *const u8,
-                values.len() * std::mem::size_of::<u64>(),
+                std::mem::size_of_val(values),
             ))
         }
     }
@@ -218,7 +220,7 @@ impl MPSGraph {
 
             // Get raw NSData pointer for Objective-C
             let data_ptr: *mut AnyObject =
-                std::mem::transmute::<&NSData, *mut AnyObject>(data.as_ref());
+                data.as_ref() as *const objc2_foundation::NSData as *mut AnyObject;
 
             // Create constant tensor
             let tensor: *mut AnyObject = msg_send![

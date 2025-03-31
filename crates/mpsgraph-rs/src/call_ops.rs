@@ -43,10 +43,8 @@ impl MPSGraph {
 
             // Create NSArray from references
             let array = NSArray::from_slice(&refs);
-            let ns_array: *mut AnyObject = std::mem::transmute::<
-                &NSArray<objc2::runtime::AnyObject>,
-                *mut AnyObject,
-            >(array.as_ref());
+            let ns_array: *mut AnyObject =
+                array.as_ref() as *const objc2_foundation::NSArray as *mut AnyObject;
             ns_array
         };
 
@@ -60,10 +58,8 @@ impl MPSGraph {
 
             // Create NSArray from references
             let array = NSArray::from_slice(&refs);
-            let ns_array: *mut AnyObject = std::mem::transmute::<
-                &NSArray<objc2::runtime::AnyObject>,
-                *mut AnyObject,
-            >(array.as_ref());
+            let ns_array: *mut AnyObject =
+                array.as_ref() as *const objc2_foundation::NSArray as *mut AnyObject;
             ns_array
         };
 
@@ -93,7 +89,8 @@ impl MPSGraph {
                 if i < count {
                     let obj: &objc2::runtime::AnyObject = msg_send![array_ref, objectAtIndex: i,];
                     // Get the object and convert it to a raw pointer
-                    let tensor_ptr: *mut AnyObject = std::mem::transmute(obj);
+                    let tensor_ptr: *mut AnyObject =
+                        obj as *const objc2::runtime::AnyObject as *mut AnyObject;
                     let tensor = objc2::ffi::objc_retain(tensor_ptr as *mut _);
                     results.push(MPSGraphTensor(tensor));
                 }

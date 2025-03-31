@@ -88,16 +88,26 @@ impl Clone for MPSGraphConvolution3DOpDescriptor {
     }
 }
 
+impl Default for MPSGraphConvolution2DOpDescriptor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MPSGraphConvolution2DOpDescriptor {
     /// Creates a new descriptor with default parameters
     pub fn new() -> Self {
         unsafe {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphConvolution2DOpDescriptor").unwrap();
             let desc: *mut AnyObject = msg_send![cls, descriptor];
-            MPSGraphConvolution2DOpDescriptor(
-                objc2::ffi::objc_retain(desc as *mut _)
-            )
+            MPSGraphConvolution2DOpDescriptor(objc2::ffi::objc_retain(desc as *mut _))
         }
+    }
+}
+
+impl Default for MPSGraphConvolution3DOpDescriptor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -107,9 +117,7 @@ impl MPSGraphConvolution3DOpDescriptor {
         unsafe {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphConvolution3DOpDescriptor").unwrap();
             let desc: *mut AnyObject = msg_send![cls, descriptor];
-            MPSGraphConvolution3DOpDescriptor(
-                objc2::ffi::objc_retain(desc as *mut _)
-            )
+            MPSGraphConvolution3DOpDescriptor(objc2::ffi::objc_retain(desc as *mut _))
         }
     }
 }

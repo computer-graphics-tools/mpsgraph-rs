@@ -36,10 +36,8 @@ pub fn create_ns_array_from_pointers(objects: &[*mut AnyObject]) -> *mut AnyObje
 
         // Create array from references
         let array = NSArray::from_slice(&refs);
-        let ptr: *mut AnyObject = std::mem::transmute::<
-            &NSArray<objc2::runtime::AnyObject>,
-            *mut AnyObject,
-        >(array.as_ref());
+        let ptr: *mut AnyObject =
+            array.as_ref() as *const objc2_foundation::NSArray as *mut AnyObject;
 
         objc2::ffi::objc_retain(ptr as *mut _);
         ptr
@@ -62,8 +60,9 @@ pub fn create_ns_array_from_i64_slice(values: &[i64]) -> *mut AnyObject {
         let array = NSArray::from_slice(&number_refs);
 
         // Get pointer to the array and retain it manually
-        let ptr: *mut AnyObject =
-            std::mem::transmute::<&NSArray<NSNumber>, *mut AnyObject>(array.as_ref());
+        let ptr: *mut AnyObject = array.as_ref()
+            as *const objc2_foundation::NSArray<objc2_foundation::NSNumber>
+            as *mut AnyObject;
         objc2::ffi::objc_retain(ptr as *mut _);
 
         ptr

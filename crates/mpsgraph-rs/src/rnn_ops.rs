@@ -990,8 +990,7 @@ impl MPSGraph {
             let output_state_tensor: *mut AnyObject = msg_send![result, objectAtIndex: 1];
 
             let output_tensor = objc2::ffi::objc_retain(output_tensor as *mut _);
-            let output_state_tensor =
-                objc2::ffi::objc_retain(output_state_tensor as *mut _);
+            let output_state_tensor = objc2::ffi::objc_retain(output_state_tensor as *mut _);
 
             (
                 MPSGraphTensor(output_tensor),

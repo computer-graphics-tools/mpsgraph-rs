@@ -55,8 +55,9 @@ impl MPSShape {
             let array = NSArray::from_slice(&number_refs);
 
             // Get pointer to the array and retain it manually
-            let ptr: *mut AnyObject =
-                std::mem::transmute::<&NSArray<NSNumber>, *mut AnyObject>(array.as_ref());
+            let ptr: *mut AnyObject = array.as_ref()
+                as *const objc2_foundation::NSArray<objc2_foundation::NSNumber>
+                as *mut AnyObject;
             objc2::ffi::objc_retain(ptr as *mut _);
 
             MPSShape(ptr)

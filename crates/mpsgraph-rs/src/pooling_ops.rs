@@ -322,10 +322,9 @@ impl MPSGraphPooling4DOpDescriptor {
             let array = objc2_foundation::NSArray::from_slice(&number_refs);
 
             // Get pointer to the array and retain it manually
-            let ptr: *mut AnyObject = std::mem::transmute::<
-                &objc2_foundation::NSArray<objc2_foundation::NSNumber>,
-                *mut AnyObject,
-            >(array.as_ref());
+            let ptr: *mut AnyObject = array.as_ref()
+                as *const objc2_foundation::NSArray<objc2_foundation::NSNumber>
+                as *mut AnyObject;
             objc2::ffi::objc_retain(ptr as *mut _);
 
             ptr
@@ -391,10 +390,8 @@ impl MPSGraph {
             let pooling_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 0u64];
             let indices_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 1u64];
 
-            let pooling_tensor =
-                objc2::ffi::objc_retain(pooling_tensor as *mut _);
-            let indices_tensor =
-                objc2::ffi::objc_retain(indices_tensor as *mut _);
+            let pooling_tensor = objc2::ffi::objc_retain(pooling_tensor as *mut _);
+            let indices_tensor = objc2::ffi::objc_retain(indices_tensor as *mut _);
 
             // Release the array
             objc2::ffi::objc_release(result as *mut _);
@@ -656,10 +653,8 @@ impl MPSGraph {
             let pooling_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 0];
             let indices_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 1];
 
-            let pooling_tensor =
-                objc2::ffi::objc_retain(pooling_tensor as *mut _);
-            let indices_tensor =
-                objc2::ffi::objc_retain(indices_tensor as *mut _);
+            let pooling_tensor = objc2::ffi::objc_retain(pooling_tensor as *mut _);
+            let indices_tensor = objc2::ffi::objc_retain(indices_tensor as *mut _);
 
             // Release the array
             objc2::ffi::objc_release(result as *mut _);
