@@ -20,6 +20,7 @@ pub mod tensor_ops;
 
 /// Convenience prelude module with most commonly used items
 pub mod prelude {
+    // Tensor operations
     pub use crate::tensor_ops;
     pub use crate::tensor_ops::{
         Tensor, GraphExt,
@@ -32,3 +33,6 @@ pub mod prelude {
         MPSGraphTensorData, MPSShape, MPSTensorDataScalar,
     };
 }
+
+#[cfg(test)]
+mod tests;

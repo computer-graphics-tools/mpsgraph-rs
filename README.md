@@ -37,6 +37,7 @@ cargo run -p mpsgraph --example simple_compile
 ```
 
 Available examples:
+
 - matmul: Matrix multiplication using MPSGraph
 - simple_compile: Simple graph compilation and execution
 - type_test: Test of data type conversions
@@ -51,6 +52,7 @@ cargo run -p mpsgraph-tools --example tensor_ops
 ```
 
 This example demonstrates:
+
 - Operator overloading for tensor arithmetic
 - Functional-style tensor operations
 - Activation functions and other neural network operations

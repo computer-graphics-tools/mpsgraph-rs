@@ -15,7 +15,7 @@ use mpsgraph::{MPSDataType, MPSGraph, MPSGraphTensor, MPSShape, MPSTensorDataSca
 use std::ops;
 
 /// A wrapper around MPSGraphTensor to enable operations with standard operators
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tensor(pub MPSGraphTensor);
 
 impl Tensor {
@@ -65,7 +65,7 @@ impl AsRef<MPSGraphTensor> for Tensor {
 /// let sum = &tensor1 + &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Add<&'b Tensor> for &'a Tensor {
+impl<'b> ops::Add<&'b Tensor> for &Tensor {
     type Output = Tensor;
 
     fn add(self, rhs: &'b Tensor) -> Self::Output {
@@ -87,7 +87,7 @@ impl<'a, 'b> ops::Add<&'b Tensor> for &'a Tensor {
 /// let difference = &tensor1 - &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Sub<&'b Tensor> for &'a Tensor {
+impl<'b> ops::Sub<&'b Tensor> for &Tensor {
     type Output = Tensor;
 
     fn sub(self, rhs: &'b Tensor) -> Self::Output {
@@ -109,7 +109,7 @@ impl<'a, 'b> ops::Sub<&'b Tensor> for &'a Tensor {
 /// let product = &tensor1 * &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Mul<&'b Tensor> for &'a Tensor {
+impl<'b> ops::Mul<&'b Tensor> for &Tensor {
     type Output = Tensor;
 
     fn mul(self, rhs: &'b Tensor) -> Self::Output {
@@ -131,7 +131,7 @@ impl<'a, 'b> ops::Mul<&'b Tensor> for &'a Tensor {
 /// let quotient = &tensor1 / &tensor2;
 /// // tensor1 and tensor2 can still be used in subsequent operations
 /// ```
-impl<'a, 'b> ops::Div<&'b Tensor> for &'a Tensor {
+impl<'b> ops::Div<&'b Tensor> for &Tensor {
     type Output = Tensor;
 
     fn div(self, rhs: &'b Tensor) -> Self::Output {
@@ -160,6 +160,45 @@ impl ops::Neg for &Tensor {
         let op = self.0.operation();
         let graph = op.graph();
         Tensor(graph.negative(&self.0, None))
+    }
+}
+
+/// Implements unary negation for tensor values
+///
+/// Enables using the unary `-` operator with tensor values.
+/// Equivalent to calling `graph.negative(tensor, None)`.
+///
+/// # Examples
+///
+/// ```rust
+/// let negated = -tensor.clone();
+/// ```
+impl ops::Neg for Tensor {
+    type Output = Tensor;
+
+    fn neg(self) -> Self::Output {
+        let op = self.0.operation();
+        let graph = op.graph();
+        Tensor(graph.negative(&self.0, None))
+    }
+}
+
+/// Implements multiplication for tensor reference and reference to reference
+///
+/// This allows expressions like `&(&a.square(None)) * &b` to work.
+///
+/// # Examples
+///
+/// ```rust
+/// let result = &(&a.square(None)) * &b;
+/// ```
+impl<'a, 'b> ops::Mul<&'b Tensor> for &'a &'a Tensor {
+    type Output = Tensor;
+
+    fn mul(self, rhs: &'b Tensor) -> Self::Output {
+        let op = self.0.operation();
+        let graph = op.graph();
+        Tensor(graph.multiply(&self.0, &rhs.0, None))
     }
 }
 
