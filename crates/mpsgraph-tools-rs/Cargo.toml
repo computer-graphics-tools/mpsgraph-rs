@@ -5,17 +5,24 @@ edition = "2021"
 license = "MIT"
 authors = ["Eugene Bokhan <eugenebokhan@icloud.com>"]
 description = "High-level tools and utilities for working with MPSGraph in Rust"
-repository = "https://github.com/eugenebokhan/mpsgraph-rs"
+repository = "https://github.com/computer-graphics-tools/mpsgraph-rs"
+documentation = "https://docs.rs/mpsgraph-tools"
+homepage = "https://github.com/computer-graphics-tools/mpsgraph-rs"
 readme = "README.md"
 keywords = ["metal", "mps", "graph", "neural-network", "machine-learning"]
 categories = ["api-bindings", "graphics", "science"]
+rust-version = "1.85"
+
 [lib]
 doctest = false
 
 [dependencies]
-mpsgraph = { path = "../mpsgraph-rs" }
+mpsgraph = { version = "0.1.0", path = "../mpsgraph-rs" }
 objc2 = "0.6.0"
 objc2-foundation = "0.3.0"
+
+[dev-dependencies]
+rand = "0.8"
 
 [features]
 default = []
