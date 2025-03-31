@@ -16,31 +16,10 @@ impl<T: objc2::Message> AsRawObject for objc2::rc::Retained<T> {
         unsafe {
             // Get pointer to the object through as_ptr() which is safe
             let ptr: *const T = objc2::rc::Retained::as_ptr(self);
-            println!("Original Retained ptr: {:p}", ptr);
 
             // Cast to AnyObject - this is a potential issue point if the cast is invalid
             let ptr = ptr as *mut AnyObject;
-            println!("Cast to AnyObject ptr: {:p}", ptr);
-
-            // Basic safety check
-            if !ptr.is_null() {
-                println!("Non-null object detected");
-
-                // Get the retain count directly
-                let retain_count_msg: usize = msg_send![ptr, retainCount];
-                println!("Retain count before: {}", retain_count_msg);
-
-                // Retain the object
-                objc2::ffi::objc_retain(ptr as *mut _);
-
-                // Check after retain
-                let retain_count_after: usize = msg_send![ptr, retainCount];
-                println!("Retain count after: {}", retain_count_after);
-            } else {
-                println!("WARNING: NULL object pointer! Can't safely retain.");
-                // We won't retain a null pointer
-            }
-
+            objc2::ffi::objc_retain(ptr as *mut _);
             ptr
         }
     }
