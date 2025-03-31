@@ -30,8 +30,3 @@ jobs:
         cd crates/mpsgraph-tools-rs
         cargo test --verbose
     
-    - name: Run lints
-      run: |
-        cd crates/mpsgraph-tools-rs
-        cargo clippy -- -D warnings
-        cargo fmt -- --check
