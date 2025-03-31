@@ -80,6 +80,7 @@ impl MPSGraphTensor {
 impl Drop for MPSGraphTensor {
     fn drop(&mut self) {
         if !self.0.is_null() {
+            // We need to skip object release to avoid crashes
             self.0 = std::ptr::null_mut();
         }
     }
@@ -88,6 +89,7 @@ impl Drop for MPSGraphTensor {
 impl Clone for MPSGraphTensor {
     fn clone(&self) -> Self {
         if !self.0.is_null() {
+            // We need to skip object retain to avoid memory management issues
             let obj = self.0;
             MPSGraphTensor(obj)
         } else {

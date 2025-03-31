@@ -561,9 +561,13 @@ impl MPSGraphTensorData {
 impl Drop for MPSGraphTensorData {
     fn drop(&mut self) {
         if !self.0.is_null() {
+            // Set the pointer to null to prevent further access
+            // Store in unused variable for future use if needed
+            let _ptr = self.0;
             self.0 = std::ptr::null_mut();
 
-            // We're deliberately not releasing the object to avoid the crash
+            // MEMORY LEAK: We're deliberately not releasing the object to avoid the crash
+            // objc2::ffi::objc_release(ptr as *mut _);
         }
     }
 }
@@ -572,6 +576,7 @@ impl Clone for MPSGraphTensorData {
     fn clone(&self) -> Self {
         if !self.0.is_null() {
             // Don't retain, just copy the pointer
+            // This is deliberate to avoid memory management issues
             let obj = self.0;
             MPSGraphTensorData(obj)
         } else {
