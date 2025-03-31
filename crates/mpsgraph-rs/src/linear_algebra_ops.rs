@@ -172,7 +172,7 @@ impl MPSGraph {
 
         unsafe {
             let tensor: *mut AnyObject = msg_send![
-                self.0, batchMatrixMultiplicationWithPrimaryTensor: primary.0,
+                self.0, matrixMultiplicationWithPrimaryTensor: primary.0,
                 secondaryTensor: secondary.0,
                 name: name_obj,
             ];
@@ -211,7 +211,7 @@ impl MPSGraph {
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0,
-                batchMatrixMultiplicationWithPrimaryTensor: primary.0,
+                matrixMultiplicationWithPrimaryTensor: primary.0,
                 transposePrimary: primary_transpose,
                 secondaryTensor: secondary.0,
                 transposeSecondary: secondary_transpose,

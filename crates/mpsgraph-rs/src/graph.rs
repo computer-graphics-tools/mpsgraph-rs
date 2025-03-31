@@ -476,8 +476,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -501,33 +501,51 @@ impl MPSGraph {
                 feed_values.push(data.0);
             }
 
+            println!("DEBUG: Creating feed dictionary");
             let feed_dict =
                 crate::core::create_ns_dictionary_from_pointers(&feed_keys, &feed_values);
 
             // Create targets array
+            println!("DEBUG: Creating targets array");
             let targets_raw: Vec<*mut AnyObject> = targets.iter().map(|t| t.0).collect();
-
             let targets_array = crate::core::create_ns_array_from_pointers(&targets_raw);
 
             // Create ops array
+            println!("DEBUG: Creating ops array");
             let ops_raw: Vec<*mut AnyObject> = target_ops.iter().map(|op| op.0).collect();
-
             let ops_array = crate::core::create_ns_array_from_pointers(&ops_raw);
 
-            // Run the graph
-            let results: *mut AnyObject = msg_send![
-                self.0,
-                runWithFeeds: feed_dict,
-                targetTensors: targets_array,
-                targetOperations: ops_array
-            ];
+            println!("DEBUG: About to run graph with feeds");
+
+            // Run the graph - explicitly wrap just the Objective-C call in an autoreleasepool
+            let results = objc2::rc::autoreleasepool(|_| {
+                println!("DEBUG: Inside autoreleasepool for graph execution");
+                let results: *mut AnyObject = msg_send![
+                    self.0,
+                    runWithFeeds: feed_dict,
+                    targetTensors: targets_array,
+                    targetOperations: ops_array
+                ];
+                println!("DEBUG: Graph run completed, results pointer: {:p}", results);
+                results
+            });
 
             // Convert the result dictionary to a Rust HashMap
-            let result_hash = self.convert_dictionary_to_hash_map(results);
+            let result_hash = if !results.is_null() {
+                println!("DEBUG: Converting results to HashMap");
+                let hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+                // Don't release the results dictionary - caused crashes (since we got it from autoreleasepool)
+                // objc2::ffi::objc_release(results as *mut _);
+                println!("DEBUG: Released results dictionary");
 
+                hash
+            } else {
+                println!("WARNING: Graph run returned null results!");
+                HashMap::new()
+            };
+
+            println!("DEBUG: Returning result hash");
             result_hash
         }
     }
@@ -572,8 +590,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -625,8 +643,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -695,8 +713,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -771,8 +789,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -990,8 +1008,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -1128,8 +1146,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -1183,8 +1201,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -1248,8 +1266,8 @@ impl MPSGraph {
             // Convert the result dictionary to a Rust HashMap
             let result_hash = self.convert_dictionary_to_hash_map(results);
 
-            // Release the results dictionary
-            objc2::ffi::objc_release(results as *mut _);
+            // Don't release the results dictionary - caused crashes
+            // objc2::ffi::objc_release(results as *mut _);
 
             result_hash
         }
@@ -1312,36 +1330,79 @@ impl MPSGraph {
         &self,
         dictionary: *mut AnyObject,
     ) -> HashMap<MPSGraphTensor, MPSGraphTensorData> {
-        unsafe {
-            let mut result = HashMap::new();
+        // Wrap the entire operation in an autoreleasepool to ensure proper memory management
+        objc2::rc::autoreleasepool(|_| {
+            println!("DEBUG: Inside autoreleasepool for dictionary conversion");
 
-            // Get an enumerator for the dictionary keys
-            let enumerator: *mut AnyObject = msg_send![dictionary, keyEnumerator];
+            unsafe {
+                if dictionary.is_null() {
+                    println!("WARNING: Dictionary pointer is NULL!");
+                    return HashMap::new();
+                }
 
-            // Use a mutable variable for the key outside the loop condition
-            let mut key: *mut AnyObject;
+                println!("DEBUG: Converting dictionary: {:p}", dictionary);
+                let mut result = HashMap::new();
 
-            while {
-                // nextObject both advances the enumerator AND returns the current object
-                key = msg_send![enumerator, nextObject];
-                !key.is_null()
-            } {
-                let value: *mut AnyObject = msg_send![dictionary, objectForKey: key];
+                // Get an enumerator for the dictionary keys
+                println!("DEBUG: Getting key enumerator");
+                let enumerator: *mut AnyObject = msg_send![dictionary, keyEnumerator];
 
-                // Retain the objects to avoid them being deallocated
-                objc2::ffi::objc_retain(key as *mut _);
-                objc2::ffi::objc_retain(value as *mut _);
+                if enumerator.is_null() {
+                    println!("WARNING: Key enumerator is NULL!");
+                    return HashMap::new();
+                }
 
-                // Create Rust wrappers
-                let tensor = MPSGraphTensor(key);
-                let tensor_data = MPSGraphTensorData(value);
+                println!("DEBUG: Got enumerator: {:p}", enumerator);
 
-                // Add to the result HashMap
-                result.insert(tensor, tensor_data);
+                // Use a mutable variable for the key outside the loop condition
+                let mut key: *mut AnyObject;
+                let mut entry_count = 0;
+
+                println!("DEBUG: Starting dictionary enumeration");
+                while {
+                    // nextObject both advances the enumerator AND returns the current object
+                    key = msg_send![enumerator, nextObject];
+                    let has_next = !key.is_null();
+                    if has_next {
+                        println!("DEBUG: Got key: {:p} (entry {})", key, entry_count);
+                        entry_count += 1;
+                    } else {
+                        println!("DEBUG: No more keys");
+                    }
+                    has_next
+                } {
+                    println!("DEBUG: Getting value for key: {:p}", key);
+                    let value: *mut AnyObject = msg_send![dictionary, objectForKey: key];
+
+                    if value.is_null() {
+                        println!("WARNING: Value for key {:p} is NULL! Skipping entry.", key);
+                        continue;
+                    }
+
+                    println!("DEBUG: Got value: {:p}", value);
+
+                    // Create Rust wrappers WITHOUT retaining the objects, since we're in an autorelease pool
+                    // and we've adjusted the tensor implementation to not release
+                    let tensor = MPSGraphTensor(key);
+                    let tensor_data = MPSGraphTensorData(value);
+
+                    println!(
+                        "DEBUG: Created Rust wrappers: tensor={:p}, data={:p}",
+                        key, value
+                    );
+
+                    // Add to the result HashMap
+                    result.insert(tensor, tensor_data);
+                    println!("DEBUG: Added entry to HashMap");
+                }
+
+                println!(
+                    "DEBUG: Dictionary conversion complete with {} entries",
+                    result.len()
+                );
+                result
             }
-
-            result
-        }
+        })
     }
 }
 

@@ -79,23 +79,40 @@ impl MPSGraphTensor {
 
 impl Drop for MPSGraphTensor {
     fn drop(&mut self) {
-        unsafe {
-            if !self.0.is_null() {
-                objc2::ffi::objc_release(self.0 as *mut _);
-            }
+        if !self.0.is_null() {
+            // TEMPORARY: For debugging, don't release objects to avoid the crash
+            // Save pointer value for debugging
+            let ptr = self.0;
+            
+            // Print debug info (without objc_release)
+            println!("MPSGraphTensor dropping with ptr: {:p} - SKIPPING RELEASE", self.0);
+            
+            // Set the pointer to null to prevent further access
+            self.0 = std::ptr::null_mut();
+            
+            // MEMORY LEAK: We're deliberately not releasing the object to avoid the crash
+            // objc2::ffi::objc_release(ptr as *mut _);
+            println!("MPSGraphTensor NOT released: {:p} (skipped to avoid crash)", ptr);
         }
     }
 }
 
 impl Clone for MPSGraphTensor {
     fn clone(&self) -> Self {
-        unsafe {
-            if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
-                MPSGraphTensor(obj)
-            } else {
-                MPSGraphTensor(ptr::null_mut())
-            }
+        if !self.0.is_null() {
+            // TEMPORARY: For debugging, no need to retain either since we're not releasing
+            println!("MPSGraphTensor cloning ptr: {:p}", self.0);
+            
+            // Just copy the pointer without retaining (since we're not releasing)
+            // let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+            let obj = self.0; // Just copy the pointer without retaining
+            
+            println!("MPSGraphTensor cloned with ptr: {:p} (no retain for debug)", obj);
+            
+            MPSGraphTensor(obj)
+        } else {
+            println!("MPSGraphTensor cloning NULL pointer");
+            MPSGraphTensor(ptr::null_mut())
         }
     }
 }

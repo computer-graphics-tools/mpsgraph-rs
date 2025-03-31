@@ -6,6 +6,10 @@ extern crate objc2;
 /// This library provides Rust bindings for the MPSGraph API, which is part of Apple's
 /// Metal Performance Shaders framework.
 
+// Tests module (only included when running tests)
+#[cfg(test)]
+mod tests;
+
 // Core modules
 pub mod command_buffer;
 pub mod core;

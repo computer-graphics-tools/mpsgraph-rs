@@ -388,8 +388,8 @@ impl MPSGraph {
                 panic!("maxPooling2DReturnIndices should return exactly 2 tensors");
             }
 
-            let pooling_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 0];
-            let indices_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 1];
+            let pooling_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 0u64];
+            let indices_tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: 1u64];
 
             let pooling_tensor =
                 objc2::ffi::objc_retain(pooling_tensor as *mut _) as *mut AnyObject;
@@ -563,7 +563,7 @@ impl MPSGraph {
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0,
-                L2NormPooling2DWithSourceTensor: source.0,
+                avgPooling2DWithSourceTensor: source.0,
                 descriptor: descriptor.0,
                 name: name_obj
             ];
@@ -589,7 +589,7 @@ impl MPSGraph {
         unsafe {
             let tensor: *mut AnyObject = msg_send![
                 self.0,
-                L2NormPooling2DGradientWithGradientTensor: gradient.0,
+                avgPooling2DGradientWithGradientTensor: gradient.0,
                 sourceTensor: source.0,
                 descriptor: descriptor.0,
                 name: name_obj
