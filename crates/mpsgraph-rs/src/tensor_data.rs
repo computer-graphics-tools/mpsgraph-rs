@@ -278,7 +278,7 @@ impl MPSGraphTensorData {
     pub fn shape(&self) -> MPSShape {
         unsafe {
             let shape: *mut AnyObject = msg_send![self.0, shape];
-            let shape = objc2::ffi::objc_retain(shape as *mut _) as *mut AnyObject;
+            let shape = objc2::ffi::objc_retain(shape as *mut _);
             MPSShape(shape)
         }
     }
@@ -297,7 +297,7 @@ impl MPSGraphTensorData {
         unsafe {
             let ndarray: *mut AnyObject = msg_send![self.0, mpsndarray];
             if !ndarray.is_null() {
-                objc2::ffi::objc_retain(ndarray as *mut _) as *mut AnyObject
+                objc2::ffi::objc_retain(ndarray as *mut _)
             } else {
                 std::ptr::null_mut()
             }

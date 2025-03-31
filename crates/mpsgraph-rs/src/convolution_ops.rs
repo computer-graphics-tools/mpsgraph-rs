@@ -56,7 +56,7 @@ impl Clone for MPSGraphConvolution2DOpDescriptor {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphConvolution2DOpDescriptor(obj)
             } else {
                 MPSGraphConvolution2DOpDescriptor(ptr::null_mut())
@@ -79,7 +79,7 @@ impl Clone for MPSGraphConvolution3DOpDescriptor {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphConvolution3DOpDescriptor(obj)
             } else {
                 MPSGraphConvolution3DOpDescriptor(ptr::null_mut())
@@ -95,7 +95,7 @@ impl MPSGraphConvolution2DOpDescriptor {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphConvolution2DOpDescriptor").unwrap();
             let desc: *mut AnyObject = msg_send![cls, descriptor];
             MPSGraphConvolution2DOpDescriptor(
-                objc2::ffi::objc_retain(desc as *mut _) as *mut AnyObject
+                objc2::ffi::objc_retain(desc as *mut _)
             )
         }
     }
@@ -108,7 +108,7 @@ impl MPSGraphConvolution3DOpDescriptor {
             let cls = objc2::runtime::AnyClass::get(c"MPSGraphConvolution3DOpDescriptor").unwrap();
             let desc: *mut AnyObject = msg_send![cls, descriptor];
             MPSGraphConvolution3DOpDescriptor(
-                objc2::ffi::objc_retain(desc as *mut _) as *mut AnyObject
+                objc2::ffi::objc_retain(desc as *mut _)
             )
         }
     }

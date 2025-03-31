@@ -27,7 +27,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -60,7 +60,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -84,7 +84,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -117,7 +117,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -141,7 +141,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -174,7 +174,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -198,7 +198,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -231,7 +231,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -255,7 +255,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -288,7 +288,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -312,7 +312,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -345,7 +345,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -369,7 +369,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -402,7 +402,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -426,7 +426,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -459,7 +459,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -483,7 +483,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -516,7 +516,7 @@ impl MPSGraph {
                 objc2::ffi::objc_release(axes_array as *mut _);
             }
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -540,7 +540,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -564,7 +564,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }

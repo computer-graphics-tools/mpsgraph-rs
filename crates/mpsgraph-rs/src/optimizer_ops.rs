@@ -18,7 +18,7 @@ impl MPSGraphVariableOp {
     pub fn operation(&self) -> MPSGraphOperation {
         unsafe {
             let op: *mut AnyObject = msg_send![self.0, operation];
-            let op = objc2::ffi::objc_retain(op as *mut _) as *mut AnyObject;
+            let op = objc2::ffi::objc_retain(op as *mut _);
             MPSGraphOperation(op)
         }
     }
@@ -27,7 +27,7 @@ impl MPSGraphVariableOp {
     pub fn tensor(&self) -> MPSGraphTensor {
         unsafe {
             let tensor: *mut AnyObject = msg_send![self.0, tensor];
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -46,7 +46,7 @@ impl Drop for MPSGraphVariableOp {
 impl Clone for MPSGraphVariableOp {
     fn clone(&self) -> Self {
         unsafe {
-            let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+            let obj = objc2::ffi::objc_retain(self.0 as *mut _);
             MPSGraphVariableOp(obj)
         }
     }
@@ -107,7 +107,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -234,7 +234,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
 
@@ -318,7 +318,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
 
@@ -355,7 +355,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let variable_op = objc2::ffi::objc_retain(variable_op as *mut _) as *mut AnyObject;
+            let variable_op = objc2::ffi::objc_retain(variable_op as *mut _);
             MPSGraphVariableOp(variable_op)
         }
     }
@@ -416,7 +416,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }

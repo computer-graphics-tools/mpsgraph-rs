@@ -39,7 +39,7 @@ impl MPSGraphStencilOpDescriptor {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptor];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -57,7 +57,7 @@ impl MPSGraphStencilOpDescriptor {
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject =
                     msg_send![cls, descriptorWithPaddingStyle: padding_style as i64];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -73,7 +73,7 @@ impl MPSGraphStencilOpDescriptor {
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject =
                     msg_send![cls, descriptorWithExplicitPadding: explicit_padding.0,];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -91,7 +91,7 @@ impl MPSGraphStencilOpDescriptor {
             let class_name = c"MPSGraphStencilOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptorWithOffsets: offsets.0, explicitPadding: explicit_padding.0,];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -123,7 +123,7 @@ impl MPSGraphStencilOpDescriptor {
                     paddingStyle: padding_style as u64,
                     paddingConstant: padding_constant,
                 ];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphStencilOpDescriptor(descriptor)
             } else {
                 // Fall back to a null descriptor if class not found
@@ -246,7 +246,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }

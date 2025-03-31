@@ -26,7 +26,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(shape_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -44,7 +44,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -71,7 +71,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(shape_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -88,7 +88,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -111,7 +111,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -142,7 +142,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(tensor_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -200,7 +200,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(axes_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -227,7 +227,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(axes_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -254,7 +254,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(multiples_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -283,7 +283,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(padding_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -306,7 +306,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -329,7 +329,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -351,7 +351,7 @@ impl MPSGraph {
 
             objc2::ffi::objc_release(axes_array as *mut _);
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }

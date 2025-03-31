@@ -29,7 +29,7 @@ impl MPSGraphDevice {
                 .unwrap_or_else(|| panic!("MPSGraphDevice class not found"));
             let device_ptr = device.as_ptr() as *mut AnyObject;
             let obj: *mut AnyObject = msg_send![cls, deviceWithMTLDevice:device_ptr];
-            let obj = objc2::ffi::objc_retain(obj as *mut _) as *mut AnyObject;
+            let obj = objc2::ffi::objc_retain(obj as *mut _);
             MPSGraphDevice(obj)
         }
     }
@@ -49,7 +49,7 @@ impl Clone for MPSGraphDevice {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphDevice(obj)
             } else {
                 MPSGraphDevice(ptr::null_mut())

@@ -63,11 +63,11 @@ impl MPSGraph {
 
             for i in 0..keys_count {
                 let key: *mut AnyObject = msg_send![keys, objectAtIndex: i,];
-                let key_retained = objc2::ffi::objc_retain(key as *mut _) as *mut AnyObject;
+                let key_retained = objc2::ffi::objc_retain(key as *mut _);
                 let key_tensor = MPSGraphTensor(key_retained);
 
                 let value: *mut AnyObject = msg_send![dict, objectForKey: key,];
-                let value_retained = objc2::ffi::objc_retain(value as *mut _) as *mut AnyObject;
+                let value_retained = objc2::ffi::objc_retain(value as *mut _);
                 let value_tensor = MPSGraphTensor(value_retained);
 
                 result.insert(key_tensor, value_tensor);

@@ -187,7 +187,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -228,7 +228,7 @@ impl MPSGraph {
                 dataType: data_type as u32
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -246,7 +246,7 @@ impl MPSGraph {
                 dataType: data_type as u32
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -266,7 +266,7 @@ impl MPSGraph {
                 dataType: data_type as u32
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -298,7 +298,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -330,7 +330,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -380,7 +380,7 @@ impl MPSGraph {
                 compilationDescriptor: descriptor_ptr
             ];
 
-            let executable = objc2::ffi::objc_retain(executable as *mut _) as *mut AnyObject;
+            let executable = objc2::ffi::objc_retain(executable as *mut _);
             MPSGraphExecutable(executable)
         }
     }
@@ -436,7 +436,7 @@ impl MPSGraph {
                 compilationDescriptor: descriptor_ptr
             ];
 
-            let executable = objc2::ffi::objc_retain(executable as *mut _) as *mut AnyObject;
+            let executable = objc2::ffi::objc_retain(executable as *mut _);
             MPSGraphExecutable(executable)
         }
     }
@@ -1433,7 +1433,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -1465,7 +1465,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -1487,7 +1487,7 @@ impl Clone for MPSGraph {
         unsafe {
             // Retain and return new instance
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraph(obj)
             } else {
                 MPSGraph(std::ptr::null_mut::<AnyObject>())

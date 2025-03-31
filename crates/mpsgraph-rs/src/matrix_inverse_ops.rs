@@ -29,7 +29,7 @@ impl MPSGraph {
 
             let tensor: *mut AnyObject = msg_send![self.0, inverseOfTensor: x.0, name: name_obj];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }

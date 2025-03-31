@@ -22,7 +22,7 @@ impl MPSGraphDepthwiseConvolution2DOpDescriptor {
             let class_name = c"MPSGraphDepthwiseConvolution2DOpDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptor];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphDepthwiseConvolution2DOpDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphDepthwiseConvolution2DOpDescriptor not found")
@@ -42,7 +42,7 @@ impl MPSGraphDepthwiseConvolution2DOpDescriptor {
                     cls, descriptorWithDataLayout: data_layout as u64,
                     weightsLayout: weights_layout as u64
                 ];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphDepthwiseConvolution2DOpDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphDepthwiseConvolution2DOpDescriptor not found")
@@ -168,7 +168,7 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject =
                     msg_send![cls, descriptorWithPaddingStyle: padding_style as u64];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphDepthwiseConvolution3DOpDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphDepthwiseConvolution3DOpDescriptor not found")
@@ -203,7 +203,7 @@ impl MPSGraphDepthwiseConvolution3DOpDescriptor {
                 objc2::ffi::objc_release(dilation_rates_array as *mut _);
                 objc2::ffi::objc_release(padding_values_array as *mut _);
 
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphDepthwiseConvolution3DOpDescriptor(descriptor)
             } else {
                 // Release the NSArrays to prevent memory leaks before panicking
@@ -345,7 +345,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -385,7 +385,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -425,7 +425,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -462,7 +462,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -502,7 +502,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -542,7 +542,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }

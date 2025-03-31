@@ -801,7 +801,7 @@ impl Clone for MPSGraphExecutable {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphExecutable(obj)
             } else {
                 MPSGraphExecutable(ptr::null_mut())
@@ -873,7 +873,7 @@ impl Clone for MPSGraphCompilationDescriptor {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphCompilationDescriptor(obj)
             } else {
                 MPSGraphCompilationDescriptor(ptr::null_mut())
@@ -1050,7 +1050,7 @@ impl Clone for MPSGraphExecutableSerializationDescriptor {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphExecutableSerializationDescriptor(obj)
             } else {
                 MPSGraphExecutableSerializationDescriptor(ptr::null_mut())
@@ -1086,7 +1086,7 @@ impl Clone for MPSGraphExecutionDescriptor {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphExecutionDescriptor(obj)
             } else {
                 MPSGraphExecutionDescriptor(ptr::null_mut())
@@ -1203,7 +1203,7 @@ impl Clone for MPSGraphExecutableExecutionDescriptor {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphExecutableExecutionDescriptor(obj)
             } else {
                 MPSGraphExecutableExecutionDescriptor(ptr::null_mut())

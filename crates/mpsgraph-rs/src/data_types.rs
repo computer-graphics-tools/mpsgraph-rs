@@ -58,7 +58,7 @@ impl Clone for MPSGraphType {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphType(obj)
             } else {
                 MPSGraphType(ptr::null_mut())
@@ -112,7 +112,7 @@ impl MPSGraphShapedType {
                 return MPSShape::from_slice(&[]);
             }
 
-            let shape_ptr = objc2::ffi::objc_retain(shape_ptr as *mut _) as *mut AnyObject;
+            let shape_ptr = objc2::ffi::objc_retain(shape_ptr as *mut _);
             MPSShape(shape_ptr)
         }
     }
@@ -182,7 +182,7 @@ impl Clone for MPSGraphShapedType {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphShapedType(obj)
             } else {
                 MPSGraphShapedType(ptr::null_mut())

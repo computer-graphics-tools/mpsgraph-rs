@@ -28,7 +28,7 @@ impl MPSGraph {
                 imaginaryPart: imaginary_part,
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -57,7 +57,7 @@ impl MPSGraph {
                 dataType: data_type as u64
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -89,7 +89,7 @@ impl MPSGraph {
                 dataType: data_type as u64
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -164,7 +164,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -191,7 +191,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -225,7 +225,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphOperation(result)
         }
     }

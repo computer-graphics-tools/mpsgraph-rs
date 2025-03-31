@@ -36,7 +36,7 @@ impl MPSGraphSingleGateRNNDescriptor {
             let class_name = c"MPSGraphSingleGateRNNDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptor];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphSingleGateRNNDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphSingleGateRNNDescriptor not found")
@@ -142,7 +142,7 @@ impl MPSGraphLSTMDescriptor {
             let class_name = c"MPSGraphLSTMDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptor];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphLSTMDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphLSTMDescriptor not found")
@@ -348,7 +348,7 @@ impl MPSGraphGRUDescriptor {
             let class_name = c"MPSGraphGRUDescriptor";
             if let Some(cls) = objc2::runtime::AnyClass::get(class_name) {
                 let descriptor: *mut AnyObject = msg_send![cls, descriptor];
-                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _) as *mut AnyObject;
+                let descriptor = objc2::ffi::objc_retain(descriptor as *mut _);
                 MPSGraphGRUDescriptor(descriptor)
             } else {
                 panic!("Class MPSGraphGRUDescriptor not found")
@@ -607,7 +607,7 @@ impl MPSGraph {
             // Extract all tensors from the array
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 tensors.push(MPSGraphTensor(tensor));
             }
 
@@ -692,7 +692,7 @@ impl MPSGraph {
             // Extract all tensors from the array
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 tensors.push(MPSGraphTensor(tensor));
             }
 
@@ -758,7 +758,7 @@ impl MPSGraph {
             // Extract all tensors from the array
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 tensors.push(MPSGraphTensor(tensor));
             }
 
@@ -854,7 +854,7 @@ impl MPSGraph {
             // Extract all tensors from the array
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result, objectAtIndex: i];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 tensors.push(MPSGraphTensor(tensor));
             }
 
@@ -921,11 +921,11 @@ impl MPSGraph {
             let output_hidden_state_tensor: *mut AnyObject = msg_send![result, objectAtIndex: 1];
             let output_cell_state_tensor: *mut AnyObject = msg_send![result, objectAtIndex: 2];
 
-            let output_tensor = objc2::ffi::objc_retain(output_tensor as *mut _) as *mut AnyObject;
+            let output_tensor = objc2::ffi::objc_retain(output_tensor as *mut _);
             let output_hidden_state_tensor =
-                objc2::ffi::objc_retain(output_hidden_state_tensor as *mut _) as *mut AnyObject;
+                objc2::ffi::objc_retain(output_hidden_state_tensor as *mut _);
             let output_cell_state_tensor =
-                objc2::ffi::objc_retain(output_cell_state_tensor as *mut _) as *mut AnyObject;
+                objc2::ffi::objc_retain(output_cell_state_tensor as *mut _);
 
             (
                 MPSGraphTensor(output_tensor),
@@ -989,9 +989,9 @@ impl MPSGraph {
             let output_tensor: *mut AnyObject = msg_send![result, objectAtIndex: 0];
             let output_state_tensor: *mut AnyObject = msg_send![result, objectAtIndex: 1];
 
-            let output_tensor = objc2::ffi::objc_retain(output_tensor as *mut _) as *mut AnyObject;
+            let output_tensor = objc2::ffi::objc_retain(output_tensor as *mut _);
             let output_state_tensor =
-                objc2::ffi::objc_retain(output_state_tensor as *mut _) as *mut AnyObject;
+                objc2::ffi::objc_retain(output_state_tensor as *mut _);
 
             (
                 MPSGraphTensor(output_tensor),

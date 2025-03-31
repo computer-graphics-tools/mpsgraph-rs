@@ -348,7 +348,7 @@ NSData is used for handling binary data in Objective-C:
 4. **Memory Characteristics**:
 
    NSData behaves like `Rc<[u8]>` in Rust - immutable, reference-counted binary data. For mutable data, use `NSMutableData` which behaves like `Rc<Cell<Vec<u8>>>`.
-   
+
 5. **Working with NSMutableData**:
 
    ```rust

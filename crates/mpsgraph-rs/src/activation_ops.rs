@@ -19,7 +19,7 @@ impl MPSGraph {
 
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
-                // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                // let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 println!("ReLU result NOT retained (skipped for debugging)");
 
                 // Return the wrapped tensor without retaining
@@ -49,7 +49,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -66,7 +66,7 @@ impl MPSGraph {
 
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
-                // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                // let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 println!("Sigmoid result NOT retained (skipped for debugging)");
 
                 // Return the wrapped tensor without retaining
@@ -96,7 +96,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -113,7 +113,7 @@ impl MPSGraph {
 
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
-                // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                // let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 println!("Tanh result NOT retained (skipped for debugging)");
 
                 // Return the wrapped tensor without retaining
@@ -139,7 +139,7 @@ impl MPSGraph {
 
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
-                // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                // let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 println!("Softmax result NOT retained (skipped for debugging)");
 
                 // Return the wrapped tensor without retaining
@@ -171,7 +171,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -195,7 +195,7 @@ impl MPSGraph {
 
             if !tensor.is_null() {
                 // TEMPORARY: For debugging, don't retain the result either
-                // let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                // let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 println!("Leaky ReLU result NOT retained (skipped for debugging)");
 
                 // Return the wrapped tensor without retaining
@@ -225,7 +225,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }
@@ -250,7 +250,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+            let tensor = objc2::ffi::objc_retain(tensor as *mut _);
             MPSGraphTensor(tensor)
         }
     }

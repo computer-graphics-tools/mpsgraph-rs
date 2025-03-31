@@ -62,7 +62,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -97,7 +97,7 @@ impl MPSGraph {
                 name: name_obj,
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -137,7 +137,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -177,7 +177,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -217,7 +217,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -257,7 +257,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }
@@ -297,7 +297,7 @@ impl MPSGraph {
                 name: name_obj
             ];
 
-            let result = objc2::ffi::objc_retain(result as *mut _) as *mut AnyObject;
+            let result = objc2::ffi::objc_retain(result as *mut _);
             MPSGraphTensor(result)
         }
     }

@@ -18,7 +18,7 @@ impl MPSGraphOperation {
 
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![input_tensors, objectAtIndex: i,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
 
@@ -35,7 +35,7 @@ impl MPSGraphOperation {
 
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![output_tensors, objectAtIndex: i,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
 
@@ -47,7 +47,7 @@ impl MPSGraphOperation {
     pub fn graph(&self) -> MPSGraph {
         unsafe {
             let graph: *mut AnyObject = msg_send![self.0, graph];
-            let graph = objc2::ffi::objc_retain(graph as *mut _) as *mut AnyObject;
+            let graph = objc2::ffi::objc_retain(graph as *mut _);
             MPSGraph(graph)
         }
     }
@@ -70,7 +70,7 @@ impl MPSGraphOperation {
 
             for i in 0..count {
                 let op: *mut AnyObject = msg_send![dependencies, objectAtIndex: i,];
-                let op = objc2::ffi::objc_retain(op as *mut _) as *mut AnyObject;
+                let op = objc2::ffi::objc_retain(op as *mut _);
                 result.push(MPSGraphOperation(op));
             }
 
@@ -93,7 +93,7 @@ impl Clone for MPSGraphOperation {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSGraphOperation(obj)
             } else {
                 MPSGraphOperation(ptr::null_mut())

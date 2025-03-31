@@ -94,7 +94,7 @@ impl MPSGraph {
                     let obj: &objc2::runtime::AnyObject = msg_send![array_ref, objectAtIndex: i,];
                     // Get the object and convert it to a raw pointer
                     let tensor_ptr: *mut AnyObject = std::mem::transmute(obj);
-                    let tensor = objc2::ffi::objc_retain(tensor_ptr as *mut _) as *mut AnyObject;
+                    let tensor = objc2::ffi::objc_retain(tensor_ptr as *mut _);
                     results.push(MPSGraphTensor(tensor));
                 }
             }

@@ -343,7 +343,7 @@ impl Clone for MPSCommandBuffer {
     fn clone(&self) -> Self {
         unsafe {
             if !self.0.is_null() {
-                let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+                let obj = objc2::ffi::objc_retain(self.0 as *mut _);
                 MPSCommandBuffer(obj)
             } else {
                 MPSCommandBuffer(std::ptr::null_mut())

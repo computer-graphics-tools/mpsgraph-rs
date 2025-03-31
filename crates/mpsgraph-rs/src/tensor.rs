@@ -32,7 +32,7 @@ impl MPSGraphTensor {
             if shape.is_null() {
                 return MPSShape::from_slice(&[]);
             }
-            let shape = objc2::ffi::objc_retain(shape as *mut _) as *mut AnyObject;
+            let shape = objc2::ffi::objc_retain(shape as *mut _);
             MPSShape(shape)
         }
     }
@@ -41,7 +41,7 @@ impl MPSGraphTensor {
     pub fn operation(&self) -> MPSGraphOperation {
         unsafe {
             let operation: *mut AnyObject = msg_send![self.0, operation];
-            let operation = objc2::ffi::objc_retain(operation as *mut _) as *mut AnyObject;
+            let operation = objc2::ffi::objc_retain(operation as *mut _);
             MPSGraphOperation(operation)
         }
     }
@@ -110,7 +110,7 @@ impl Clone for MPSGraphTensor {
             println!("MPSGraphTensor cloning ptr: {:p}", self.0);
 
             // Just copy the pointer without retaining (since we're not releasing)
-            // let obj = objc2::ffi::objc_retain(self.0 as *mut _) as *mut AnyObject;
+            // let obj = objc2::ffi::objc_retain(self.0 as *mut _);
             let obj = self.0; // Just copy the pointer without retaining
 
             println!(

@@ -75,7 +75,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,,,,,,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -155,7 +155,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -261,7 +261,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,,,,,,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -347,7 +347,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
             
@@ -427,7 +427,7 @@ impl MPSGraph {
             let mut result = Vec::with_capacity(count);
             for i in 0..count {
                 let tensor: *mut AnyObject = msg_send![result_array, objectAtIndex: i,,,,,,,];
-                let tensor = objc2::ffi::objc_retain(tensor as *mut _) as *mut AnyObject;
+                let tensor = objc2::ffi::objc_retain(tensor as *mut _);
                 result.push(MPSGraphTensor(tensor));
             }
             
