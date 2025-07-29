@@ -1,6 +1,15 @@
 {
     "recommendations": [
+        "fill-labs.dependi",
+        "vadimcn.vscode-lldb",
+        "tamasfe.even-better-toml",
+        "llvm-vs-code-extensions.lldb-dap",
+        "yzhang.markdown-all-in-one",
+        "doublebuffer.metal-shader",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
         "rust-lang.rust-analyzer",
-        "vadimcn.vscode-lldb"
+        "slevesque.shader"
     ]
 }

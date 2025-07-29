@@ -18,3 +18,4 @@ target/
 *.DS_Store
 MetalPerformanceShaders.framework
 objc2-master
+crates/mpsgraph-rs/examples/output.mpsgraphpackage

@@ -1,0 +1,47 @@
+# ToDo
+
+- [x] ActivationOps
+- [x] ArithmeticOps
+- [x] CallOps
+- [x] ConvolutionOps
+- [x] ConvolutionTransposeOps
+- [x] ControlFlowOps
+- [x] CumulativeOps
+- [ ] DepthwiseConvolutionOps
+- [ ] FourierTransformOps
+- [ ] GatherOps
+- [ ] ImToColOps
+- [ ] LinearAlgebraOps
+- [ ] LossOps
+- [ ] MatrixInverseOps
+- [x] MatrixMultiplicationOps
+- [x] MemoryOps
+- [ ] NonMaximumSuppressionOps
+- [ ] NonZeroOps
+- [ ] NormalizationOps
+- [ ] OneHotOps
+- [ ] OptimizerOps
+- [ ] PoolingOps
+- [x] QuantizationOps
+- [ ] RandomOps
+- [ ] ReductionOps
+- [ ] ResizeOps
+- [ ] RNNOps
+- [ ] SampleGridOps
+- [ ] ScatterNDOps
+- [ ] SortOps
+- [ ] SparseOps
+- [ ] StencilOps
+- [x] TensorShapeOps
+- [ ] TopKOps
+
+
+- [x] MPSGraphTensorData
+- [x] MPSGraph
+- [x] MPSGraphCore
+- [ ] MetalPerformanceShadersGraph
+- [x] MPSGraphExecutable
+- [x] MPSGraphOperation
+- [ ] MPSGraphAutomaticDifferentiation
+- [x] MPSGraphDevice
+- [x] MPSGraphTensor

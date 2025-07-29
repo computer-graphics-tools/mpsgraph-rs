@@ -1,13 +1,30 @@
-[workspace]
-members = [
-    "crates/mpsgraph-rs",
-    "crates/mpsgraph-tools-rs",
-]
-resolver = "2"
-
-[workspace.package]
-version = "0.1.0"
-edition = "2021"
-license = "MIT"
+[package]
+name = "mpsgraph"
+version = "0.2.0"
+edition = "2024"
 authors = ["Eugene Bokhan <eugenebokhan@icloud.com>"]
-repository = "https://github.com/computer-graphics-tools/mpsgraph-rs"
+description = "Modern Rust bindings for Apple's Metal Performance Shaders Graph framework"
+license = "MIT"
+repository = "https://github.com/mirai-audio/mpsgraph-rs"
+keywords = ["metal", "mps", "graph", "neural-network", "apple"]
+categories = ["api-bindings", "graphics", "science"]
+documentation = "https://docs.rs/mpsgraph"
+readme = "README.md"
+
+[dependencies]
+objc2 = "0.6.1"
+objc2-foundation = "0.3.1"
+block2 = "0.6.1"
+metal = "0.32.0"
+bitflags = "2.9.1"
+
+[package.metadata.docs.rs]
+default-target = "aarch64-apple-darwin"
+targets = ["aarch64-apple-darwin", "aarch64-apple-ios"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[package.metadata.macos]
+frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]
+
+[package.metadata.ios]
+frameworks = ["MetalPerformanceShaders", "Metal", "Foundation"]
