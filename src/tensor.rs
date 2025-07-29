@@ -1,137 +1,61 @@
-use objc2::rc::Retained;
-use objc2::runtime::NSObject;
-use objc2::{extern_class, msg_send};
-use objc2_foundation::{NSArray, NSNumber, NSObjectProtocol, NSString};
-use std::hash::{Hash, Hasher};
-
-use crate::shape::Shape;
-use crate::ShapedType;
-
-/// Data type for Metal Performance Shaders Graph tensors
-///
-/// These values match the MPSDataType definitions in the Metal Performance Shaders framework.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(u32)]
-pub enum DataType {
-    Invalid = 0,
-
-    // Floating point types
-    Float32 = 0x10000000 | 32,
-    Float16 = 0x10000000 | 16,
-    Float64 = 0x10000000 | 64,
-
-    // Signed integer types
-    Int2 = 0x20000000 | 2,
-    Int4 = 0x20000000 | 4,
-    Int8 = 0x20000000 | 8,
-    Int16 = 0x20000000 | 16,
-    Int32 = 0x20000000 | 32,
-    Int64 = 0x20000000 | 64,
-
-    // Unsigned integer types
-    Uint2 = 2,
-    Uint4 = 4,
-    Uint8 = 8,
-    Uint16 = 16,
-    Uint32 = 32,
-    Uint64 = 64,
-
-    // Boolean type
-    Bool = 0x40000000 | 8,
-
-    // Complex types
-    Complex32 = 0x10000000 | 0x80000000 | 32,
-    Complex64 = 0x10000000 | 0x80000000 | 64,
-
-    // BFloat16 type
-    BFloat16 = 0x80000000 | 0x10000000 | 16,
-
-    // Normalized types
-    Unorm1 = 0x30000000 | 1,
-    Unorm8 = 0x30000000 | 8,
-}
-
-impl DataType {
-    /// Convert from u64 to DataType
-    pub fn from(value: u64) -> Self {
-        match value as u32 {
-            val if val == DataType::Float32 as u32 => DataType::Float32,
-            val if val == DataType::Float16 as u32 => DataType::Float16,
-            val if val == DataType::Float64 as u32 => DataType::Float64,
-            val if val == DataType::Int2 as u32 => DataType::Int2,
-            val if val == DataType::Int4 as u32 => DataType::Int4,
-            val if val == DataType::Int8 as u32 => DataType::Int8,
-            val if val == DataType::Int16 as u32 => DataType::Int16,
-            val if val == DataType::Int32 as u32 => DataType::Int32,
-            val if val == DataType::Int64 as u32 => DataType::Int64,
-            val if val == DataType::Uint2 as u32 => DataType::Uint2,
-            val if val == DataType::Uint4 as u32 => DataType::Uint4,
-            val if val == DataType::Uint8 as u32 => DataType::Uint8,
-            val if val == DataType::Uint16 as u32 => DataType::Uint16,
-            val if val == DataType::Uint32 as u32 => DataType::Uint32,
-            val if val == DataType::Uint64 as u32 => DataType::Uint64,
-            val if val == DataType::Bool as u32 => DataType::Bool,
-            val if val == DataType::Complex32 as u32 => DataType::Complex32,
-            val if val == DataType::Complex64 as u32 => DataType::Complex64,
-            val if val == DataType::BFloat16 as u32 => DataType::BFloat16,
-            val if val == DataType::Unorm1 as u32 => DataType::Unorm1,
-            val if val == DataType::Unorm8 as u32 => DataType::Unorm8,
-            _ => DataType::Invalid,
-        }
-    }
-}
+use crate::{DataType, GraphObject, Operation, Shape, ShapedType, ns_number_array_to_boxed_slice};
+use objc2::{
+    extern_class, extern_conformance, extern_methods, msg_send, rc::Retained, runtime::NSObject,
+};
+use objc2_foundation::{CopyingHelper, NSCopying, NSObjectProtocol};
 
 extern_class!(
-    #[derive(Debug, PartialEq, Eq)]
-    #[unsafe(super = NSObject)]
+    /// The symbolic representation of a compute data type.
+    ///
+    /// `NSCopy` will take a refrence, this is so `NSDictionary` can work with the tensor.
+    /// All tensors are created, owned and destroyed by the MPSGraph
+    ///
+    /// See also [Apple's documentation](https://developer.apple.com/documentation/metalperformanceshadersgraph/mpsgraphtensor?language=objc)
+    #[unsafe(super(GraphObject, NSObject))]
+    #[derive(Debug, PartialEq, Eq, Hash)]
     #[name = "MPSGraphTensor"]
     pub struct Tensor;
 );
 
-unsafe impl NSObjectProtocol for Tensor {}
+extern_conformance!(
+    unsafe impl NSCopying for Tensor {}
+);
+
+unsafe impl CopyingHelper for Tensor {
+    type Result = Self;
+}
+
+extern_conformance!(
+    unsafe impl NSObjectProtocol for Tensor {}
+);
 
 impl Tensor {
-    /// Returns the data type of this tensor
-    pub fn data_type(&self) -> DataType {
-        unsafe {
-            let data_type_val: u32 = msg_send![self, dataType];
-            std::mem::transmute(data_type_val)
-        }
-    }
+    extern_methods!(
+        /// The data type of the tensor.
+        #[unsafe(method(dataType))]
+        #[unsafe(method_family = none)]
+        pub fn data_type(&self) -> DataType;
 
-    /// Returns the shape of this tensor
-    pub fn shape(&self) -> Shape {
-        unsafe {
-            let array: Retained<NSArray<NSNumber>> = msg_send![self, shape];
-            Shape::new(&array)
-        }
-    }
+        /// The operation responsible for creating this tensor.
+        #[unsafe(method(operation))]
+        #[unsafe(method_family = none)]
+        pub fn operation(&self) -> Retained<Operation>;
+    );
+}
 
-    /// Returns the dimensions of the tensor
-    pub fn dimensions(&self) -> Vec<i64> {
-        self.shape().dimensions()
-    }
-
-    /// Returns the rank (number of dimensions) of this tensor
-    pub fn rank(&self) -> usize {
-        self.shape().len()
-    }
-
-    /// Returns the name of this tensor
-    pub fn name(&self) -> Option<String> {
-        unsafe {
-            let name_opt: Option<Retained<NSString>> = msg_send![self, name];
-            name_opt.map(|name_retained| name_retained.to_string())
-        }
+impl Tensor {
+    /// The shape of the tensor.
+    ///
+    /// nil shape represents an unranked tensor.
+    /// -1 value for a dimension represents that it will be resolved via shape inference at runtime and it can be anything.
+    pub fn shape(&self) -> Option<Box<[isize]>> {
+        let shape: Option<Retained<Shape>> = unsafe { msg_send![self, shape] };
+        shape.map(|shape| ns_number_array_to_boxed_slice(&shape))
     }
 
     pub fn shaped_type(&self) -> Retained<ShapedType> {
-        ShapedType::new(&self.shape(), self.data_type())
-    }
-}
-
-impl Hash for Tensor {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        (self as *const Self as usize).hash(state);
+        let shape = self.shape();
+        let data_type = self.data_type();
+        ShapedType::new_with_shape_data_type(shape.as_deref(), data_type)
     }
 }

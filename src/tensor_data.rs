@@ -1,196 +1,138 @@
-use metal::foreign_types::ForeignType;
-use metal::{Buffer, Device as MetalDevice};
-use objc2::ffi::class_getInstanceMethod;
-use objc2::rc::{Allocated, Retained};
-use objc2::runtime::NSObject;
-use objc2::{extern_class, msg_send, sel, ClassType};
-use objc2_foundation::{NSArray, NSData, NSNumber, NSObjectProtocol};
-
-use crate::device::Device;
-use crate::shape::Shape;
-use crate::tensor::DataType;
+use crate::{
+    DataType, Device, GraphObject, Shape, ns_number_array_from_slice,
+    ns_number_array_to_boxed_slice,
+};
+use metal::{Buffer, foreign_types::ForeignType};
+use objc2::{
+    ClassType, extern_class, extern_conformance, extern_methods, msg_send,
+    rc::{Allocated, Retained, autoreleasepool},
+    runtime::{AnyObject, NSObject},
+};
+use objc2_foundation::{NSData, NSObjectProtocol};
+use std::mem::size_of_val;
+use std::slice::from_raw_parts;
 
 extern_class!(
-    #[derive(Debug, PartialEq, Eq)]
-    #[unsafe(super = NSObject)]
+    /// The representation of a compute data type.
+    ///
+    /// Pass data to a graph using a tensor data, a reference will be taken to your data and used just in time when the graph is run.
+    ///
+    /// See also [Apple's documentation](https://developer.apple.com/documentation/metalperformanceshadersgraph/mpsgraphtensordata?language=objc)
+    #[unsafe(super(GraphObject, NSObject))]
+    #[derive(Debug, PartialEq, Eq, Hash)]
     #[name = "MPSGraphTensorData"]
     pub struct TensorData;
 );
 
-unsafe impl NSObjectProtocol for TensorData {}
+extern_conformance!(
+    unsafe impl NSObjectProtocol for TensorData {}
+);
 
 impl TensorData {
-    /// Creates a new TensorData from a slice of data and a shape dimensions
-    pub fn from_bytes<T: Copy>(
-        data: &[T],
-        shape_dimensions: &[i64],
-        data_type: DataType,
-    ) -> Retained<Self> {
-        let shape = Shape::from_dimensions(shape_dimensions);
-        unsafe {
-            let data_size = std::mem::size_of_val(data);
-            let device = MetalDevice::system_default().expect("No Metal device found");
-            let ns_data = NSData::with_bytes(std::slice::from_raw_parts(
-                data.as_ptr() as *const u8,
-                data_size,
-            ));
-            let mps_device = Device::with_device(&device);
-            let class = Self::class();
-            let data_type_val = data_type as u32;
+    extern_methods!(
+        /// The data type of the tensor data.
+        #[unsafe(method(dataType))]
+        #[unsafe(method_family = none)]
+        pub fn data_type(&self) -> DataType;
 
-            let allocated: Allocated<Self> = msg_send![class, alloc];
-            let initialized: Retained<Self> = msg_send![allocated,
-                initWithDevice:&*mps_device,
-                data:&*ns_data,
-                shape:shape.as_ptr(),
-                dataType:data_type_val
-            ];
-            initialized
-        }
-    }
+        /// The device of the tensor data.
+        #[unsafe(method(device))]
+        #[unsafe(method_family = none)]
+        pub fn device(&self) -> Retained<Device>;
+    );
+}
 
-    /// Creates a new TensorData with bytes, shape, and data type
-    pub fn with_bytes<T: Copy>(
-        data: &[T],
-        shape: &Shape,
-        data_type: DataType,
-    ) -> Option<Retained<Self>> {
-        unsafe {
-            let data_size = std::mem::size_of_val(data);
-            let device = MetalDevice::system_default().expect("No Metal device found");
-            let ns_data = NSData::with_bytes(std::slice::from_raw_parts(
-                data.as_ptr() as *const u8,
-                data_size,
-            ));
-            let mps_device = Device::with_device(&device);
-            let class = Self::class();
-            let data_type_val = data_type as u32;
-
-            let allocated: Allocated<Self> = msg_send![class, alloc];
-            let initialized: Option<Retained<Self>> = msg_send![allocated,
-                initWithDevice:&*mps_device,
-                data:&*ns_data,
-                shape:shape.as_ptr(),
-                dataType:data_type_val
-            ];
-            initialized
-        }
-    }
-
-    /// Creates a new TensorData from a Metal buffer
-    pub fn from_buffer(buffer: &Buffer, shape: &Shape, data_type: DataType) -> Retained<Self> {
-        unsafe {
-            let class = Self::class();
-            let buffer_ptr = buffer.as_ptr() as *mut objc2::runtime::AnyObject;
-
-            let allocated: Allocated<Self> = msg_send![class, alloc];
-            let initialized: Retained<Self> = msg_send![allocated,
-                initWithMTLBuffer: buffer_ptr,
-                shape: shape.as_ptr(),
-                dataType: data_type as u32
-            ];
-            initialized
-        }
-    }
-
-    /// Creates a new TensorData from a Metal buffer specifying rowBytes (stride between rows)
-    pub fn from_buffer_row_bytes(
-        buffer: &Buffer,
-        shape: &Shape,
-        data_type: DataType,
-        row_bytes: u64,
-    ) -> Retained<Self> {
-        unsafe {
-            let class = Self::class();
-            let buffer_ptr = buffer.as_ptr() as *mut objc2::runtime::AnyObject;
-
-            let allocated: Allocated<Self> = msg_send![class, alloc];
-            let initialized: Retained<Self> = msg_send![allocated,
-                initWithMTLBuffer: buffer_ptr,
-                shape: shape.as_ptr(),
-                dataType: data_type as u32,
-                rowBytes: row_bytes
-            ];
-            initialized
-        }
-    }
-
-    /// Returns the shape of this tensor data
-    pub fn shape(&self) -> Shape {
-        unsafe {
-            let array: Retained<NSArray<NSNumber>> = msg_send![self, shape];
-            Shape::new(&array)
-        }
-    }
-
-    /// Returns the data type of this tensor data
-    pub fn data_type(&self) -> DataType {
-        unsafe {
-            let data_type_val: u32 = msg_send![self, dataType];
-            std::mem::transmute(data_type_val)
-        }
-    }
-
-    /// Get the total number of bytes in the tensor data
-    pub fn bytes_size(&self) -> usize {
-        unsafe {
-            let size: usize = msg_send![self, length];
-            size
-        }
-    }
-
-    /// Get the bytes as a slice of a specific type
-    pub fn bytes_as<T: Copy>(&self) -> Option<Vec<T>> {
-        unsafe {
-            // Try to synchronize - this may not be available in all versions
-            let synchronize_selector = sel!(synchronizeOnCPU);
-
-            let method_exists = class_getInstanceMethod(Self::class(), synchronize_selector)
-                != std::ptr::null_mut();
-            if method_exists {
-                let _: () = msg_send![self, synchronizeOnCPU];
-            }
-
-            // Get the data pointer
-            let bytes_ptr: *const u8 = msg_send![self, bytes];
-            if bytes_ptr.is_null() {
-                return None;
-            }
-
-            // Get the size of the data
-            let bytes_size: usize = msg_send![self, length];
-            let element_size = std::mem::size_of::<T>();
-            let count = bytes_size / element_size;
-
-            if bytes_size % element_size != 0 {
-                return None; // Size mismatch
-            }
-
-            // Convert to the desired type
-            let typed_ptr = bytes_ptr as *const T;
-            let slice = std::slice::from_raw_parts(typed_ptr, count);
-
-            // Make a copy to ensure memory safety
-            Some(slice.to_vec())
-        }
-    }
-
-    /// Synchronize this tensor data to CPU
+impl TensorData {
+    /// Initializes the tensor data with an `NSData` on a device.
     ///
-    /// This method ensures that any data on the GPU is synchronized to CPU-accessible memory.
-    /// Use this method when you need to access the tensor data from the CPU after GPU operations.
-    pub fn synchronize(&self) -> bool {
+    /// - Parameters:
+    /// - device: Device on which the TensorData exists
+    /// - data: NSData from which to copy the contents
+    /// - shape: shape of the output tensor
+    /// - dataType: dataType of the placeholder tensor
+    /// - Returns: A valid TensorData, or nil if allocation failure.
+    pub fn new_with_ns_data(
+        device: &Device,
+        data: &NSData,
+        shape: &[usize],
+        data_type: DataType,
+    ) -> Retained<Self> {
+        let class = Self::class();
+        let allocated: Allocated<Self> = unsafe { msg_send![class, alloc] };
         unsafe {
-            let synchronize_selector = sel!(synchronizeOnCPU);
-
-            let method_exists = class_getInstanceMethod(Self::class(), synchronize_selector)
-                != std::ptr::null_mut();
-            if method_exists {
-                let _: () = msg_send![self, synchronizeOnCPU];
-                true
-            } else {
-                false // Method not available
-            }
+            msg_send![
+                allocated,
+                initWithDevice: device,
+                data: data,
+                shape: &*ns_number_array_from_slice(shape),
+                dataType: data_type
+            ]
         }
+    }
+
+    /// Initializes the tensor data with a slice on a device.
+    ///
+    /// - Parameters:
+    /// - device: Device on which the TensorData exists
+    /// - data: Slice from which to copy the contents
+    /// - shape: shape of the output tensor
+    /// - dataType: dataType of the placeholder tensor
+    /// - Returns: A valid TensorData, or nil if allocation failure.
+    pub fn new_with_data<T: Copy>(
+        device: &Device,
+        data: &[T],
+        shape: &[usize],
+        data_type: DataType,
+    ) -> Retained<Self> {
+        autoreleasepool(|_| unsafe {
+            let data_size = size_of_val(data);
+            let ns_data = NSData::with_bytes(from_raw_parts(data.as_ptr() as *const u8, data_size));
+            Self::new_with_ns_data(device, &ns_data, shape, data_type)
+        })
+    }
+
+    /// Initializes the tensor data with a Metal buffer specifying rowBytes (stride between rows)
+    ///
+    /// - Parameters:
+    /// - buffer: Metal buffer from which to copy the contents
+    /// - shape: shape of the output tensor
+    /// - dataType: dataType of the placeholder tensor
+    /// - rowBytes: rowBytes for the fastest moving dimension, must be larger than or equal to sizeOf(dataType)shape[rank - 1] and must be a multiple of sizeOf(dataType)
+    /// - Returns: A valid TensorData, or nil if allocation failure.
+    pub fn new_with_mtl_buffer(
+        buffer: &Buffer,
+        shape: &[usize],
+        data_type: DataType,
+        row_bytes: Option<u64>,
+    ) -> Retained<Self> {
+        let class = Self::class();
+        let buffer_ptr = buffer.as_ptr() as *mut AnyObject;
+        let allocated: Allocated<Self> = unsafe { msg_send![class, alloc] };
+        let shape = ns_number_array_from_slice(shape);
+        match row_bytes {
+            Some(row_bytes) => unsafe {
+                msg_send![
+                    allocated,
+                    initWithMTLBuffer: buffer_ptr,
+                    shape: &*shape,
+                    dataType: data_type,
+                    rowBytes: row_bytes
+                ]
+            },
+            None => unsafe {
+                msg_send![
+                    allocated,
+                    initWithMTLBuffer: buffer_ptr,
+                    shape: &*shape,
+                    dataType: data_type
+                ]
+            },
+        }
+    }
+
+    /// The shape of the tensor data.
+    pub fn shape(&self) -> Box<[usize]> {
+        let array: Retained<Shape> = unsafe { msg_send![self, shape] };
+        ns_number_array_to_boxed_slice(&array)
     }
 }

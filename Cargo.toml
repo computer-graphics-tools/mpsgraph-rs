@@ -1,10 +1,10 @@
 [package]
 name = "mpsgraph"
-version = "0.1.0"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
 authors = ["Eugene Bokhan <eugenebokhan@icloud.com>"]
 description = "Modern Rust bindings for Apple's Metal Performance Shaders Graph framework"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/mirai-audio/mpsgraph-rs"
 keywords = ["metal", "mps", "graph", "neural-network", "apple"]
 categories = ["api-bindings", "graphics", "science"]
@@ -15,27 +15,8 @@ readme = "README.md"
 objc2 = "0.6.1"
 objc2-foundation = "0.3.1"
 block2 = "0.6.1"
-metal =  "0.32.0"
+metal = "0.32.0"
 bitflags = "2.9.1"
-
-[dev-dependencies]
-prettydiff = "0.8.1"
-ndarray = "0.16.1"
-
-[build-dependencies]
-bindgen = "0.72.0"
-
-[[example]]
-name = "matmul"
-path = "examples/matmul.rs"
-
-[[example]]
-name = "type_test"
-path = "examples/type_test.rs"
-
-[[example]]
-name = "callback_test"
-path = "examples/callback_test.rs"
 
 [package.metadata.docs.rs]
 default-target = "aarch64-apple-darwin"

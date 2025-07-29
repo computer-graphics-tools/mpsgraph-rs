@@ -6,22 +6,9 @@ Modern Rust bindings for Apple's Metal Performance Shaders Graph framework (MPSG
 
 This crate provides Rust bindings for the Metal Performance Shaders Graph framework, a high-level graph-based API for defining neural network models that run on the GPU. It uses:
 
-- Modern `extern_class!` pattern from objc2 for class definitions
-- Automatic memory management with `Retained<T>` instead of manual retain/release
 - More idiomatic Rust API with improved type safety
-- Better Debug and display support via standard traits
 - Cleaner FFI boundary between Rust and Objective-C
-
-## Status
-
-This crate is stable and ready for production use. It is the result of a completed migration effort from the original AnyObject-based implementation to a modern Objective-C integration approach. See the [Migration Progress](../../../MIGRATION-PROGRESS.md) document for details.
-
-## Features
-
-- Create and manipulate graph-based neural network models
-- Define tensor operations with strong typing
-- Execute models on Metal-compatible GPUs
-- Automatic memory management for Objective-C objects
+- Automatic memory management with `Retained<T>` instead of manual retain/release
 
 ## Requirements
 
@@ -32,96 +19,65 @@ This crate is stable and ready for production use. It is the result of a complet
 ## Usage Example
 
 ```rust
-use mpsgraph::{
-    DataType, Device, ExecutionDescriptor, Graph, ShapeHelper, TensorData
-};
+use mpsgraph::{DataType, Device, Graph, ShapedType, TensorData};
+use metal::{self as mtl, MTLResourceOptions};
 use std::collections::HashMap;
-use objc2::rc::Retained;
 
 fn main() {
-    // Create a Metal device and MPS graph
-    let metal_device = metal::Device::system_default().expect("No Metal device found");
-    let device = Device::with_device(&metal_device);
+    let mtl_device = MTLDevice::system_default().expect("No Metal device found");
+    let device = Device::with_device(&mtl_device);
     let graph = Graph::new();
-    
-    // Create a 2x2 matrix shape and tensors
-    let matrix_shape = ShapeHelper::matrix(2, 2);
-    let input_a = graph.placeholder(DataType::Float32, &matrix_shape).unwrap();
-    let input_b = graph.placeholder(DataType::Float32, &matrix_shape).unwrap();
-    
-    // Create a matrix multiplication operation
-    let output = graph.matmul(
-        &input_a, &input_b, 
-        false, false, 
-        None
-    ).unwrap();
-    
-    // Create input tensor data
-    let a_data = vec![1.0f32, 2.0, 3.0, 4.0];
-    let b_data = vec![5.0f32, 6.0, 7.0, 8.0];
-    
-    let a_tensor_data = TensorData::with_bytes(
-        &a_data,
-        &matrix_shape,
-        DataType::Float32,
-    ).unwrap();
-    
-    let b_tensor_data = TensorData::with_bytes(
-        &b_data,
-        &matrix_shape,
-        DataType::Float32,
-    ).unwrap();
-    
-    // Set up execution
-    let exec_desc = ExecutionDescriptor::new();
-    exec_desc.prefer_synchronous_execution();
-    
-    // Create feeds dictionary and run graph
-    let mut feeds = HashMap::new();
-    feeds.insert(&*input_a, &*a_tensor_data);
-    feeds.insert(&*input_b, &*b_tensor_data);
-    
-    let results = graph.run_with_feeds_and_descriptor(
-        &feeds,
-        &[&*output],
-        Some(&exec_desc)
+
+    let a = graph.placeholder(Some(&[2_isize, 2]), DataType::Float32, None);
+    let b = graph.placeholder(Some(&[2_isize, 2]), DataType::Float32, None);
+    let c = graph.matrix_multiplication(&a, &b, None);
+
+    let a_values: [f32; 4] = [1.0, 2.0, 3.0, 4.0];
+    let b_values: [f32; 4] = [5.0, 6.0, 7.0, 8.0];
+    let bytes = (a_values.len() * std::mem::size_of::<f32>()) as u64;
+
+    let a_buffer = mtl_device.new_buffer_with_data(
+        a_values.as_ptr() as *const std::ffi::c_void,
+        bytes,
+        MTLResourceOptions::empty(),
     );
-    
-    // Process results
-    if let Some(result_data) = results.get(&output) {
-        if let Some(result_array) = result_data.bytes_as::<f32>() {
-            println!("Result matrix:");
-            for i in 0..2 {
-                for j in 0..2 {
-                    print!("{} ", result_array[i * 2 + j]);
-                }
-                println!();
-            }
-        }
-    }
+    let b_buffer = mtl_device.new_buffer_with_data(
+        b_values.as_ptr() as *const std::ffi::c_void,
+        bytes,
+        MTLResourceOptions::empty(),
+    );
+    let c_buffer = mtl_device.new_buffer(bytes, MTLResourceOptions::empty());
+
+    let a_td = TensorData::new_with_mtl_buffer(&a_buffer, &[2, 2], DataType::Float32, None);
+    let b_td = TensorData::new_with_mtl_buffer(&b_buffer, &[2, 2], DataType::Float32, None);
+    let c_td = TensorData::new_with_mtl_buffer(&c_buffer, &[2, 2], DataType::Float32, None);
+
+    let mut feeds = HashMap::new();
+    let shaped = ShapedType::new_with_shape_data_type(Some(&[2_isize, 2]), DataType::Float32);
+    feeds.insert(&*a, &*shaped);
+    feeds.insert(&*b, &*shaped);
+
+    let executable = graph.compile(&device, &feeds, &[&*c], None, None);
+    let mtl_command_queue = mtl_device.new_command_queue();
+    let mps_command_buffer = CommandBuffer::from_command_queue(&mtl_command_queue);
+
+    executable.encode_to_command_buffer(
+        &mps_command_buffer,
+        &[&*a_td, &*b_td],
+        Some(&[&*c_td]),
+        None,
+    );
+
+    mps_command_buffer.commit();
+    mps_command_buffer
+        .root_command_buffer()
+        .wait_until_completed();
+
+    let result = unsafe { std::slice::from_raw_parts(c_buffer.contents() as *const f32, 4) };
+    println!("Result matrix: {:?}", result); // [19.0, 22.0, 43.0, 50.0]
 }
 ```
 
-## Key Features
-
-The main features of this crate are:
-
-1. **Memory Management**: Uses `Retained<T>` for automatic memory management instead of raw pointers and manual retain/release
-2. **Type Safety**: Strong type safety through the use of generics and proper Objective-C class wrappers
-3. **API Design**: Idiomatic Rust API with methods returning `Option<T>` and `Result<T, E>` where appropriate
-4. **Naming**: Uses simpler type names without the MPS prefix (e.g., `Device` instead of `MPSGraphDevice`)
-5. **Error Handling**: Comprehensive error handling with better Rust integration
-6. **Block Support**: Full support for Objective-C blocks with proper type safety and memory management
-
 ## License
 
-Licensed under either of:
-
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
-
-## License
-
-Licensed under MIT license.
+Licensed under [MIT license](LICENSE).
